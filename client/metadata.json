@@ -1,0 +1,6 @@
+{
+  "name": "Calvin Ratings",
+  "description": "Real-time campus crowd-rating, occupancy guide, and spot finder for Calvin University.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

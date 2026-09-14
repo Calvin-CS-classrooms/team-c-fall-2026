@@ -1,28 +1,23 @@
 {
-  "name": "client",
+  "name": "calvin-ratings",
   "private": true,
   "version": "0.0.0",
-  "type": "module",
+  "main": "expo/AppEntry",
   "scripts": {
-    "dev": "vite",
-    "build": "vite build",
-    "lint": "oxlint",
-    "test": "vitest run",
-    "preview": "vite preview"
+    "start": "expo start",
+    "android": "expo start --android",
+    "ios": "expo start --ios",
+    "lint": "tsc --noEmit",
+    "web": "expo start --web"
   },
   "dependencies": {
-    "react": "^19.2.8",
-    "react-dom": "^19.2.8"
+    "expo": "~57.0.22",
+    "react": "19.2.3",
+    "react-native": "0.86.3",
+    "react-native-safe-area-context": "~5.7.0"
   },
   "devDependencies": {
-    "@testing-library/jest-dom": "^7.0.1",
-    "@testing-library/react": "^16.3.3",
-    "@types/react": "^19.2.18",
-    "@types/react-dom": "^19.2.7",
-    "@vitejs/plugin-react": "^6.1.1",
-    "jsdom": "^29.1.1",
-    "oxlint": "^1.81.0",
-    "vite": "^8.3.0",
-    "vitest": "^5.0.0"
+    "@types/react": "^19.3.0",
+    "typescript": "~6.0.3"
   }
 }

@@ -1,0 +1,7 @@
+{
+  "extends": "expo/tsconfig.base",
+  "include": ["App.tsx"],
+  "compilerOptions": {
+    "noEmit": true
+  }
+}
