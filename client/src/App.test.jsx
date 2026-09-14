@@ -2,6 +2,7 @@ import { fireEvent, render, screen } from '@testing-library/react'
 import { describe, expect, it } from 'vitest'
 import App from './App'
 
+// Covers the two currently implemented screens and their primary navigation.
 describe('Calvin Ratings', () => {
   it('shows an introductory screen with a current capacity snapshot', () => {
     render(<App />)

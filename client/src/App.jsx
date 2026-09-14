@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import './App.css'
 
+// Temporary campus data displayed by the client until it is connected to the server.
 const spaces = [
   { name: 'Hekman Library', type: 'Study spaces', status: 'Busy', detail: '82% of seats reported full', description: 'Quiet reading rooms, group tables, research help, and late-night study space.', tone: 'busy', position: 'library' },
   { name: "Johnny's", type: 'Dining', status: 'Easy to find a table', detail: '46% of tables in use', description: 'A campus spot for coffee, meals, and catching up with friends between classes.', tone: 'open', position: 'johnnys' },
@@ -8,6 +9,7 @@ const spaces = [
 ]
 
 function App() {
+  // Switches between the welcome screen and the interactive campus map.
   const [showDirectory, setShowDirectory] = useState(false)
   if (showDirectory) return <Directory onBack={() => setShowDirectory(false)} />
 
@@ -23,12 +25,14 @@ function App() {
 }
 
 function Directory({ onBack }) {
+  // The selected place controls both the active pin and the bottom-sheet details.
   const [selectedPlace, setSelectedPlace] = useState(spaces[0])
 
   return <main className="directory">
     <section className="map-canvas" aria-label="Map of Calvin University campus">
       <header className="map-header"><button className="map-back" type="button" onClick={onBack} aria-label="Back to welcome screen">←</button><div className="map-search" aria-label="Search campus places"><span aria-hidden="true">⌕</span><span>Search Calvin campus</span></div><button className="profile-button" type="button" aria-label="Calvin community profile">C</button></header>
       <p className="map-area-label">Calvin University campus</p><div className="campus-boundary" aria-hidden="true" /><div className="campus-road road-one" aria-hidden="true" /><div className="campus-road road-two" aria-hidden="true" /><div className="campus-road road-three" aria-hidden="true" /><div className="campus-green green-one" aria-hidden="true" /><div className="campus-green green-two" aria-hidden="true" /><div className="campus-green green-three" aria-hidden="true" /><span className="map-road-label label-one">East Beltline Ave</span><span className="map-road-label label-two">Lake Drive</span>
+      {/* Map pins and Place tabs select the same mocked campus location. */}
       {spaces.map((space) => <button className={`map-pin ${space.position} ${selectedPlace.name === space.name ? 'selected-pin' : ''}`} type="button" key={space.name} onClick={() => setSelectedPlace(space)} aria-label={`View ${space.name}`}><span className={`pin-dot status-${space.tone}`} aria-hidden="true" />{space.name}</button>)}
       <button className="location-button" type="button" aria-label="Center on your location">⌁</button>
     </section>
