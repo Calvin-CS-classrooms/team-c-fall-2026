@@ -13,7 +13,7 @@ This contract defines the expectations and working practices our team agrees to 
 ## Expectations
 
 - Each member will contribute consistently throughout every 3-week sprint rather than leaving assigned work until the end.
-- Each member should expect to spend approximately **[X–Y hours] per week outside of class** on the project when needed.
+- Each member should expect to spend approximately **3-5 per week outside of class** on the project when needed.
 - Team members are expected to attend scheduled meetings and arrive on time.
 - If a member expects to miss a meeting or deadline, they should notify the team as early as reasonably possible.
 - Interviews, illness, competitions, work, family responsibilities, and other unexpected commitments will be accommodated when communicated early.
@@ -24,7 +24,7 @@ This contract defines the expectations and working practices our team agrees to 
 ## Communication
 
 - Microsoft Teams will be our primary communication platform.
-- Team members should respond to project-related messages within **[X hours]** whenever reasonably possible.
+- Team members should respond to project-related messages within **24 hours** whenever reasonably possible.
 - Messages involving blockers or questions that prevent another member from continuing work should be treated as higher priority.
 - Important decisions, changes to assignments, blockers, and meeting information should be documented in Teams.
 - If a discussion becomes too complicated for chat, the team should move it to a meeting or call.
@@ -41,8 +41,8 @@ This contract defines the expectations and working practices our team agrees to 
 ## Meeting Schedule
 
 - The team will hold one recurring meeting each week lasting approximately **30–60 minutes**.
-- Recurring meeting time: **[Day and Time]**
-- Meeting format: **[In person / Microsoft Teams / Hybrid]**
+- Recurring meeting time: **Thursdays at 6:30pm**
+- Meeting format: **In person**
 - Additional meetings may be scheduled when needed.
 - The Project Manager will organize the meeting agenda and keep the meeting focused.
 - Members who cannot attend should notify the team beforehand and review meeting decisions and assigned action items afterward.
@@ -98,4 +98,4 @@ By adding our names below, we confirm that we have discussed this contract, unde
 - Grant
 - Wilson Hornbaker
 
-Date agreed upon: ____________________
+Date agreed upon: 9/10/2026
