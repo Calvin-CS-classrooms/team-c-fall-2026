@@ -17,4 +17,4 @@ Ponjul Shedul
   
 The Calvin Ratings App/ Calvin rates me/  Calvin Ratings
 
-This is a platform for Calvin students and staff where they could get to rate and learn about different places/ events at Calvin. Unlike the calvin.edu website that may or may not tell you about current campus events, this app gives live ratings to campus events/ places and could also let the users know what the purpose of certain places are on campus. 
+This is a platform for Calvin students to rate and learn about different places/events at Calvin, allowing them to quickly see the best places to study or socialize, based on availability, resources, and popularity. Unlike the calvin.edu website that gives limited information about events, this app gives live ratings for campus events/places and also lets users know the purpose of certain places on campus.
