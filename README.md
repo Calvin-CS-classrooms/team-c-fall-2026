@@ -15,6 +15,37 @@ Ponjul Shedul
 ## Vision Statement
 - [Vision Statment doc](vision-statement.md)
   
-The Calvin Ratings App/Calvin Rates Me/Calvin Ratings
+The Calvin Ratings App/ Calvin rates me/  Calvin Ratings
 
-This platform lets Calvin students rate and learn about places/events at Calvin, so they can quickly find the best places to study or socialize based on availability, resources, and popularity. Unlike the calvin.edu website, which provides limited information about events, this app offers live ratings for campus events and places and explains the purpose of certain campus locations.
+This is a platform for Calvin students and staff where they could get to rate and learn about different places/ events at Calvin. Unlike the calvin.edu website that may or may not tell you about current campus events, this app gives live ratings to campus events/ places and could also let the users know what the purpose of certain places are on campus. 
+
+## How to run the App
+
+Prerequisite: Node.js and npm.
+
+From the repository root, install the client dependencies:
+
+```powershell
+cd client
+npm install
+```
+
+Start the app in a web browser:
+
+```powershell
+npm run web
+```
+
+To start Expo for a phone or emulator:
+
+```powershell
+npm start
+```
+
+## How to Run Tests
+
+Run the test:
+
+```powershell
+npm run test:ci
+```
