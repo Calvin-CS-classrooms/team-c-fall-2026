@@ -1,8 +1,0 @@
-{
-  "extends": "expo/tsconfig.base",
-  "include": ["App.tsx", "tests"],
-  "compilerOptions": {
-    "noEmit": true,
-    "types": ["jest"]
-  }
-}
