@@ -1,0 +1,82 @@
+import type { CampusLocation } from '@/types';
+
+export const locations: CampusLocation[] = [
+  {
+    id: 'hekman-library',
+    name: 'Hekman Library',
+    category: 'study',
+    image: require('@/assets/images/hekman_library.jpg'),
+    capacity: 62,
+    density: 'moderate',
+    noise: 'low-buzz',
+    hoursLabel: 'Open until 1:00 AM',
+    isOpenNow: true,
+    rating: 4.6,
+    shortDescription: 'Four floors of study space, from silent stacks to group rooms.',
+    amenities: ['Wi-Fi', 'Printing', 'Group Rooms', 'Silent Floor', 'Outlets'],
+    floors: [
+      { floor: 'Floor 1 — Commons', description: 'Group tables, service desk, and cafe seating.', noise: 'social' },
+      { floor: 'Floor 2 — Reading Room', description: 'Long tables and lounge chairs for focused work.', noise: 'low-buzz' },
+      { floor: 'Floor 3 — Group Study', description: 'Bookable group rooms and whiteboards.', noise: 'social' },
+      { floor: 'Floor 4 — Silent Floor', description: 'No talking, phones on silent only.', noise: 'whisper' },
+    ],
+  },
+  {
+    id: 'commons-dining-hall',
+    name: 'Commons Dining Hall',
+    category: 'dining',
+    image: require('@/assets/images/dining-hall-min.jpg'),
+    capacity: 81,
+    density: 'busy',
+    noise: 'social',
+    hoursLabel: 'Open until 8:00 PM',
+    isOpenNow: true,
+    rating: 4.2,
+    waitTimeMinutes: 12,
+    shortDescription: 'The main dining hall with rotating stations and 300+ seats.',
+    amenities: ['Vegetarian', 'Halal Options', 'Allergen Friendly', 'Seating 300+'],
+    floors: [
+      { floor: 'Main Floor', description: 'Grill, deli, and international stations.', noise: 'social' },
+      { floor: 'Grille Side', description: 'Quick bites and late-night grill favorites.', noise: 'loud' },
+    ],
+  },
+  {
+    id: 'morren-fitness',
+    name: 'Morren Fitness Center',
+    category: 'athletics',
+    image: require('@/assets/images/morren-fitness.jpg'),
+    capacity: 45,
+    density: 'moderate',
+    noise: 'loud',
+    hoursLabel: 'Open until 11:00 PM',
+    isOpenNow: true,
+    rating: 4.4,
+    shortDescription: 'Cardio, free weights, and group fitness classes for every schedule.',
+    amenities: ['Free Weights', 'Cardio Machines', 'Group Classes', 'Locker Rooms'],
+    floors: [
+      { floor: 'Main Gym', description: 'Cardio machines and open floor space.', noise: 'loud' },
+      { floor: 'Weight Room', description: 'Free weights and strength machines.', noise: 'loud' },
+      { floor: 'Track (Upper Level)', description: 'Walking and running track above the gym floor.', noise: 'low-buzz' },
+    ],
+  },
+  {
+    id: 'peets-coffee',
+    name: "Peet's Coffee",
+    category: 'dining',
+    image: require('@/assets/images/peets-coffee.webp'),
+    capacity: 38,
+    density: 'quiet',
+    noise: 'low-buzz',
+    hoursLabel: 'Open until 6:00 PM',
+    isOpenNow: true,
+    rating: 4.7,
+    waitTimeMinutes: 4,
+    shortDescription: 'Espresso bar and cozy study seating near the commons.',
+    amenities: ['Espresso Bar', 'Mobile Order', 'Study Seating', 'Outlets'],
+    floors: [{ floor: 'Main Floor', description: 'Counter service with lounge and bar seating.', noise: 'low-buzz' }],
+  },
+];
+
+export function getLocationById(id: string): CampusLocation | undefined {
+  return locations.find((location) => location.id === id);
+}
