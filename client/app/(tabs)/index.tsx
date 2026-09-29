@@ -13,8 +13,13 @@ export default function ExploreScreen() {
           params: { query },
         });
       }}
-      onGoToSelectLocation={() => router.push('/select-location')}
       onOpenProfile={() => router.push('/(tabs)/profile')}
+      onSelectLocation={(loc) =>
+        router.push({
+          pathname: '/place-details',
+          params: { id: loc.id },
+        })
+      }
     />
   );
 }

@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import {
   View,
   Text,
+  Image,
   TextInput,
   TouchableOpacity,
   ScrollView,
@@ -10,18 +11,19 @@ import {
 import { MaterialIcons } from '@expo/vector-icons';
 import { TopHeader } from '../components/TopHeader';
 import { LiveDot } from '../components/ui';
+import { CAMPUS_LOCATIONS, CampusLocation } from '../data/mockData';
 import { colors } from '../theme';
 
 interface ChatHomeScreenProps {
   onAskQuestion: (query: string) => void;
-  onGoToSelectLocation: () => void;
   onOpenProfile: () => void;
+  onSelectLocation: (loc: CampusLocation) => void;
 }
 
 export const ChatHomeScreen: React.FC<ChatHomeScreenProps> = ({
   onAskQuestion,
-  onGoToSelectLocation,
   onOpenProfile,
+  onSelectLocation,
 }) => {
   const [inputText, setInputText] = useState('');
 
@@ -108,15 +110,72 @@ export const ChatHomeScreen: React.FC<ChatHomeScreenProps> = ({
           </View>
         </View>
 
-        {/* Direct Action: Rate a Place */}
-        <View style={styles.rateSection}>
-          <Text style={styles.rateText}>
-            Currently on campus and want to report live conditions?
-          </Text>
-          <TouchableOpacity onPress={onGoToSelectLocation} style={styles.rateBtn}>
-            <MaterialIcons name="add-location-alt" size={20} color={colors.maroon} />
-            <Text style={styles.rateBtnText}>Rate a Place</Text>
-          </TouchableOpacity>
+        {/* Location Tiles */}
+        <View style={styles.tilesSection}>
+          <View style={styles.sectionHeader}>
+            <Text style={styles.sectionTitle}>Trending Now</Text>
+            <Text style={styles.sectionCount}>{CAMPUS_LOCATIONS.length} spots</Text>
+          </View>
+
+          <View style={styles.tilesList}>
+            {CAMPUS_LOCATIONS.map((loc) => (
+              <TouchableOpacity
+                key={loc.id}
+                onPress={() => onSelectLocation(loc)}
+                style={styles.tile}
+                activeOpacity={0.9}
+              >
+                {/* Picture-focused tile */}
+                <View style={styles.tileImageWrap}>
+                  <Image source={{ uri: loc.image }} style={styles.tileImage} />
+                  <View style={styles.tileOverlay} />
+
+                  {/* Status pill */}
+                  <View style={styles.tileStatusPill}>
+                    <View style={[styles.tileStatusDot, { backgroundColor: loc.statusDotColor }]} />
+                    <Text style={[styles.tileStatusText, { color: loc.statusColor }]}>
+                      {loc.statusTag}
+                    </Text>
+                  </View>
+
+                  {/* Rating pill */}
+                  <View style={styles.tileRatingPill}>
+                    <MaterialIcons name="star" size={14} color={colors.star} />
+                    <Text style={styles.tileRatingText}>{loc.rating}</Text>
+                    <Text style={styles.tileRatingCount}>({loc.reviewCount})</Text>
+                  </View>
+
+                  {/* Bottom info over image */}
+                  <View style={styles.tileBottom}>
+                    <Text style={styles.tileName}>{loc.name}</Text>
+                    <Text style={styles.tileSubtitle} numberOfLines={1}>
+                      {loc.subtitle}
+                    </Text>
+                    <View style={styles.tileMetaRow}>
+                      <View style={styles.tileMetaItem}>
+                        <MaterialIcons name="volume-off" size={13} color="#fff" />
+                        <Text style={styles.tileMetaText}>
+                          {loc.metrics?.noiseScore ?? 4.8}/5
+                        </Text>
+                      </View>
+                      <View style={styles.tileMetaItem}>
+                        <MaterialIcons name="event-seat" size={13} color="#fff" />
+                        <Text style={styles.tileMetaText}>
+                          {loc.liveMetrics?.openDesks ?? 18} desks
+                        </Text>
+                      </View>
+                      <View style={styles.tileMetaItem}>
+                        <MaterialIcons name="wifi" size={13} color="#fff" />
+                        <Text style={styles.tileMetaText}>
+                          {loc.liveMetrics?.wifiSpeed ?? '220 Mbps'}
+                        </Text>
+                      </View>
+                    </View>
+                  </View>
+                </View>
+              </TouchableOpacity>
+            ))}
+          </View>
         </View>
       </ScrollView>
     </View>
@@ -278,35 +337,121 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  rateSection: {
-    marginTop: 32,
-    paddingTop: 16,
-    borderTopWidth: 1,
-    borderTopColor: colors.borderLight,
-    alignItems: 'center',
+  tilesSection: {
+    gap: 12,
+    marginTop: 24,
   },
-  rateText: {
-    fontSize: 13,
-    color: colors.muted,
-    marginBottom: 12,
-    textAlign: 'center',
-  },
-  rateBtn: {
-    width: '100%',
-    height: 48,
-    borderRadius: 999,
-    backgroundColor: colors.white,
-    borderWidth: 1,
-    borderColor: '#ded8cf',
+  sectionHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
-    gap: 8,
+    justifyContent: 'space-between',
+    paddingHorizontal: 4,
   },
-  rateBtnText: {
-    fontSize: 14,
+  sectionTitle: {
+    fontSize: 16,
     fontWeight: '700',
     color: colors.text,
+  },
+  sectionCount: {
+    fontSize: 12,
+    color: colors.muted,
+  },
+  tilesList: {
+    gap: 16,
+  },
+  tile: {
+    borderRadius: 20,
+    overflow: 'hidden',
+    backgroundColor: colors.white,
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+  tileImageWrap: {
+    height: 220,
+  },
+  tileImage: {
+    width: '100%',
+    height: '100%',
+  },
+  tileOverlay: {
+    ...StyleSheet.absoluteFill,
+    backgroundColor: 'rgba(0,0,0,0.25)',
+  },
+  tileStatusPill: {
+    position: 'absolute',
+    top: 12,
+    left: 12,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    backgroundColor: 'rgba(255,255,255,0.95)',
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 999,
+  },
+  tileStatusDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+  },
+  tileStatusText: {
+    fontSize: 11,
+    fontWeight: '700',
+  },
+  tileRatingPill: {
+    position: 'absolute',
+    top: 12,
+    right: 12,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    backgroundColor: 'rgba(255,255,255,0.95)',
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 999,
+  },
+  tileRatingText: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: colors.text,
+  },
+  tileRatingCount: {
+    fontSize: 11,
+    color: colors.subtext4,
+  },
+  tileBottom: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    padding: 14,
+  },
+  tileName: {
+    fontSize: 20,
+    fontWeight: '800',
+    color: colors.white,
+    letterSpacing: -0.3,
+  },
+  tileSubtitle: {
+    fontSize: 13,
+    color: 'rgba(255,255,255,0.9)',
+    marginTop: 2,
+  },
+  tileMetaRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    marginTop: 8,
+  },
+  tileMetaItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+  },
+  tileMetaText: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: colors.white,
   },
 });
 

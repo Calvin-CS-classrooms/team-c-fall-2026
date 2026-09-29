@@ -1,6 +1,5 @@
-import { Tabs } from 'expo-router';
+import { Tabs, useRouter } from 'expo-router';
 import { BottomNavBar, MainTab } from '../../src/components/BottomNavBar';
-import { useRouter } from 'expo-router';
 
 export default function TabsLayout() {
   const router = useRouter();
@@ -23,8 +22,9 @@ export default function TabsLayout() {
           <BottomNavBar
             currentTab={routeToTab[routeName] ?? 'explore'}
             onSelectTab={(tab) => {
-              const routeName = tab === 'explore' ? 'index' : tab;
-              router.push(`/(tabs)/${routeName}`);
+              const target = tab === 'explore' ? 'index' : tab;
+              // Use navigation.navigate to switch the active tab
+              props.navigation.navigate(target);
             }}
             onCreateRating={() => router.push('/select-location')}
           />

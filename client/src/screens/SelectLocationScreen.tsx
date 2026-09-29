@@ -155,8 +155,8 @@ export const SelectLocationScreen: React.FC<SelectLocationScreenProps> = ({
             return (
               <TouchableOpacity
                 key={loc.id}
-                onPress={() => handleCardClick(loc)}
-                onLongPress={() => onSelectLocation(loc)}
+                onPress={() => onSelectLocation(loc)}
+                onLongPress={() => handleCardClick(loc)}
                 style={[styles.card, isChosen && styles.cardChosen]}
               >
                 <View style={styles.cardImageWrap}>
