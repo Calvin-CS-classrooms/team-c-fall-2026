@@ -48,11 +48,11 @@ export const ConfirmationScreen: React.FC<ConfirmationScreenProps> = ({
 
         {/* Feedback Typography */}
         <View style={styles.feedbackText}>
-          <Text style={styles.feedbackTitle}>Thanks for your review!</Text>
+          <Text style={styles.feedbackTitle}>Review demo complete</Text>
           <Text style={styles.feedbackDesc}>
             Your rating for{' '}
-            <Text style={styles.feedbackBold}>{location.name} (2nd Floor)</Text>{' '}
-            has been submitted and is helping fellow Calvin Knights find great study spots right now.
+            <Text style={styles.feedbackBold}>{location.name}</Text>{' '}
+            was previewed only. Nothing was submitted or added to the survey dataset.
           </Text>
         </View>
 
@@ -61,11 +61,11 @@ export const ConfirmationScreen: React.FC<ConfirmationScreenProps> = ({
           <View style={styles.bentoHeader}>
             <View style={styles.pointsBadge}>
               <MaterialIcons name="stars" size={18} color="#7f5700" />
-              <Text style={styles.pointsText}>+25 Campus Scout Points</Text>
+              <Text style={styles.pointsText}>Example Scout Points</Text>
             </View>
             <View style={styles.liveBadge}>
               <LiveDot color="#005312" size={8} />
-              <Text style={styles.liveBadgeText}>Live</Text>
+              <Text style={styles.liveBadgeText}>Demo</Text>
             </View>
           </View>
 
@@ -75,7 +75,7 @@ export const ConfirmationScreen: React.FC<ConfirmationScreenProps> = ({
                 <MaterialIcons name="verified" size={18} color="#005312" />
                 <Text style={styles.tileHeaderGreenText}>Status</Text>
               </View>
-              <Text style={styles.tileValue}>Verified Contributor</Text>
+              <Text style={styles.tileValue}>Example Contributor</Text>
               <Text style={styles.tileSub}>Calvin Student</Text>
             </View>
 
@@ -87,7 +87,7 @@ export const ConfirmationScreen: React.FC<ConfirmationScreenProps> = ({
                 </Text>
               </View>
               <Text style={styles.tileBigValue}>149</Text>
-              <Text style={styles.tileSub}>Total Space Reviews</Text>
+              <Text style={styles.tileSub}>Example Review Count</Text>
             </View>
           </View>
 
@@ -98,7 +98,7 @@ export const ConfirmationScreen: React.FC<ConfirmationScreenProps> = ({
             <View style={styles.impactTextWrap}>
               <Text style={styles.impactTitle}>Community Impact</Text>
               <Text style={styles.impactDesc} numberOfLines={1}>
-                Your noise level rating updated the live library meter.
+                This demo does not update survey ratings or live measurements.
               </Text>
             </View>
           </View>

@@ -1,3 +1,5 @@
+// Fictional fixtures for the legacy review/profile UI demo only.
+// Not survey responses, current conditions, or input to recommendations/map/details.
 export interface CampusLocation {
   id: string;
   name: string;

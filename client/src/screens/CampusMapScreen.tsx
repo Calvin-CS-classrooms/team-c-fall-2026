@@ -1,177 +1,71 @@
 import React, { useState } from 'react';
-import {
-  View,
-  Text,
-  Image,
-  TouchableOpacity,
-  ScrollView,
-  StyleSheet,
-} from 'react-native';
+import { View, Text, Image, TouchableOpacity, ScrollView, StyleSheet } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
 import { TopHeader } from '../components/TopHeader';
-import { CAMPUS_LOCATIONS, CampusLocation } from '../data/mockData';
+import { SurveySpaceCard } from '../components/SurveySpaceCard';
+import { SURVEY_SPACES, type CampusSpace } from '../data/surveySpaces';
+import { MAP_LAYOUT } from '../data/mapLayout';
+import { MAP_FILTERS, filterSurveySpaces, selectedVisibleSpace, type MapFilter } from '../utils/surveyMap';
 import { colors } from '../theme';
 
 interface CampusMapScreenProps {
-  onSelectLocation: (loc: CampusLocation) => void;
-  onRateLocation: (loc: CampusLocation) => void;
+  onSelectLocation: (loc: CampusSpace) => void;
   onProfileClick: () => void;
 }
-
-export const CampusMapScreen: React.FC<CampusMapScreenProps> = ({
-  onSelectLocation,
-  onRateLocation,
-  onProfileClick,
-}) => {
-  const [selectedLoc, setSelectedLoc] = useState<CampusLocation>(CAMPUS_LOCATIONS[0]);
-  const [activeFilter, setActiveFilter] = useState<'all' | 'quiet' | 'open'>('all');
-
-  const filtered = CAMPUS_LOCATIONS.filter((loc) => {
-    if (activeFilter === 'quiet') return loc.metrics?.noiseScore && loc.metrics.noiseScore >= 4.5;
-    if (activeFilter === 'open') return loc.statusTag !== 'Bustling';
-    return true;
-  });
-
-  const pins = [
-    { loc: CAMPUS_LOCATIONS[0], top: '33%' as const, left: '50%' as const, size: 32 },
-    { loc: CAMPUS_LOCATIONS[1], top: '25%' as const, left: '25%' as const, size: 28 },
-    { loc: CAMPUS_LOCATIONS[2], top: '66%' as const, left: '75%' as const, size: 28 },
-    { loc: CAMPUS_LOCATIONS[3], top: '80%' as const, left: '33%' as const, size: 28 },
-  ];
+export const CampusMapScreen: React.FC<CampusMapScreenProps> = ({ onSelectLocation, onProfileClick }) => {
+  const [selectedId, setSelectedId] = useState(SURVEY_SPACES[0].id);
+  const [activeFilter, setActiveFilter] = useState<MapFilter>('all');
+  const filtered = filterSurveySpaces(activeFilter);
+  // A hidden selection must not leave a preview or details button for an excluded place.
+  const selectedLoc = selectedVisibleSpace(filtered, selectedId);
 
   return (
     <View style={styles.container}>
       <TopHeader type="feed" onProfileClick={onProfileClick} />
-
       <ScrollView contentContainerStyle={styles.content} style={styles.scroll}>
-        {/* Map Header with Filters */}
         <View style={styles.mapHeader}>
           <View style={styles.mapTitleRow}>
             <MaterialIcons name="explore" size={20} color={colors.maroon} />
-            <Text style={styles.mapTitle}>Campus Map Mockup</Text>
+            <Text style={styles.mapTitle}>Surveyed Places</Text>
           </View>
-          <View style={styles.liveSyncBadge}>
-            <Text style={styles.liveSyncText}>Illustrative mockup</Text>
+          <View style={styles.surveyBadge}>
+            <Text style={styles.surveyBadgeText}>Prototype Survey</Text>
           </View>
         </View>
-
-        <Text style={{ color: colors.subtext7 }}>Illustrative map with sample ratings and positions; not survey data or live availability. Use the home search for survey recommendations.</Text>
-
-        {/* Filter Chips */}
+        <Text style={{ color: colors.subtext7 }}>Illustrative map positions — not GPS coordinates. Ratings describe student surveys, not current availability.</Text>
         <View style={styles.filterRow}>
-          <TouchableOpacity
-            onPress={() => setActiveFilter('all')}
-            style={[styles.filterChip, activeFilter === 'all' && styles.filterChipActive]}
-          >
-            <Text style={[styles.filterChipText, activeFilter === 'all' && styles.filterChipTextActive]}>
-              All Campus (5)
-            </Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            onPress={() => setActiveFilter('quiet')}
-            style={[styles.filterChip, activeFilter === 'quiet' && styles.filterChipActive]}
-          >
-            <Text style={[styles.filterChipText, activeFilter === 'quiet' && styles.filterChipTextActive]}>
-              🤫 Quiet Zones
-            </Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            onPress={() => setActiveFilter('open')}
-            style={[styles.filterChip, activeFilter === 'open' && styles.filterChipActive]}
-          >
-            <Text style={[styles.filterChipText, activeFilter === 'open' && styles.filterChipTextActive]}>
-              Sample Filter
-            </Text>
-          </TouchableOpacity>
+          {MAP_FILTERS.map(filter => (
+            <TouchableOpacity key={filter.id} onPress={() => setActiveFilter(filter.id)}
+              accessibilityRole="button" accessibilityState={{ selected: activeFilter === filter.id }}
+              style={[styles.filterChip, activeFilter === filter.id && styles.filterChipActive]}>
+              <Text style={[styles.filterChipText, activeFilter === filter.id && styles.filterChipTextActive]}>
+                {filter.label}{filter.id === 'all' ? ` (${SURVEY_SPACES.length})` : ''}
+              </Text>
+            </TouchableOpacity>
+          ))}
         </View>
-
-        {/* Interactive Campus Map Canvas */}
         <View style={styles.mapCanvas}>
-          <Image
-            source={{
-              uri: 'https://lh3.googleusercontent.com/aida-public/AB6AXuCORammRxve1Y5-2OqM8q8NwzjCKyP3Jnl-7-kDCC3gTpMu7DbTmjh5Xsq2iYtLoVghgoH9n36z9kzZoHDocj4jDIhqOpUcpCm_CAaNdb15AoVrajras2DAyAGkcB7VXauGfsq29E2_RIq8lzGdrx3lTwUmbpATOvvp3LtE3gv6-jrA5g96KRjIOTIIi6FwZLw5k4sjMPoSR-Us5R4dVKrbrKI1gu-CbTbG9OO4TELeqb0jFyMQogM7',
-            }}
-            style={styles.mapImage}
-          />
+          <Image source={{ uri: 'https://lh3.googleusercontent.com/aida-public/AB6AXuCORammRxve1Y5-2OqM8q8NwzjCKyP3Jnl-7-kDCC3gTpMu7DbTmjh5Xsq2iYtLoVghgoH9n36z9kzZoHDocj4jDIhqOpUcpCm_CAaNdb15AoVrajras2DAyAGkcB7VXauGfsq29E2_RIq8lzGdrx3lTwUmbpATOvvp3LtE3gv6-jrA5g96KRjIOTIIi6FwZLw5k4sjMPoSR-Us5R4dVKrbrKI1gu-CbTbG9OO4TELeqb0jFyMQogM7' }} style={styles.mapImage} accessible={false} />
           <View style={styles.mapOverlay} />
-
-          {/* Interactive Spot Markers */}
-          {pins.map((pin) => {
-            const isSelected = selectedLoc.id === pin.loc.id;
-            return (
-              <TouchableOpacity
-                key={pin.loc.id}
-                onPress={() => setSelectedLoc(pin.loc)}
-                style={[styles.pin, { top: pin.top, left: pin.left }]}
-                accessibilityLabel={`${pin.loc.name} Pin`}
-              >
+          {filtered.map(space => {
+            const position = MAP_LAYOUT[space.id];
+            const isSelected = selectedLoc?.id === space.id;
+            return position && (
+              <TouchableOpacity key={space.id} onPress={() => setSelectedId(space.id)}
+                style={[styles.pin, position]} accessibilityRole="button"
+                accessibilityState={{ selected: isSelected }} accessibilityLabel={`Select ${space.name}`}>
                 <View style={[styles.pinLabel, isSelected && styles.pinLabelActive]}>
-                  <View
-                    style={[
-                      styles.pinDot,
-                      { backgroundColor: pin.loc.statusDotColor },
-                    ]}
-                  />
-                  <Text style={[styles.pinLabelText, isSelected && styles.pinLabelTextActive]}>
-                    {pin.loc.id === 'hekman-library' ? 'Hekman (4.7)' : pin.loc.name.split(' ')[0]}
-                  </Text>
+                  <Text style={[styles.pinLabelText, isSelected && styles.pinLabelTextActive]}>{space.name}</Text>
                 </View>
-                <MaterialIcons
-                  name="location-on"
-                  size={pin.size}
-                  color={isSelected ? colors.maroon : 'rgba(107,20,36,0.8)'}
-                />
+                <MaterialIcons name="location-on" size={isSelected ? 32 : 28} color={colors.maroon} />
               </TouchableOpacity>
             );
           })}
-
-          {/* Compass pill */}
-          <View style={styles.compass}>
-            <MaterialIcons name="near-me" size={20} color={colors.maroon} />
-          </View>
         </View>
-
-        {/* Selected Location Bottom Card Preview */}
-        <View style={styles.previewCard}>
-          <View style={styles.previewHeader}>
-            <View style={styles.previewLeft}>
-              <Image source={{ uri: selectedLoc.image }} style={styles.previewImage} />
-              <View>
-                <Text style={styles.previewName}>{selectedLoc.name}</Text>
-                <Text style={styles.previewSubtitle}>{selectedLoc.subtitle}</Text>
-              </View>
-            </View>
-            <View style={styles.previewRating}>
-              <MaterialIcons name="star" size={14} color={colors.star} />
-              <Text style={styles.previewRatingText}>{selectedLoc.rating}</Text>
-            </View>
-          </View>
-
-          <View style={styles.previewMetrics}>
-            <View style={styles.previewMetric}>
-              <Text style={styles.previewMetricLabel}>Noise Level</Text>
-              <Text style={styles.previewMetricValueGreen}>
-                {selectedLoc.metrics?.noiseScore ?? 4.8}/5
-              </Text>
-            </View>
-            <View style={styles.previewMetric}>
-              <Text style={styles.previewMetricLabel}>Live seating</Text>
-              <Text style={styles.previewMetricValue}>
-                Not collected
-              </Text>
-            </View>
-          </View>
-
-          <View style={styles.previewActions}>
-            <TouchableOpacity onPress={() => onSelectLocation(selectedLoc)} style={styles.viewBtn}>
-              <Text style={styles.viewBtnText}>View Details</Text>
-              <MaterialIcons name="chevron-right" size={16} color={colors.white} />
-            </TouchableOpacity>
-            <TouchableOpacity onPress={() => onRateLocation(selectedLoc)} style={styles.rateBtn}>
-              <MaterialIcons name="star" size={16} color={colors.maroon} />
-              <Text style={styles.rateBtnText}>Rate Spot</Text>
-            </TouchableOpacity>
-          </View>
+        <View style={{ marginTop: 12 }}>
+          {selectedLoc ? <SurveySpaceCard space={selectedLoc} showPhoto
+            onViewDetails={() => onSelectLocation(selectedLoc)} />
+            : <Text style={{ color: colors.subtext7 }}>No surveyed places match this filter.</Text>}
         </View>
       </ScrollView>
     </View>
@@ -208,7 +102,7 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     color: colors.text,
   },
-  liveSyncBadge: {
+  surveyBadge: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 4,
@@ -219,13 +113,14 @@ const styles = StyleSheet.create({
     paddingVertical: 4,
     borderRadius: 999,
   },
-  liveSyncText: {
+  surveyBadgeText: {
     fontSize: 11,
     fontWeight: '700',
     color: colors.green,
   },
   filterRow: {
     flexDirection: 'row',
+    flexWrap: 'wrap',
     gap: 8,
     paddingVertical: 4,
   },
@@ -265,8 +160,9 @@ const styles = StyleSheet.create({
   },
   pin: {
     position: 'absolute',
+    width: 140,
     alignItems: 'center',
-    transform: [{ translateX: -20 }, { translateY: -20 }],
+    transform: [{ translateX: -70 }, { translateY: -20 }],
   },
   pinLabel: {
     flexDirection: 'row',
@@ -282,143 +178,15 @@ const styles = StyleSheet.create({
   pinLabelActive: {
     backgroundColor: colors.maroon,
   },
-  pinDot: {
-    width: 6,
-    height: 6,
-    borderRadius: 3,
-  },
   pinLabelText: {
+    textAlign: 'center',
+    flexShrink: 1,
     fontSize: 10,
     fontWeight: '700',
     color: colors.text,
   },
   pinLabelTextActive: {
     color: colors.white,
-  },
-  compass: {
-    position: 'absolute',
-    top: 12,
-    right: 12,
-    backgroundColor: 'rgba(255,255,255,0.9)',
-    borderRadius: 999,
-    padding: 6,
-  },
-  previewCard: {
-    backgroundColor: colors.white,
-    borderWidth: 1,
-    borderColor: colors.border,
-    borderRadius: 16,
-    padding: 16,
-    gap: 12,
-    marginTop: 12,
-  },
-  previewHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-  },
-  previewLeft: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-    flex: 1,
-  },
-  previewImage: {
-    width: 48,
-    height: 48,
-    borderRadius: 12,
-    backgroundColor: '#ebe7e1',
-  },
-  previewName: {
-    fontSize: 16,
-    fontWeight: '700',
-    color: colors.text,
-  },
-  previewSubtitle: {
-    fontSize: 12,
-    color: colors.mutedText,
-  },
-  previewRating: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-    backgroundColor: colors.starBg,
-    paddingHorizontal: 8,
-    paddingVertical: 2,
-    borderRadius: 999,
-    borderWidth: 1,
-    borderColor: colors.starLight,
-  },
-  previewRatingText: {
-    fontSize: 12,
-    fontWeight: '700',
-    color: '#78350f',
-  },
-  previewMetrics: {
-    flexDirection: 'row',
-    gap: 8,
-  },
-  previewMetric: {
-    flex: 1,
-    padding: 8,
-    backgroundColor: colors.card,
-    borderWidth: 1,
-    borderColor: colors.border,
-    borderRadius: 8,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-  },
-  previewMetricLabel: {
-    fontSize: 12,
-    color: colors.mutedText,
-  },
-  previewMetricValueGreen: {
-    fontSize: 12,
-    fontWeight: '700',
-    color: colors.green,
-  },
-  previewMetricValue: {
-    fontSize: 12,
-    fontWeight: '700',
-    color: colors.text,
-  },
-  previewActions: {
-    flexDirection: 'row',
-    gap: 8,
-    paddingTop: 4,
-  },
-  viewBtn: {
-    flex: 1,
-    height: 40,
-    borderRadius: 999,
-    backgroundColor: colors.maroon,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 4,
-  },
-  viewBtnText: {
-    color: colors.white,
-    fontSize: 13,
-    fontWeight: '700',
-  },
-  rateBtn: {
-    flex: 1,
-    height: 40,
-    borderRadius: 999,
-    backgroundColor: colors.white,
-    borderWidth: 1,
-    borderColor: colors.border,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 4,
-  },
-  rateBtnText: {
-    color: colors.text,
-    fontSize: 13,
-    fontWeight: '700',
   },
 });
 

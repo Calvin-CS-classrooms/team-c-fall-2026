@@ -24,7 +24,7 @@ interface SuggestedRatingsScreenProps {
 
 export const SuggestedRatingsScreen: React.FC<SuggestedRatingsScreenProps> = ({
   location = CAMPUS_LOCATIONS[0],
-  reviewSnippet = '“Pin-drop quiet right now... working power outlet... 70% of seats taken...”',
+  reviewSnippet = 'Example review for the prototype.',
   onBack,
   onConfirmSubmit,
   onEditManually,
@@ -36,7 +36,6 @@ export const SuggestedRatingsScreen: React.FC<SuggestedRatingsScreenProps> = ({
     devices: 5,
   });
 
-  const [flaggedHours, setFlaggedHours] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
 
@@ -69,7 +68,7 @@ export const SuggestedRatingsScreen: React.FC<SuggestedRatingsScreenProps> = ({
       iconColor: '#047857',
       title: 'Noise Level',
       desc: 'Extremely quiet',
-      badge: '98% detected',
+      badge: 'Example only',
       badgeIcon: 'verified' as const,
       badgeColor: '#047857',
       badgeBg: '#ecfdf5',
@@ -81,7 +80,7 @@ export const SuggestedRatingsScreen: React.FC<SuggestedRatingsScreenProps> = ({
       iconColor: colors.goldDark,
       title: 'Capacity & Seating',
       desc: 'Moderate availability',
-      badge: '~30% open desks',
+      badge: 'Example only',
       badgeIcon: 'airline-seat-recline-normal' as const,
       badgeColor: '#92400e',
       badgeBg: '#fffbeb',
@@ -92,8 +91,8 @@ export const SuggestedRatingsScreen: React.FC<SuggestedRatingsScreenProps> = ({
       icon: 'power' as const,
       iconColor: colors.maroon,
       title: 'Device Access & Outlets',
-      desc: 'Abundant plugs & Wi-Fi',
-      badge: 'Dedicated AC outlets',
+      desc: 'Example outlet rating',
+      badge: 'Example only',
       badgeIcon: 'bolt' as const,
       badgeColor: colors.maroon,
       badgeBg: '#fff1f2',
@@ -124,7 +123,7 @@ export const SuggestedRatingsScreen: React.FC<SuggestedRatingsScreenProps> = ({
             <View style={styles.backdropOverlay} />
             <View style={styles.aiBadge}>
               <LiveDot color="#059669" size={8} />
-              <Text style={styles.aiBadgeText}>AI Inference Active</Text>
+              <Text style={styles.aiBadgeText}>Illustrative Preview</Text>
             </View>
           </View>
 
@@ -132,14 +131,14 @@ export const SuggestedRatingsScreen: React.FC<SuggestedRatingsScreenProps> = ({
             <View style={styles.backdropTitleRow}>
               <View style={styles.backdropTitleLeft}>
                 <MaterialIcons name="auto-awesome" size={20} color={colors.maroon} />
-                <Text style={styles.backdropTitle}>Extracted Breakdown</Text>
+                <Text style={styles.backdropTitle}>Sample Breakdown</Text>
               </View>
               <View style={styles.locationPill}>
-                <Text style={styles.locationPillText}>{location.name} 3rd Fl.</Text>
+                <Text style={styles.locationPillText}>{location.name}</Text>
               </View>
             </View>
             <Text style={styles.backdropDesc}>
-              Based on your written review for {location.name}:
+              Example ratings for {location.name}; not extracted from your review:
             </Text>
 
             <View style={styles.quoteCard}>
@@ -156,7 +155,7 @@ export const SuggestedRatingsScreen: React.FC<SuggestedRatingsScreenProps> = ({
           <View style={styles.heroLeft}>
             <View style={styles.heroScoreLabelRow}>
               <MaterialIcons name="stars" size={18} color={colors.star} />
-              <Text style={styles.heroScoreLabel}>Aggregated Score</Text>
+              <Text style={styles.heroScoreLabel}>Demo Average</Text>
             </View>
             <Text style={styles.heroScore}>
               {calculateAverage()} <Text style={styles.heroScoreSub}>/ 5.0</Text>
@@ -229,60 +228,7 @@ export const SuggestedRatingsScreen: React.FC<SuggestedRatingsScreenProps> = ({
             </View>
           ))}
 
-          {/* Criterion 4: Campus Hours & Access */}
-          <View style={styles.criterionCard}>
-            <View style={styles.criterionHeader}>
-              <View style={styles.criterionTitleWrap}>
-                <View style={styles.criterionTitleRow}>
-                  <MaterialIcons name="schedule" size={18} color="#047857" />
-                  <Text style={styles.criterionTitle}>Campus Hours & Access</Text>
-                </View>
-                <Text style={styles.criterionDesc}>Open until 11:00 PM tonight</Text>
-              </View>
-
-              <View
-                style={[
-                  styles.criterionBadge,
-                  flaggedHours
-                    ? styles.hoursBadgeFlagged
-                    : styles.hoursBadgeConfirmed,
-                ]}
-              >
-                <MaterialIcons
-                  name={flaggedHours ? 'report' : 'check-circle'}
-                  size={13}
-                  color={flaggedHours ? '#b91c1c' : '#047857'}
-                />
-                <Text
-                  style={[
-                    styles.criterionBadgeText,
-                    { color: flaggedHours ? '#b91c1c' : '#047857' },
-                  ]}
-                >
-                  {flaggedHours ? 'Pending verification' : '✓ Confirmed accurate'}
-                </Text>
-              </View>
-            </View>
-
-            <View style={styles.hoursRow}>
-              <Text style={styles.hoursLabel}>Calvin Semester Schedule</Text>
-              <TouchableOpacity onPress={() => setFlaggedHours(!flaggedHours)} style={styles.flagBtn}>
-                <MaterialIcons
-                  name="flag"
-                  size={16}
-                  color={flaggedHours ? '#dc2626' : colors.maroon}
-                />
-                <Text
-                  style={[
-                    styles.flagBtnText,
-                    { color: flaggedHours ? '#dc2626' : colors.maroon },
-                  ]}
-                >
-                  {flaggedHours ? 'Reported as inaccurate' : 'Flag if wrong'}
-                </Text>
-              </TouchableOpacity>
-            </View>
-          </View>
+          <Text style={styles.criterionDesc}>Building hours and current access are not available in the prototype survey.</Text>
         </View>
 
         {/* Bottom Visual Delight Toast */}
@@ -291,7 +237,7 @@ export const SuggestedRatingsScreen: React.FC<SuggestedRatingsScreenProps> = ({
             <MaterialIcons name="psychology" size={18} color={colors.maroon} />
           </View>
           <Text style={styles.toastText}>
-            You retain full editorial power. Your corrections help calibrate Calvin Campus live telemetry models.
+            Changes are local to this demo. They do not update survey records or any live measurements.
           </Text>
         </View>
       </ScrollView>
@@ -307,17 +253,17 @@ export const SuggestedRatingsScreen: React.FC<SuggestedRatingsScreenProps> = ({
             {isSubmitting ? (
               <>
                 <MaterialIcons name="refresh" size={20} color={colors.white} />
-                <Text style={styles.submitBtnText}>Submitting Review...</Text>
+                <Text style={styles.submitBtnText}>Finishing Demo...</Text>
               </>
             ) : submitted ? (
               <>
                 <MaterialIcons name="check" size={20} color={colors.white} />
-                <Text style={styles.submitBtnText}>Review Published!</Text>
+                <Text style={styles.submitBtnText}>Demo Complete!</Text>
               </>
             ) : (
               <>
                 <MaterialIcons name="check-circle" size={20} color={colors.white} />
-                <Text style={styles.submitBtnText}>Confirm & Submit</Text>
+                <Text style={styles.submitBtnText}>Finish Demo</Text>
               </>
             )}
           </TouchableOpacity>

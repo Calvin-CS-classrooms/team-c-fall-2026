@@ -1,5 +1,6 @@
 import React from 'react';
 import { useRouter } from 'expo-router';
+import { surveyDetailsRoute } from '../../src/utils/surveyMap';
 import { CampusMapScreen } from '../../src/screens/CampusMapScreen';
 
 export default function MapScreen() {
@@ -7,18 +8,7 @@ export default function MapScreen() {
 
   return (
     <CampusMapScreen
-      onSelectLocation={(loc) =>
-        router.push({
-          pathname: '/place-details',
-          params: { id: loc.id },
-        })
-      }
-      onRateLocation={(loc) =>
-        router.push({
-          pathname: '/write-review',
-          params: { id: loc.id },
-        })
-      }
+      onSelectLocation={(loc) => router.push(surveyDetailsRoute(loc))}
       onProfileClick={() => router.push('/(tabs)/profile')}
     />
   );

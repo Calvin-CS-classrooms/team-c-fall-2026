@@ -67,7 +67,7 @@ export const SelectLocationScreen: React.FC<SelectLocationScreenProps> = ({
         if (name && name.trim()) {
           Alert.alert(
             'Thank you!',
-            `"${name.trim()}" has been submitted for student moderation.`
+            `"${name.trim()}" is shown in this demo only; it has not been submitted.`
           );
         }
       }
@@ -94,7 +94,7 @@ export const SelectLocationScreen: React.FC<SelectLocationScreenProps> = ({
             </View>
             <Text style={styles.headerTitle}>Select a Location</Text>
             <Text style={styles.headerSubtitle}>
-              Choose the campus space you'd like to rate or review.
+              Review-flow demo using fictional sample locations and ratings.
             </Text>
           </View>
           <TouchableOpacity onPress={onBack} style={styles.dismissBtn} accessibilityLabel="Dismiss screen">
@@ -144,7 +144,7 @@ export const SelectLocationScreen: React.FC<SelectLocationScreenProps> = ({
           <Text style={styles.statText}>{filteredLocations.length} Verified Campus Spots</Text>
           <View style={styles.syncRow}>
             <LiveDot color={colors.emerald} size={8} />
-            <Text style={styles.syncText}>Live Noise & Crowd Sync</Text>
+            <Text style={styles.syncText}>Sample directory — no live measurements</Text>
           </View>
         </View>
 

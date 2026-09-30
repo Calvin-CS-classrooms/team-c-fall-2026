@@ -1,6 +1,6 @@
 # Prototype survey recommendations
 
-The home search, recommendation cards, follow-up questions, and place details use the four original responses in `client/src/data/surveySpaces.ts`. These are survey reports, not live telemetry. The separate map remains an explicitly labeled illustrative mockup.
+The home search, recommendation cards, follow-up questions, map, and place details use the four original responses in `client/src/data/surveySpaces.ts`. These are survey reports, not live telemetry. Map ratings and filters use the same survey records; only its backdrop and pin positions are illustrative. Positions are stored separately in `client/src/data/mapLayout.ts` and are not GPS coordinates. The map offers All, Quiet, Good for studying, and Social filters, and sends survey IDs to place details. It has no Rate Spot action because the legacy review flow uses fictional fixtures.
 
 `client/src/utils/queryParser.ts` handles normalization, vocabulary coverage, review topics, negatives, and priorities. `client/src/utils/recommendationEngine.ts` handles evidence filtering, scoring, and explanations. Parsing matches whole words and phrases, normalizes apostrophes, and collects every recognized criterion once. One named location limits the result to that location; multiple names limit the comparison to those locations. Unrecognized requests receive a helpful unsupported result. Unsupported questions receive a friendly no-answer message and no recommendation cards. Known missing measurements are explained in the limitations text.
 

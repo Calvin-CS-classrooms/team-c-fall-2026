@@ -29,9 +29,7 @@ export const WriteReviewScreen: React.FC<WriteReviewScreenProps> = ({
   onSkipToManual,
   onProfileClick,
 }) => {
-  const [reviewText, setReviewText] = useState(
-    'The 2nd floor is pin-drop quiet right now. Almost every cubicle has a working power outlet and the Wi-Fi is super snappy. About 70% of seats are taken but still easy to find a spot. AC is cool and lighting is easy on the eyes.'
-  );
+  const [reviewText, setReviewText] = useState('');
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [analyzedSuccess, setAnalyzedSuccess] = useState(false);
 
@@ -39,8 +37,8 @@ export const WriteReviewScreen: React.FC<WriteReviewScreenProps> = ({
     'Outlets galore',
     'Whisper quiet',
     'Crowded',
-    'Cold AC',
-    'Strong Wi-Fi',
+    'Good for studying',
+    'Room to sit',
   ];
 
   const handleTagClick = (tag: string) => {
@@ -66,10 +64,10 @@ export const WriteReviewScreen: React.FC<WriteReviewScreenProps> = ({
   };
 
   const extracted = [
-    { icon: 'volume-off' as const, color: '#00410c', label: 'Noise', value: 'Pin-Drop Quiet' },
-    { icon: 'power' as const, color: '#7f5700', label: 'Outlets', value: 'Abundant (95%)' },
-    { icon: 'chair' as const, color: colors.maroon, label: 'Seats', value: '70% Full • Available' },
-    { icon: 'wifi' as const, color: '#00410c', label: 'Network', value: 'Snappy / Fast' },
+    { icon: 'volume-off' as const, color: '#00410c', label: 'Noise', value: 'Sample quiet rating' },
+    { icon: 'power' as const, color: '#7f5700', label: 'Outlets', value: 'Sample outlet rating' },
+    { icon: 'chair' as const, color: colors.maroon, label: 'Seats', value: 'Sample seating rating' },
+    { icon: 'school' as const, color: '#00410c', label: 'Studying', value: 'Sample study rating' },
   ];
 
   return (
@@ -89,15 +87,15 @@ export const WriteReviewScreen: React.FC<WriteReviewScreenProps> = ({
             <View style={styles.liveVibeRow}>
               <View style={styles.liveVibeBadge}>
                 <LiveDot color="#002905" size={6} />
-                <Text style={styles.liveVibeText}>LIVE VIBE</Text>
+                <Text style={styles.liveVibeText}>Review Demo</Text>
               </View>
-              <Text style={styles.updatedText}>Updated 6m ago</Text>
+              <Text style={styles.updatedText}>Sample data</Text>
             </View>
             <Text style={styles.locationTitle} numberOfLines={1}>
               Rate {location.name}
             </Text>
             <Text style={styles.locationDesc} numberOfLines={2}>
-              2nd Floor Quiet Zone • Tell the campus community how it feels right now.
+              Fictional preview only. Reviews are not saved or added to survey recommendations.
             </Text>
           </View>
           <Image
@@ -128,7 +126,7 @@ export const WriteReviewScreen: React.FC<WriteReviewScreenProps> = ({
               maxLength={500}
               multiline
               numberOfLines={5}
-              placeholder="How is the noise, outlet availability, seating, or temperature right now?"
+              placeholder="Describe your experience with studying, noise, outlets, or seating."
               placeholderTextColor={colors.subtext3}
               style={styles.textArea}
             />
@@ -152,7 +150,7 @@ export const WriteReviewScreen: React.FC<WriteReviewScreenProps> = ({
           </View>
         </View>
 
-        {/* AI Extraction Preview Deck */}
+        {/* Illustrative rating preview */}
         <View style={styles.aiCard}>
           <View style={styles.aiHeader}>
             <View style={styles.aiAvatar}>
@@ -160,11 +158,11 @@ export const WriteReviewScreen: React.FC<WriteReviewScreenProps> = ({
             </View>
             <View style={styles.aiHeaderText}>
               <View style={styles.aiTitleRow}>
-                <Text style={styles.aiTitle}>AI Auto-Extraction Ready</Text>
+                <Text style={styles.aiTitle}>Sample Rating Preview</Text>
                 <View style={styles.aiDot} />
               </View>
               <Text style={styles.aiDesc}>
-                We'll automatically estimate Noise, Seating, Device Outlets, and Hours from your notes so you don't have to fill tedious forms!
+                These fixed example ratings demonstrate the review flow. They are not extracted from your notes.
               </Text>
             </View>
           </View>
@@ -194,16 +192,16 @@ export const WriteReviewScreen: React.FC<WriteReviewScreenProps> = ({
             {isAnalyzing ? (
               <>
                 <MaterialIcons name="refresh" size={20} color={colors.white} />
-                <Text style={styles.analyzeBtnText}>Parsing Insights...</Text>
+                <Text style={styles.analyzeBtnText}>Loading Preview...</Text>
               </>
             ) : analyzedSuccess ? (
               <>
                 <MaterialIcons name="check-circle" size={20} color={colors.white} />
-                <Text style={styles.analyzeBtnText}>Ratings Extracted!</Text>
+                <Text style={styles.analyzeBtnText}>Preview Ready!</Text>
               </>
             ) : (
               <>
-                <Text style={styles.analyzeBtnText}>Analyze Review</Text>
+                <Text style={styles.analyzeBtnText}>Preview Sample Ratings</Text>
                 <MaterialIcons name="auto-awesome" size={20} color={colors.white} />
               </>
             )}
