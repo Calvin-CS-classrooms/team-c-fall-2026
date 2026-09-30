@@ -8,11 +8,11 @@ export default function RecommendationRoute() {
 
   return (
     <RecommendationScreen
-      userQuery={query || 'Where is the best place to study on campus at 7 PM?'}
-      onViewDetails={() => router.push('/place-details')}
+      key={query}
+      userQuery={query || 'Where is the best place to study?'}
+      onViewDetails={(locationId) => router.push({ pathname: '/place-details', params: { id: locationId } })}
       onProfileClick={() => router.push('/(tabs)/profile')}
       onMenuClick={() => router.back()}
-      onPreviewMap={() => router.push('/(tabs)/map')}
     />
   );
 }

@@ -9,7 +9,6 @@ import {
 } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
 import { TopHeader } from '../components/TopHeader';
-import { LiveDot } from '../components/ui';
 import { CAMPUS_LOCATIONS, CampusLocation } from '../data/mockData';
 import { colors } from '../theme';
 
@@ -49,13 +48,14 @@ export const CampusMapScreen: React.FC<CampusMapScreenProps> = ({
         <View style={styles.mapHeader}>
           <View style={styles.mapTitleRow}>
             <MaterialIcons name="explore" size={20} color={colors.maroon} />
-            <Text style={styles.mapTitle}>Campus Pulse Map</Text>
+            <Text style={styles.mapTitle}>Campus Map Mockup</Text>
           </View>
           <View style={styles.liveSyncBadge}>
-            <LiveDot size={6} />
-            <Text style={styles.liveSyncText}>Live Sync</Text>
+            <Text style={styles.liveSyncText}>Illustrative mockup</Text>
           </View>
         </View>
+
+        <Text style={{ color: colors.subtext7 }}>Illustrative map with sample ratings and positions; not survey data or live availability. Use the home search for survey recommendations.</Text>
 
         {/* Filter Chips */}
         <View style={styles.filterRow}>
@@ -80,7 +80,7 @@ export const CampusMapScreen: React.FC<CampusMapScreenProps> = ({
             style={[styles.filterChip, activeFilter === 'open' && styles.filterChipActive]}
           >
             <Text style={[styles.filterChipText, activeFilter === 'open' && styles.filterChipTextActive]}>
-              🪑 Open Seats
+              Sample Filter
             </Text>
           </TouchableOpacity>
         </View>
@@ -155,9 +155,9 @@ export const CampusMapScreen: React.FC<CampusMapScreenProps> = ({
               </Text>
             </View>
             <View style={styles.previewMetric}>
-              <Text style={styles.previewMetricLabel}>Open Seats</Text>
+              <Text style={styles.previewMetricLabel}>Live seating</Text>
               <Text style={styles.previewMetricValue}>
-                {selectedLoc.liveMetrics?.openDesks ?? 18} desks
+                Not collected
               </Text>
             </View>
           </View>

@@ -10,14 +10,14 @@ import {
 } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
 import { TopHeader } from '../components/TopHeader';
-import { LiveDot } from '../components/ui';
-import { CAMPUS_LOCATIONS, CampusLocation } from '../data/mockData';
+import { SURVEY_SPACES, type CampusSpace } from '../data/surveySpaces';
+import { SurveySpaceCard } from '../components/SurveySpaceCard';
 import { colors } from '../theme';
 
 interface ChatHomeScreenProps {
   onAskQuestion: (query: string) => void;
   onOpenProfile: () => void;
-  onSelectLocation: (loc: CampusLocation) => void;
+  onSelectLocation: (loc: CampusSpace) => void;
 }
 
 export const ChatHomeScreen: React.FC<ChatHomeScreenProps> = ({
@@ -27,7 +27,7 @@ export const ChatHomeScreen: React.FC<ChatHomeScreenProps> = ({
 }) => {
   const [inputText, setInputText] = useState('');
 
-  const defaultQuestion = 'Where is the best place to study on campus at 7 PM?';
+  const defaultQuestion = 'Where is the best place to study in the evening?';
 
   const handleSubmit = () => {
     if (inputText.trim()) {
@@ -45,12 +45,11 @@ export const ChatHomeScreen: React.FC<ChatHomeScreenProps> = ({
         {/* Live campus status badge */}
         <View style={styles.statusRow}>
           <View style={[styles.badge, styles.liveBadge]}>
-            <LiveDot />
-            <Text style={styles.liveBadgeText}>Live Campus Insights</Text>
+            <Text style={styles.liveBadgeText}>Student Survey Insights</Text>
           </View>
           <View style={[styles.badge, styles.timeBadge]}>
             <MaterialIcons name="schedule" size={14} color={colors.subtext2} />
-            <Text style={styles.timeBadgeText}>7:02 PM • Tue</Text>
+            <Text style={styles.timeBadgeText}>Prototype survey</Text>
           </View>
         </View>
 
@@ -62,7 +61,7 @@ export const ChatHomeScreen: React.FC<ChatHomeScreenProps> = ({
           </View>
           <Text style={styles.heroTitle}>Ask about places on campus</Text>
           <Text style={styles.heroSubtitle}>
-            Real-time noise meters, seat availability, outlet counts, and coffee lines curated by Calvin Knights.
+            Explore student survey ratings for studying, noise, seating, and charging. These are survey reports, not live conditions.
           </Text>
         </View>
 
@@ -80,9 +79,8 @@ export const ChatHomeScreen: React.FC<ChatHomeScreenProps> = ({
               <View style={styles.suggestTextWrap}>
                 <Text style={styles.suggestTitle}>{defaultQuestion}</Text>
                 <View style={styles.suggestMeta}>
-                  <LiveDot size={6} />
                   <Text style={styles.suggestMetaText}>
-                    Checks quiet floors, AC outlets, and late hours
+                    Compares study ratings and typical usage periods
                   </Text>
                 </View>
               </View>
@@ -113,67 +111,13 @@ export const ChatHomeScreen: React.FC<ChatHomeScreenProps> = ({
         {/* Location Tiles */}
         <View style={styles.tilesSection}>
           <View style={styles.sectionHeader}>
-            <Text style={styles.sectionTitle}>Trending Now</Text>
-            <Text style={styles.sectionCount}>{CAMPUS_LOCATIONS.length} spots</Text>
+            <Text style={styles.sectionTitle}>Surveyed Places</Text>
+            <Text style={styles.sectionCount}>{SURVEY_SPACES.length} spots</Text>
           </View>
 
           <View style={styles.tilesList}>
-            {CAMPUS_LOCATIONS.map((loc) => (
-              <TouchableOpacity
-                key={loc.id}
-                onPress={() => onSelectLocation(loc)}
-                style={styles.tile}
-                activeOpacity={0.9}
-              >
-                {/* Picture-focused tile */}
-                <View style={styles.tileImageWrap}>
-                  <Image source={{ uri: loc.image }} style={styles.tileImage} />
-                  <View style={styles.tileOverlay} />
-
-                  {/* Status pill */}
-                  <View style={styles.tileStatusPill}>
-                    <View style={[styles.tileStatusDot, { backgroundColor: loc.statusDotColor }]} />
-                    <Text style={[styles.tileStatusText, { color: loc.statusColor }]}>
-                      {loc.statusTag}
-                    </Text>
-                  </View>
-
-                  {/* Rating pill */}
-                  <View style={styles.tileRatingPill}>
-                    <MaterialIcons name="star" size={14} color={colors.star} />
-                    <Text style={styles.tileRatingText}>{loc.rating}</Text>
-                    <Text style={styles.tileRatingCount}>({loc.reviewCount})</Text>
-                  </View>
-
-                  {/* Bottom info over image */}
-                  <View style={styles.tileBottom}>
-                    <Text style={styles.tileName}>{loc.name}</Text>
-                    <Text style={styles.tileSubtitle} numberOfLines={1}>
-                      {loc.subtitle}
-                    </Text>
-                    <View style={styles.tileMetaRow}>
-                      <View style={styles.tileMetaItem}>
-                        <MaterialIcons name="volume-off" size={13} color="#fff" />
-                        <Text style={styles.tileMetaText}>
-                          {loc.metrics?.noiseScore ?? 4.8}/5
-                        </Text>
-                      </View>
-                      <View style={styles.tileMetaItem}>
-                        <MaterialIcons name="event-seat" size={13} color="#fff" />
-                        <Text style={styles.tileMetaText}>
-                          {loc.liveMetrics?.openDesks ?? 18} desks
-                        </Text>
-                      </View>
-                      <View style={styles.tileMetaItem}>
-                        <MaterialIcons name="wifi" size={13} color="#fff" />
-                        <Text style={styles.tileMetaText}>
-                          {loc.liveMetrics?.wifiSpeed ?? '220 Mbps'}
-                        </Text>
-                      </View>
-                    </View>
-                  </View>
-                </View>
-              </TouchableOpacity>
+            {SURVEY_SPACES.map((loc) => (
+              <SurveySpaceCard key={loc.id} space={loc} showPhoto onViewDetails={() => onSelectLocation(loc)} />
             ))}
           </View>
         </View>
