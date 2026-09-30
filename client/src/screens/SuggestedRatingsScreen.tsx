@@ -323,8 +323,8 @@ export const SuggestedRatingsScreen: React.FC<SuggestedRatingsScreenProps> = ({
           </TouchableOpacity>
 
           <TouchableOpacity onPress={onEditManually} style={styles.editBtn}>
-            <MaterialIcons name="tune" size={16} color={colors.dark} />
-            <Text style={styles.editBtnText}>Edit All Criteria Manually</Text>
+            <MaterialIcons name="auto-fix-high" size={16} color={colors.dark} />
+            <Text style={styles.editBtnText}>Use AI Auto-Review</Text>
           </TouchableOpacity>
         </View>
       </View>

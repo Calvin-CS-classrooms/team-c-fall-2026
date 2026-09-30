@@ -51,7 +51,7 @@ export const ConfirmationScreen: React.FC<ConfirmationScreenProps> = ({
           <Text style={styles.feedbackTitle}>Thanks for your review!</Text>
           <Text style={styles.feedbackDesc}>
             Your rating for{' '}
-            <Text style={styles.feedbackBold}>{location.name} (2nd Floor)</Text>{' '}
+            <Text style={styles.feedbackBold}>{location.name}</Text>{' '}
             has been submitted and is helping fellow Calvin Knights find great study spots right now.
           </Text>
         </View>
@@ -107,8 +107,8 @@ export const ConfirmationScreen: React.FC<ConfirmationScreenProps> = ({
         {/* Primary & Secondary Navigation Controls */}
         <View style={styles.actions}>
           <TouchableOpacity onPress={onBackToChat} style={styles.primaryBtn}>
-            <MaterialIcons name="chat-bubble" size={20} color={colors.white} />
-            <Text style={styles.primaryBtnText}>Back to Chat</Text>
+            <MaterialIcons name="explore" size={20} color={colors.white} />
+            <Text style={styles.primaryBtnText}>Back to Chat Home</Text>
           </TouchableOpacity>
 
           <TouchableOpacity onPress={onRateAnotherSpace} style={styles.secondaryBtn}>

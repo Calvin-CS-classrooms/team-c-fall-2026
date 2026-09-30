@@ -13,7 +13,7 @@ export default function ConfirmationRoute() {
   return (
     <ConfirmationScreen
       location={location}
-      onBackToChat={() => router.replace('/(tabs)/index')}
+      onBackToChat={() => router.dismissAll()}
       onRateAnotherSpace={() => router.replace('/select-location')}
       onProfileClick={() => router.push('/(tabs)/profile')}
     />
