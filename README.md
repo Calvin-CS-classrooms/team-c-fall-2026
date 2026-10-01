@@ -13,8 +13,6 @@ Ponjul Shedul
 - [Team Contract](team-contract.md)
 
 ## Vision Statement
-- [Vision Statment doc](vision-statement.md)
+- [Vision Statement doc](vision-statement.md)
   
-The Calvin Ratings App/Calvin rates me/Calvin Ratings
-
-The current Calvin Ratings prototype recommends four campus spaces using student survey responses. It does not provide live occupancy, building hours, or other real-time measurements. See the [client README](client/README.md) for setup and implementation details. The linked vision statement describes broader planned features.
+**Calvin Ratings** is a campus discovery and decision-making app for Calvin University students and staff. It combines recent community reports with place and event information so users can decide where to go, what to expect, and which campus resources fit their needs. Unlike Calvin's official website or generic review and map apps, it provides Calvin-specific context, location-purpose information, campus-only participation, and clearly timestamped ratings for current conditions.
