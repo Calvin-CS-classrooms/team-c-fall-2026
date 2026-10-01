@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { FlatList, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { FlatList, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { ActivityFeedRow } from '@/components/activity-feed-row';
@@ -14,7 +14,7 @@ import { Colors } from '@/constants/colors';
 import { Typography } from '@/constants/typography';
 import { useAppData } from '@/context/app-context';
 import { activityFeed } from '@/data/activity';
-import { locations } from '@/data/locations';
+import { getLocationById, locations } from '@/data/locations';
 
 const FILTERS = ['Now Open', 'Quiet Spots', 'Trending'] as const;
 type FilterOption = (typeof FILTERS)[number];
@@ -22,6 +22,7 @@ type FilterOption = (typeof FILTERS)[number];
 export function HomeScreen() {
   const { addRating } = useAppData();
   const [search, setSearch] = useState('');
+  const [question, setQuestion] = useState('');
   const [activeFilter, setActiveFilter] = useState<FilterOption | null>(null);
   const [quickRateVisible, setQuickRateVisible] = useState(false);
 
@@ -34,12 +35,26 @@ export function HomeScreen() {
     } else if (activeFilter === 'Trending') {
       result = [...result].sort((a, b) => b.rating - a.rating);
     }
-    if (search.trim()) {
-      const query = search.trim().toLowerCase();
-      result = result.filter((location) => location.name.toLowerCase().includes(query));
-    }
     return result;
-  }, [activeFilter, search]);
+  }, [activeFilter]);
+
+  const askCalvin = () => {
+    const nextQuestion = search.trim();
+    if (!nextQuestion) return;
+    setQuestion(nextQuestion);
+    setSearch('');
+  };
+
+  const questionLower = question.toLowerCase();
+  const recommendation = question
+    ? questionLower.includes('study') || questionLower.includes('exam') || questionLower.includes('quiet') || questionLower.includes('focus')
+      ? { location: getLocationById('hekman-library'), floor: 'Floor 4 — Silent Floor', reason: 'Best match for focused exam studying' }
+      : questionLower.includes('coffee') || questionLower.includes('cafe')
+        ? { location: getLocationById('peets-coffee'), floor: 'Main Floor', reason: 'Best match for coffee and study seating' }
+        : questionLower.includes('gym') || questionLower.includes('workout')
+          ? { location: getLocationById('morren-fitness'), floor: 'Main Gym', reason: 'Best match for workouts' }
+          : { location: getLocationById('hekman-library'), floor: 'Floor 2 — Reading Room', reason: 'Best overall campus study match' }
+    : null;
 
   return (
     <SafeAreaView style={styles.container} edges={['top', 'left', 'right']}>
@@ -51,7 +66,22 @@ export function HomeScreen() {
         />
 
         <View style={styles.section}>
-          <SearchBar value={search} onChangeText={setSearch} />
+          <SearchBar value={search} onChangeText={setSearch} onSubmit={askCalvin} />
+          {recommendation?.location ? (
+            <View style={styles.recommendationCard}>
+              <View style={styles.recommendationEyebrow}>
+                <Text style={styles.recommendationLabel}>Calvin Ratings recommendation</Text>
+                <Text style={styles.recommendationQuestion}>{question}</Text>
+              </View>
+              <Pressable style={styles.recommendationBody}>
+                <View style={styles.recommendationCopy}>
+                  <Text style={styles.recommendationTitle}>{recommendation.location.name} · {recommendation.floor}</Text>
+                  <Text style={styles.recommendationReason}>{recommendation.reason}</Text>
+                  <Text style={styles.recommendationNote}>Based on campus ratings, not live conditions.</Text>
+                </View>
+              </Pressable>
+            </View>
+          ) : null}
           <View style={styles.filterRow}>
             {FILTERS.map((filter) => (
               <Chip
@@ -116,6 +146,49 @@ const styles = StyleSheet.create({
   filterRow: {
     flexDirection: 'row',
     gap: 8,
+  },
+  recommendationCard: {
+    backgroundColor: Colors.maroon,
+    borderRadius: 16,
+    padding: 16,
+    gap: 8,
+  },
+  recommendationEyebrow: {
+    gap: 4,
+  },
+  recommendationLabel: {
+    fontFamily: Typography.semiBold,
+    fontSize: 11,
+    color: Colors.goldSoft,
+    textTransform: 'uppercase',
+  },
+  recommendationQuestion: {
+    fontFamily: Typography.medium,
+    fontSize: 12,
+    color: Colors.white,
+  },
+  recommendationBody: {
+    borderTopWidth: 1,
+    borderTopColor: Colors.maroonSoft,
+    paddingTop: 10,
+  },
+  recommendationCopy: {
+    gap: 4,
+  },
+  recommendationTitle: {
+    fontFamily: Typography.bold,
+    fontSize: 17,
+    color: Colors.white,
+  },
+  recommendationReason: {
+    fontFamily: Typography.medium,
+    fontSize: 13,
+    color: Colors.white,
+  },
+  recommendationNote: {
+    fontFamily: Typography.medium,
+    fontSize: 11,
+    color: Colors.goldSoft,
   },
   sectionTitle: {
     fontFamily: Typography.bold,

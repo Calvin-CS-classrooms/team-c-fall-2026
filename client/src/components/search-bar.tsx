@@ -7,20 +7,22 @@ import { Typography } from '@/constants/typography';
 interface SearchBarProps {
   value: string;
   onChangeText: (text: string) => void;
+  onSubmit?: () => void;
   placeholder?: string;
 }
 
-export function SearchBar({ value, onChangeText, placeholder = 'Search campus spots…' }: SearchBarProps) {
+export function SearchBar({ value, onChangeText, onSubmit, placeholder = 'Ask Calvin Ratings' }: SearchBarProps) {
   return (
     <View style={styles.container}>
-      <Ionicons name="search" size={18} color={Colors.textMuted} />
+      <Ionicons name="sparkles-outline" size={18} color={Colors.maroon} />
       <TextInput
         value={value}
         onChangeText={onChangeText}
         placeholder={placeholder}
         placeholderTextColor={Colors.textMuted}
         style={styles.input}
-        returnKeyType="search"
+        returnKeyType="send"
+        onSubmitEditing={onSubmit}
       />
     </View>
   );
