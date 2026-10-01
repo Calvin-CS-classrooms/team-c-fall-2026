@@ -15,6 +15,6 @@ Ponjul Shedul
 ## Vision Statement
 - [Vision Statment doc](vision-statement.md)
   
-The Calvin Ratings App/ Calvin rates me/  Calvin Ratings
+The Calvin Ratings App/Calvin rates me/Calvin Ratings
 
-This is a platform for Calvin students and staff where they could get to rate and learn about different places/ events at Calvin. Unlike the calvin.edu website that may or may not tell you about current campus events, this app gives live ratings to campus events/ places and could also let the users know what the purpose of certain places are on campus. 
+The current Calvin Ratings prototype recommends four campus spaces using student survey responses. It does not provide live occupancy, building hours, or other real-time measurements. See the [client README](client/README.md) for setup and implementation details. The linked vision statement describes broader planned features.
