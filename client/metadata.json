@@ -1,6 +1,0 @@
-{
-  "name": "Calvin Ratings - Campus Pulse",
-  "description": "Calvin University campus spot recommendations and crowdsourced study ratings.",
-  "requestFramePermissions": [],
-  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
-}
