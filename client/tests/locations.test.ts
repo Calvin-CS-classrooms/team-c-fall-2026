@@ -3,11 +3,16 @@ import { getLocationById, locations } from '@/data/locations';
 const getAssetValue = (asset: unknown) => asset;
 
 describe('campus location mock data', () => {
-  it('contains the four required campus locations', () => {
-    expect(locations).toHaveLength(4);
+  it('contains all campus locations', () => {
+    expect(locations).toHaveLength(9);
     expect(locations.map((location) => location.name)).toEqual([
       'Hekman Library',
       'Commons Dining Hall',
+      'Business Building',
+      'North Hall',
+      'Spoelhof Fieldhouse Complex',
+      'DeVries Greenhouse Lounge',
+      'CFAC Practice Lounges',
       'Morren Fitness Center',
       "Peet's Coffee",
     ]);
