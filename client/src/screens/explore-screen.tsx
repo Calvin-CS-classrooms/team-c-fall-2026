@@ -6,11 +6,13 @@ import { AppHeader } from '@/components/app-header';
 import { Chip } from '@/components/chip';
 import { DensityOverviewCard } from '@/components/density-overview-card';
 import { LandmarkCard } from '@/components/landmark-card';
+import { StarRating } from '@/components/star-rating';
 import { Colors } from '@/constants/colors';
 import { Typography } from '@/constants/typography';
 import { useAppData } from '@/context/app-context';
 import { locations } from '@/data/locations';
 import type { Category, DensityLevel } from '@/types';
+import { formatMinutesAgo } from '@/utils/format';
 
 const CATEGORIES: { key: Category; label: string }[] = [
   { key: 'study', label: 'Study & Quiet' },
@@ -30,13 +32,21 @@ function overallDensity(): DensityLevel {
 }
 
 export function ExploreScreen() {
-  const { isFavorite, toggleFavorite } = useAppData();
+  const { isFavorite, toggleFavorite, ratings } = useAppData();
   const [category, setCategory] = useState<Category>('study');
 
   const filteredLocations = useMemo(
     () => locations.filter((location) => location.category === category),
     [category],
   );
+  const recentRatings = useMemo(() => {
+    const locationIds = new Set(filteredLocations.map((location) => location.id));
+    return ratings
+      .filter((rating) => locationIds.has(rating.locationId))
+      .slice()
+      .sort((first, second) => first.createdMinutesAgo - second.createdMinutesAgo)
+      .slice(0, 3);
+  }, [filteredLocations, ratings]);
 
   const breakdown = useMemo(
     () =>
@@ -93,6 +103,34 @@ export function ExploreScreen() {
             </View>
           )}
         </View>
+
+        {category !== 'events' ? (
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>Recent Ratings</Text>
+            {recentRatings.length > 0 ? (
+              <View style={styles.ratingList}>
+                {recentRatings.map((rating) => (
+                  <View key={rating.id} style={styles.ratingCard}>
+                    <View style={styles.ratingHeader}>
+                      <Text style={styles.ratingLocation}>{rating.locationName}</Text>
+                      <Text style={styles.ratingTime}>{formatMinutesAgo(rating.createdMinutesAgo)}</Text>
+                    </View>
+                    <StarRating value={rating.stars} readOnly size={15} />
+                    {rating.comment ? <Text style={styles.ratingComment}>{rating.comment}</Text> : null}
+                    <Text style={styles.ratingMeta}>
+                      {rating.capacity}% busy ·{' '}
+                      {rating.amenities.length > 0 ? rating.amenities.join(', ') : 'No amenities noted'}
+                    </Text>
+                  </View>
+                ))}
+              </View>
+            ) : (
+              <View style={styles.emptyState}>
+                <Text style={styles.emptySubtitle}>No ratings for this category yet.</Text>
+              </View>
+            )}
+          </View>
+        ) : null}
       </ScrollView>
     </SafeAreaView>
   );
@@ -123,6 +161,44 @@ const styles = StyleSheet.create({
   },
   landmarkList: {
     gap: 14,
+  },
+  ratingList: {
+    gap: 10,
+  },
+  ratingCard: {
+    backgroundColor: Colors.surface,
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: Colors.border,
+    padding: 14,
+    gap: 7,
+  },
+  ratingHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    gap: 8,
+  },
+  ratingLocation: {
+    flex: 1,
+    fontFamily: Typography.bold,
+    fontSize: 14,
+    color: Colors.textPrimary,
+  },
+  ratingTime: {
+    fontFamily: Typography.medium,
+    fontSize: 11,
+    color: Colors.textMuted,
+  },
+  ratingComment: {
+    fontFamily: Typography.medium,
+    fontSize: 12,
+    color: Colors.textSecondary,
+  },
+  ratingMeta: {
+    fontFamily: Typography.medium,
+    fontSize: 11,
+    color: Colors.textMuted,
   },
   emptyState: {
     backgroundColor: Colors.surface,

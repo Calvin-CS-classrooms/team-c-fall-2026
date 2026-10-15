@@ -14,6 +14,18 @@ export const initialRatings: UserRating[] = [
     createdMinutesAgo: 95,
   },
   {
+    id: 'rating-4',
+    locationId: 'morren-fitness',
+    locationName: 'Morren Fitness Center',
+    stars: 4,
+    capacity: 55,
+    noise: 'loud',
+    amenities: ['Free Weights', 'Locker Rooms'],
+    comment: 'The weight room has plenty of space this afternoon.',
+    helpfulCount: 3,
+    createdMinutesAgo: 210,
+  },
+  {
     id: 'rating-2',
     locationId: 'commons-dining-hall',
     locationName: 'Commons Dining Hall',
