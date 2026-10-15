@@ -1,6 +1,6 @@
 import type { CampusLocation } from '@/types';
 
-export let locations: CampusLocation[] = [
+export const locations: CampusLocation[] = [
   {
     id: 'hekman-library',
     name: 'Hekman Library',
@@ -169,8 +169,4 @@ export let locations: CampusLocation[] = [
 
 export function getLocationById(id: string): CampusLocation | undefined {
   return locations.find((location) => location.id === id);
-}
-
-export function setLocations(nextLocations: CampusLocation[]) {
-  locations = nextLocations;
 }

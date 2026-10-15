@@ -11,14 +11,10 @@ import FontAwesome6 from '@expo/vector-icons/FontAwesome6';
 import Octicons from '@expo/vector-icons/Octicons';
 import { Tabs } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 
 import { Colors } from '@/constants/colors';
 import { AppProvider } from '@/context/app-context';
-
-//Additional stuff for Rest API
-import { setLocations } from '@/data/locations';
-import { fetchLocations } from '@/services/locations-api';
 
 SplashScreen.preventAutoHideAsync();
 
@@ -31,29 +27,14 @@ export default function RootLayout() {
     Montserrat_800ExtraBold,
   });
 
-  const [locationsLoaded, setLocationsLoaded] = useState(false);
-
   useEffect(() => {
-  if (!fontsLoaded) return;
-
-  async function initializeApp() {
-    try {
-      const serverLocations = await fetchLocations();
-      setLocations(serverLocations);
-      console.log('Loaded locations from API:', serverLocations.length);
-    } catch (error) {
-      console.warn('API unavailable, using local mock locations:', error);
-    } finally {
-      setLocationsLoaded(true);
+    if (fontsLoaded) {
       SplashScreen.hideAsync();
     }
-  }
+  }, [fontsLoaded]);
 
-  initializeApp();
-}, [fontsLoaded]);
-
-  if (!fontsLoaded || !locationsLoaded) {
-  return null;
+  if (!fontsLoaded) {
+    return null;
   }
 
   return (
