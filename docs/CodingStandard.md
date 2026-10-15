@@ -1,47 +1,39 @@
 # Calvin Ratings Coding Standard
 
-These standards apply to the Calvin Ratings React Native/Expo client, the Node/TypeScript server, and project documentation. Follow established patterns in the area you are changing; keep changes focused and explain exceptions in the pull request.
+These standards apply to the Calvin Ratings React Native/Expo client, the Node.js/Express server, and project documentation. Team members should follow the existing conventions in the part of the project they are modifying and keep changes focused, readable, and maintainable.
 
-## TypeScript and naming
+## Language, Naming, and Formatting
 
-- Use TypeScript for application and server code. Prefer explicit, useful types at module boundaries and let TypeScript infer obvious local values.
-- Use `interface` for extendable object shapes such as `CampusLocation` and `UserRating`; use `type` for unions, aliases, and composed types.
-- Avoid `any`. Use a specific type, a generic, or `unknown` with validation when the value is not known yet.
-- Use `PascalCase` for React component names, interfaces, and type aliases. Use `camelCase` for variables, functions, properties, hooks, and constants, including fixed shared data.
-- Name files for their primary export. Follow the current client convention of descriptive kebab-case names for component files and camelCase names for utility, data, and test files. Keep Expo Router route filenames compatible with its route conventions.
-- Use single quotes, semicolons, and the indentation and formatting already present in the surrounding file. Keep imports grouped and remove unused imports.
+- Use TypeScript for the React Native/Expo client and JavaScript for the current Node.js/Express server.
+- In TypeScript, use explicit and useful types when data crosses module or component boundaries.
+- Use `interface` for object structures such as `CampusLocation` and `UserRating`, and use `type` for unions, aliases, and composed types.
+- Avoid unnecessary use of `any`. Use a specific type or `unknown` with validation when the value is not known.
+- Use `PascalCase` for React components, interfaces, and type aliases.
+- Use `camelCase` for variables, functions, properties, hooks, and constants.
+- Name files clearly according to their purpose and follow the naming conventions already used in the surrounding directory.
+- Keep Expo Router filenames compatible with Expo Router conventions.
+- Follow the formatting already used in the file being modified. Keep indentation consistent and remove unused imports, variables, and unnecessary code.
 
 ## React Native and Expo
 
-- Write function components and keep rendering, state, and event handling easy to follow. Extract a component or helper when it clarifies a substantial block or enables meaningful reuse.
-- Use the shared types, data modules, theme, and existing UI components before introducing duplicates. Do not copy location/rating fixtures into screens.
-- Keep platform-specific behavior explicit and compatible with Expo. Treat Metro assets such as `require()` image values as client-only; do not serialize them as server JSON.
-- Keep screens focused on presentation and user interaction. Put reusable data transformations and domain logic in appropriate `src/utils/` or `src/data/` modules.
+- Use function components for React Native components.
+- Keep components focused on a clear responsibility and extract reusable components or helper functions when appropriate.
+- Reuse existing types, data modules, theme values, and UI components instead of creating unnecessary duplicates.
+- Keep screens focused mainly on presentation and user interaction.
+- Put reusable API calls in `src/services/` and shared data or transformations in appropriate `src/data/` or utility modules.
+- Keep platform-specific behavior explicit and compatible with Expo.
+- Client image assets using `require()` should remain client-side. The API should return a serializable identifier such as `imageKey`, which the client can map to the appropriate local image.
+- Preserve the application's local mock-data fallback while the REST API integration is being developed.
 
-## Functions, comments, and documentation
+## Server and REST API
 
-- Give functions and components names that describe their purpose. Keep functions small enough to understand and test; avoid deeply nested conditionals when early returns make the flow clearer.
-- Do not duplicate logic or data without a reason. Reuse a shared helper when it prevents behavior from drifting; avoid abstractions used only once that add indirection without clarity.
-- Comments should explain intent, constraints, or non-obvious decisions, not repeat the code. Add implementation documentation for tricky behavior, assumptions, and limitations (SC5), especially where a future maintainer could otherwise misuse the code.
-- Update relevant documentation when an API, data contract, setup step, or user-visible behavior changes. Keep API documentation aligned with implemented routes and response shapes.
+- The current server uses Node.js, Express, CommonJS modules, Jest, and Supertest. New server code should follow these existing conventions unless the team agrees to change the architecture.
+- Keep route handlers focused and easy to understand.
+- Store shared mock data in dedicated data files instead of duplicating it inside routes.
+- Use resource-oriented REST paths under `/api`.
 
-## REST API and errors
+Examples:
 
-- Use resource-oriented paths under `/api`, HTTP methods according to their standard meaning, and JSON request/response bodies where applicable.
-- Return an appropriate status: `200` for successful reads, `201` for created resources, `400` for malformed or invalid input, and `404` when a requested resource does not exist. Do not report success for missing data.
-- Keep response shapes consistent and document identifiers, fields, and error responses. Validate inputs at the boundary and do not expose stack traces or private data in client-facing errors.
-- Keep mock data clearly identified as mock data. Do not connect a real database or treat illustrative client values as live measurements unless the task explicitly changes that scope.
-
-## Testing and quality checks
-
-- Add or update automated tests for changed behavior, including success and relevant failure cases. Prefer deterministic tests that do not require network access or a real database.
-- The client uses Jest (`npm test`) and Expo ESLint through `npm run lint`; run both from `client/` for client changes. Use the server's documented test and type-check commands for server changes.
-- Keep tests readable and assert outcomes that matter to a user or API consumer. Do not weaken existing assertions merely to make a change pass.
-- Do not claim a check passed unless it was run. Mention unavailable or failing checks in the pull request.
-
-## Git and pull requests
-
-- Never commit directly to `master`. Start each independent change from the latest `master` on a clearly named feature branch; use a stacked branch only when a change depends on another unmerged branch, and target that base explicitly.
-- Make small, meaningful commits with imperative messages that describe the change, for example, `Add mock location API`.
-- Open a pull request for each independently reviewable assignment or feature. Use a specific title, summarize behavior and scope, link relevant requirements when known, and list tests/checks run.
-- Review the diff for unrelated files, generated artifacts, secrets, and accidental fixture or API changes before requesting review. Do not merge another person's work or rewrite shared branch history without agreement.
+```text
+GET /api/locations
+GET /api/locations/:id
