@@ -5,6 +5,7 @@ import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { CapacityMeter } from '@/components/capacity-meter';
 import { Chip } from '@/components/chip';
+import { StarRating } from '@/components/star-rating';
 import { Colors, NoiseLabels } from '@/constants/colors';
 import { Typography } from '@/constants/typography';
 import type { CampusLocation } from '@/types';
@@ -47,13 +48,32 @@ export function LandmarkCard({ location, isFavorite, onToggleFavorite }: Landmar
           ))}
         </View>
 
-        <Pressable style={styles.expandRow} onPress={() => setExpanded((value) => !value)}>
-          <Text style={styles.expandLabel}>Floor-by-floor guide</Text>
+        <Pressable
+          style={styles.expandRow}
+          onPress={() => setExpanded((value) => !value)}
+          accessibilityRole="button"
+          accessibilityLabel={`${expanded ? 'Hide' : 'View'} details for ${location.name}`}>
+          <Text style={styles.expandLabel}>{expanded ? 'Hide place details' : 'More about this place'}</Text>
           <Ionicons name={expanded ? 'chevron-up' : 'chevron-down'} size={16} color={Colors.maroon} />
         </Pressable>
 
         {expanded ? (
-          <View style={styles.floorsWrap}>
+          <View style={styles.detailsWrap}>
+            <View style={styles.ratingRow}>
+              <StarRating value={location.rating} readOnly size={16} />
+              <Text style={styles.ratingText}>{location.rating.toFixed(1)} / 5</Text>
+            </View>
+            <Text style={styles.detailDescription}>{location.shortDescription}</Text>
+            <Text style={styles.detailHeading}>Amenities</Text>
+            <View style={styles.tagRow}>
+              {location.amenities.map((amenity) => (
+                <Chip key={amenity} label={amenity} />
+              ))}
+            </View>
+            {location.waitTimeMinutes !== undefined ? (
+              <Text style={styles.detailText}>Typical wait: {location.waitTimeMinutes} min</Text>
+            ) : null}
+            <Text style={styles.detailHeading}>Floor-by-floor guide</Text>
             {location.floors.map((floor) => (
               <View key={floor.floor} style={styles.floorRow}>
                 <Text style={styles.floorName}>{floor.floor}</Text>
@@ -128,8 +148,34 @@ const styles = StyleSheet.create({
     fontSize: 13,
     color: Colors.maroon,
   },
-  floorsWrap: {
+  detailsWrap: {
     gap: 10,
+  },
+  ratingRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  ratingText: {
+    fontFamily: Typography.semiBold,
+    fontSize: 12,
+    color: Colors.textPrimary,
+  },
+  detailDescription: {
+    fontFamily: Typography.medium,
+    fontSize: 12,
+    color: Colors.textSecondary,
+  },
+  detailHeading: {
+    fontFamily: Typography.semiBold,
+    fontSize: 12,
+    color: Colors.textPrimary,
+    marginTop: 2,
+  },
+  detailText: {
+    fontFamily: Typography.medium,
+    fontSize: 12,
+    color: Colors.textSecondary,
   },
   floorRow: {
     backgroundColor: Colors.surfaceAlt,
