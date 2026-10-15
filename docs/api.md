@@ -12,7 +12,7 @@ Run the server from `server/` with `npm start` (default port `3000`; set `PORT` 
 | `GET /api/locations/:id` | `200`, one location object | `404` when the location ID does not exist |
 | `GET /api/locations/:id/ratings` | `200`, array of ratings for that location; an existing location with no ratings returns `[]` | `404` when the location ID does not exist |
 
-Unsupported HTTP methods return `405` with `Allow: GET`. Unknown routes return `404`. Error responses have the shape `{ "error": "..." }`.
+Malformed percent-encoded location IDs return `400`. Unsupported HTTP methods return `405` with `Allow: GET`. Unknown routes return `404`. Error responses have the shape `{ "error": "..." }`.
 
 Location objects contain `id`, `name`, `category`, `capacity`, `density`, `noise`, `hoursLabel`, `isOpenNow`, `rating`, `shortDescription`, `amenities`, and `floors`; `waitTimeMinutes` is optional. Rating objects follow the client `UserRating` shape, including `id`, `locationId`, `locationName`, `stars`, `capacity`, `noise`, `amenities`, `helpfulCount`, and `createdMinutesAgo`; `comment` is optional.
 
