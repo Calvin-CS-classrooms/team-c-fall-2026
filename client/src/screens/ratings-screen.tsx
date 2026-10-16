@@ -29,7 +29,7 @@ export function RatingsScreen() {
               <RatingForm onSubmit={addRating} />
             ) : (
               <Text>
-                Please enter your Calvin emial in the profile section before submitting a rating.
+                Please enter your Calvin email in the profile section before submitting a rating.
               </Text>
             )}
           </View>
