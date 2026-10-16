@@ -5,6 +5,8 @@ import { initialRatings } from '@/data/ratings';
 import type { AppSettings, CampusLocation, FavoriteSpot, NewRatingInput, UserRating } from '@/types';
 
 interface AppContextValue {
+  calvinEmail: string | null;
+  setCalvinEmail: (email: string | null) => void;
   ratings: UserRating[];
   addRating: (input: NewRatingInput) => void;
   markHelpful: (id: string) => void;
@@ -22,6 +24,7 @@ const AppContext = createContext<AppContextValue | undefined>(undefined);
 let ratingIdCounter = 0;
 
 export function AppProvider({ children }: PropsWithChildren) {
+  const [calvinEmail, setCalvinEmail] = useState<string | null>(null);
   const [ratings, setRatings] = useState<UserRating[]>(initialRatings);
   const [favorites, setFavorites] = useState<FavoriteSpot[]>(initialFavorites);
   const [settings, setSettings] = useState<AppSettings>({
@@ -31,6 +34,10 @@ export function AppProvider({ children }: PropsWithChildren) {
   });
 
   const addRating = useCallback((input: NewRatingInput) => {
+    if (!calvinEmail) {
+      return;
+    }
+
     ratingIdCounter += 1;
     const newRating: UserRating = {
       id: `local-rating-${ratingIdCounter}`,
@@ -39,7 +46,7 @@ export function AppProvider({ children }: PropsWithChildren) {
       ...input,
     };
     setRatings((prev) => [newRating, ...prev]);
-  }, []);
+  }, [calvinEmail]);
 
   const markHelpful = useCallback((id: string) => {
     setRatings((prev) =>
@@ -76,6 +83,8 @@ export function AppProvider({ children }: PropsWithChildren) {
 
   const value = useMemo(
     () => ({
+      calvinEmail,
+      setCalvinEmail,
       ratings,
       addRating,
       markHelpful,
@@ -88,6 +97,7 @@ export function AppProvider({ children }: PropsWithChildren) {
       toggleSetting,
     }),
     [
+      calvinEmail,
       ratings,
       addRating,
       markHelpful,

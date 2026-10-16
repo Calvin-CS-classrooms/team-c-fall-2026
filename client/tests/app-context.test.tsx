@@ -17,6 +17,10 @@ function ContextProbe() {
       <Text testID="first-helpful-count">{firstRating?.helpfulCount}</Text>
       <Text testID="morren-favorite">{String(morrenFavorite)}</Text>
       <Text testID="geolocation">{String(data.settings.geolocation)}</Text>
+      <Pressable 
+        testID="set-calvin-email" 
+        onPress={() => data.setCalvinEmail( 'student@calvin.edu')}
+      />
       <Pressable testID="add-rating" onPress={() => data.addRating(newRating)} />
       <Pressable
         testID="mark-helpful"
@@ -62,11 +66,22 @@ const newRating: NewRatingInput = {
 };
 
 describe('AppProvider', () => {
-  it('adds a rating, marks it helpful, and deletes it', () => {
+  it('blocks rating submissions without a Calvin email', () => {
     const view = renderContext();
     const initialCount = Number(getNode(view, 'rating-count').props.children);
 
     act(() => getNode(view, 'add-rating').props.onPress());
+
+    expect(getNode(view, 'rating-count').props.children).toBe(initialCount);
+  });
+    
+  it('adds a rating, marks it helpful, and deletes it', () => {
+    const view = renderContext();
+    const initialCount = Number(getNode(view, 'rating-count').props.children);
+
+    act (() => getNode(view, 'set-calvin-email').props.onPress());
+    act(() => getNode(view, 'add-rating').props.onPress());
+
     expect(getNode(view, 'rating-count').props.children).toBe(initialCount + 1);
     expect(getNode(view, 'first-rating-id').props.children).toMatch(/^local-rating-/);
     expect(getNode(view, 'first-helpful-count').props.children).toBe(0);
