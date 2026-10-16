@@ -90,7 +90,8 @@ The server is a Node.js/Express REST API located in the [`server/`](./server) di
 
    The server runs at `http://localhost:3000`.
 
-   > **Note:** To have the client load data from the server, **keep the server running in one terminal and the client (`npx expo start`) running in another.** If the server is not running, the client falls back to its local mock data.
+> [!IMPORTANT]
+> To have the client load data from the server, **keep the server running in one terminal and the client (`npx expo start`) running in another.** If the server is not running, the client falls back to its local mock data.
 
 ### Useful scripts
 
