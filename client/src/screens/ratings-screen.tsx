@@ -10,7 +10,7 @@ import { Typography } from '@/constants/typography';
 import { useAppData } from '@/context/app-context';
 
 export function RatingsScreen() {
-  const { ratings, addRating, markHelpful, deleteRating } = useAppData();
+  const { ratings, addRating, markHelpful, deleteRating, calvinEmail } = useAppData();
   const helpfulVotes = ratings.reduce((sum, rating) => sum + rating.helpfulCount, 0);
 
   return (
@@ -25,7 +25,13 @@ export function RatingsScreen() {
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Submit a Rating</Text>
           <View style={styles.formCard}>
-            <RatingForm onSubmit={addRating} />
+            {calvinEmail ? (
+              <RatingForm onSubmit={addRating} />
+            ) : (
+              <Text>
+                Please enter your Calvin emial in the profile section before submitting a rating.
+              </Text>
+            )}
           </View>
         </View>
 
