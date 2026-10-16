@@ -1,4 +1,5 @@
-[Jump to Setup](#running-the-client-calvin-ratings-app)
+[Jump to Client Setup](#running-the-client-calvin-ratings-app)  
+[Jump to Server Setup](#running-the-server-rest-api)
 
 # Team-C-Fall-2026
 
@@ -89,11 +90,11 @@ The server is a Node.js/Express REST API located in the [`server/`](./server) di
 
    The server runs at `http://localhost:3000`.
 
+   > **Note:** To have the client load data from the server, **keep the server running in one terminal and the client (`npx expo start`) running in another.** If the server is not running, the client falls back to its local mock data.
+
 ### Useful scripts
 
 | Command | Description |
 |---|---|
 | `npm start` | Start the Express server on port 3000 |
 | `npm test` | Run the Jest API tests |
-
-> **Note:** To have the client load data from the server, **keep the server running in one terminal and the client (`npx expo start`) running in another.** If the server is not running, the client falls back to its local mock data.
