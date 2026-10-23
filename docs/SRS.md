@@ -52,7 +52,8 @@ The first version of the project will be a working prototype with the basic scre
 ## 1.5 Definitions and Acronyms
 
 - **SRS:** Software Requirements Specification.
-- **User:** A Calvin student using the application.
+- **User:** A person using the application **without** a verified Calvin account.
+- **Calvin Student:** A Calvin student using the application **with** a verified Calvin account.
 - **Rating:** Information submitted by a user about a campus place.
 - **Live Rating:** A recent rating meant to show the current state of a place, such as how busy it is.
 - **Place:** A location on or around Calvin University's campus that is listed in the application.
@@ -112,7 +113,7 @@ The application should be simple enough that students can quickly check a locati
   The app will support both number-based and category-based ratings. The type of rating may be different depending on the location.
 
 - **FR-06: Current Activity Ratings**  
-  For locations where it makes sense, users will be able to submit ratings about how busy or crowded the location currently is.
+  For locations where it makes sense, Calvin students will be able to submit ratings about how busy or crowded the location currently is.
 
 - **FR-07: Calvin Verification**  
   The app will use a Calvin email address to verify that a user is connected to Calvin University.
@@ -130,7 +131,7 @@ The application should be simple enough that students can quickly check a locati
 
 - **EARS-01:** When a user selects a campus place, the app will display information about that place.
 - **EARS-02:** When a user views a rated campus place, the app will display available ratings for that location.
-- **EARS-03:** When a verified user submits a valid rating, the app will save the rating for the selected location.
+- **EARS-03:** When a verified Calvin student submits a valid rating, the app will save the rating for the selected location.
 - **EARS-04:** When a location has different rating categories, the app will display the rating options that belong to that location.
 - **EARS-05:** When a user needs to prove Calvin membership, the app will use their Calvin email address for verification.
 - **EARS-06:** When recent ratings are available, the app will use them to help show the current condition of the location.
@@ -225,7 +226,7 @@ Stored information may include:
 - Rating categories for each place.
 - Ratings submitted by users.
 - The time a rating was submitted.
-- Information needed to verify users.
+- Verified Calvin student accounts.
 
 Each rating should be connected to the correct campus place.
 
@@ -245,18 +246,18 @@ These user stories describe the main features from the student's point of view. 
 
 ## US-01: Browse Campus Places
 
-**User Story:** As a Calvin student, I want to browse places around campus so that I can find a location that fits what I want to do.
+**User Story:** As a user, I can browse places around campus so that I can find a location that fits what I want to do.
 
 **Acceptance Criteria:**
 - The user can open a list of campus places.
 - Places have clear names.
-- The user can select a place to see more information.
+- The user can select a place to see more information (US-02).
 
 ---
 
 ## US-02: View Place Information
 
-**User Story:** As a Calvin student, I want to read information about a campus place so that I can understand what the location is used for.
+**User Story:** As a user, I can read information about a campus place so that I can understand what the location is used for.
 
 **Acceptance Criteria:**
 - The user can select a campus place.
@@ -267,11 +268,12 @@ These user stories describe the main features from the student's point of view. 
 
 ## US-03: View Recent Ratings
 
-**User Story:** As a Calvin student, I want to see recent ratings for a campus place so that I can decide whether I want to go there.
+**User Story:** As a user, I can see recent ratings for a campus place so that I can decide whether I want to go there.
 
 **Acceptance Criteria:**
 - The user can view available ratings for a selected place.
 - The app clearly shows the rating information.
+- **Only verified Calvin students can see the owners of ratings. Unverified users cannot.**
 - Recent ratings can be used to show the current condition of a location.
 - If recent ratings are unavailable, the app makes that clear to the user.
 
@@ -279,32 +281,32 @@ These user stories describe the main features from the student's point of view. 
 
 ## US-04: Submit a Rating
 
-**User Story:** As a Calvin student, I want to rate a campus place so that other students can see useful information about it.
+**User Story:** As a Calvin student, I can rate a campus place so that other students can see useful information about it.
 
 **Acceptance Criteria:**
-- The user can select a campus place.
-- The user can choose from the rating types available for that place.
+- The student can select a campus place.
+- The student can choose from the rating types available for that place.
 - Ratings can use numbers, categories, or both.
-- The user can submit the completed rating.
+- The student can submit the completed rating.
 - The rating is connected to the correct campus place.
 
 ---
 
-## US-05: Verify Calvin Membership
+## US-05: Create an Account
 
-**User Story:** As a Calvin student, I want to verify that I am connected to Calvin so that I can use features that are limited to the Calvin community.
+**User Story:** As a user, I can create an account so that I can become a verified Calvin student and access account features.
 
 **Acceptance Criteria:**
 - The app asks the user for a Calvin email address when verification is needed.
 - The app checks whether the provided email is a Calvin email.
-- Users who do not meet the verification requirement cannot submit ratings.
-- Verified users can access the rating features available to them.
+- Users who do not meet the verification requirement do not receive a verified account.
+- Verified users can access features like creating and deleting ratings.
 
 ---
 
 ## US-06: View Highest Rated Places
 
-**User Story:** As a Calvin student, I want to see the highest rated places on campus so that I can quickly find places that other students recommend.
+**User Story:** As a user, I can see the highest rated places on campus so that I can quickly find places that other students recommend.
 
 **Acceptance Criteria:**
 - The user can view a list of highly rated campus places.
@@ -315,19 +317,84 @@ These user stories describe the main features from the student's point of view. 
 
 ---
 
+## US-07: Save Favorite Places
+
+**User Story:** As a user, I can save my favorite places so that I can easily access them in my profile section.
+
+**Acceptance Criteria:**
+- Saved places are shown in the profile page and home page.
+- Saved places are saved client-side if the user does not have an account.
+- If a user with client-side information creates an account, they can move their client-side information to their new account, preserving saved places.
+
+---
+
+## US-08: Delete an Account
+
+**User Story:** As a Calvin student, I can delete my account if I no longer want to have account information and features.
+
+**Acceptance Criteria:**
+- When requesting account deletion, the student will be notified that the account will be deleted in a week from the request time, in case they change their mind.
+- All account information will be permanently deleted, except for ratings.
+- Ratings associated with the account will be displayed as an "anonymous user" (see [US-09](#us-09-anonymous-ratings)).
+
+---
+
+## US-09: Anonymous Ratings
+
+**User Story:** As a Calvin student, I can make anonymous ratings that are not publicly displayed with my account so that I can feel comfortable making ratings while protecting my privacy.
+
+**Acceptance Criteria:**
+- An anonymous rating's owner will not be displayed publicly.
+- An anonymous rating's owner will still be stored internally for documentation purposes, and to mitigate the amount unhelpful ratings.
+- Anonymous ratings will only apply to ratings created while the setting is enabled.
+
+---
+
+## US-10: Space Addition Suggestions
+
+**User Story:** As a Calvin student, I can suggest a space addition if I see a study space that isn't already on the app, to better reflect the goal of the app.
+
+**Acceptance Criteria:**
+- A single student is limited to one space addition suggestion per day.
+- The student can provide the name of the suggested study space.
+- The student can provide a description for the suggested space and what it is normally used for.
+- The student can provide amenities suggestions.
+- Once submitted, the space will be displayed to other students to rate whether this is a helpful space, and any amenities to add or remove.
+- If enough students rate it positively, it will be displayed as an official space.
+
+---
+
+## US-11: Space Removal Suggestions
+
+**User Story:** As a Calvin student, I can suggest a space removal if I see a study space that is outdated or no longer exists, to better reflect the goal of the app.
+
+**Acceptance Criteria:**
+- A single student is limited to one space removal suggestion per day.
+- The student can provide a reason for the removal suggestion.
+- Once submitted, the suggestion will be reviewed and accepted or rejected by the admins/developers (this is a different review criteria to [US-10](#us-10-space-addition-suggestions)).
+
+---
+
+## US-12: Open Spot Push Notifications
+
+**User Story:** As a Calvin student, I can receive a push notification when one of my favorite spots opens up.
+
+**Acceptance Criteria:**
+- When the number of reviews for a student's favorite space in a short time have dwindled (e.g., 20 reviews in the past hour, but < 3 reviews in the past 15 minutes), a student can receive a push notification suggesting that the place could be less busy.
+- Push notifications can be disabled.
+
 # Current Prototype Goal
 
-The team's first goal is to create a working prototype of Calvin Ratings.
+The team's current goal is to create an `implementation` prototype version that implements more user stories, updates the RESTful API, and designs and implements a relational database. 
 
-The prototype should:
+This prototype should:
 
-- Show the basic design of the application.
-- Allow users to navigate between the main screens.
-- Demonstrate the main idea of Calvin Ratings.
-- Include enough functionality to show how the final application could work.
+- Implement Supabase database.
+- Create a relationship between the database and server.
+- Implement as many more user stories as time allows.
 
-The prototype does not need to contain every feature described in this SRS.
+This prototype does not need to contain every feature described in this SRS.
 
-Features that are not completed in the first version can be added or improved during later development.
+Features that are not completed in this version can be added or improved during later development.
 
 This SRS can also be updated as Team C makes more decisions about the application.
