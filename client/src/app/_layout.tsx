@@ -12,6 +12,7 @@ import Octicons from '@expo/vector-icons/Octicons';
 import { Tabs } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { useEffect, useState } from 'react';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { Colors } from '@/constants/colors';
 import { AppProvider } from '@/context/app-context';
@@ -32,28 +33,48 @@ export default function RootLayout() {
   });
 
   const [locationsLoaded, setLocationsLoaded] = useState(false);
+  const [loadError, setLoadError] = useState<Error | null>(null);
+  const [retryCount, setRetryCount] = useState(0);
 
   useEffect(() => {
-  if (!fontsLoaded) return;
+    if (!fontsLoaded) return;
 
-  async function initializeApp() {
-    try {
-      const serverLocations = await fetchLocations();
-      setLocations(serverLocations);
-      console.log('Loaded locations from API:', serverLocations.length);
-    } catch (error) {
-      console.warn('API unavailable, using local mock locations:', error);
-    } finally {
-      setLocationsLoaded(true);
-      SplashScreen.hideAsync();
+    async function initializeApp() {
+      try {
+        setLoadError(null);
+        const serverLocations = await fetchLocations();
+        setLocations(serverLocations);
+        setLocationsLoaded(true);
+      } catch (error) {
+        const initializationError =
+          error instanceof Error ? error : new Error('The location server could not be reached.');
+        setLoadError(initializationError);
+        setLocationsLoaded(false);
+      } finally {
+        await SplashScreen.hideAsync();
+      }
     }
+
+    initializeApp();
+  }, [fontsLoaded, retryCount]);
+
+  if (!fontsLoaded || (!locationsLoaded && !loadError)) {
+    return null;
   }
 
-  initializeApp();
-}, [fontsLoaded]);
-
-  if (!fontsLoaded || !locationsLoaded) {
-  return null;
+  if (loadError) {
+    return (
+      <View style={styles.errorContainer}>
+        <Text style={styles.errorTitle}>Unable to load campus locations</Text>
+        <Text style={styles.errorMessage}>
+          Connect to the local server and try again. The app does not use offline location data.
+        </Text>
+        <Text style={styles.errorDetails}>{loadError.message}</Text>
+        <Pressable style={styles.retryButton} onPress={() => setRetryCount((count) => count + 1)}>
+          <Text style={styles.retryButtonText}>Retry</Text>
+        </Pressable>
+      </View>
+    );
   }
 
   return (
@@ -106,3 +127,40 @@ export default function RootLayout() {
   );
 }
 
+const styles = StyleSheet.create({
+  errorContainer: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 24,
+    backgroundColor: Colors.background,
+  },
+  errorTitle: {
+    color: Colors.textPrimary,
+    fontSize: 20,
+    fontWeight: '700',
+    textAlign: 'center',
+  },
+  errorMessage: {
+    marginTop: 12,
+    color: Colors.textSecondary,
+    textAlign: 'center',
+  },
+  errorDetails: {
+    marginTop: 8,
+    color: Colors.textMuted,
+    fontSize: 12,
+    textAlign: 'center',
+  },
+  retryButton: {
+    marginTop: 24,
+    paddingHorizontal: 24,
+    paddingVertical: 12,
+    borderRadius: 8,
+    backgroundColor: Colors.maroon,
+  },
+  retryButtonText: {
+    color: Colors.white,
+    fontWeight: '600',
+  },
+});
