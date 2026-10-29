@@ -16,16 +16,27 @@ import { useAppData } from '@/context/app-context';
 import { activityFeed } from '@/data/activity';
 import { getLocationById, locations } from '@/data/locations';
 
+// Available filter chips, in display order. `as const` keeps the array
+// literal so FilterOption can be derived from it.
 const FILTERS = ['Now Open', 'Quiet Spots', 'Trending'] as const;
 type FilterOption = (typeof FILTERS)[number];
 
+/**
+ * Home screen: the main landing view. Contains the location filter chips,
+ * the "Ask Calvin" search bar with keyword-based recommendations, a
+ * scrollable carousel of popular locations, and a live activity feed.
+ */
 export function HomeScreen() {
   const { addRating } = useAppData();
   const [search, setSearch] = useState('');
   const [question, setQuestion] = useState('');
+  // null = no filter active (show all locations)
   const [activeFilter, setActiveFilter] = useState<FilterOption | null>(null);
   const [quickRateVisible, setQuickRateVisible] = useState(false);
 
+  // Recompute the visible locations whenever the active filter changes.
+  // Each filter applies a different predicate; "Trending" sorts by rating
+  // (a copy is sorted so the original `locations` array is not mutated).
   const filteredLocations = useMemo(() => {
     let result = locations;
     if (activeFilter === 'Now Open') {
@@ -38,6 +49,8 @@ export function HomeScreen() {
     return result;
   }, [activeFilter]);
 
+  // Handles search submission: stores the trimmed query as the active
+  // question (which drives the recommendation logic) and clears the input.
   const askCalvin = () => {
     const nextQuestion = search.trim();
     if (!nextQuestion) return;
@@ -45,6 +58,11 @@ export function HomeScreen() {
     setSearch('');
   };
 
+
+  // Keyword-based recommendation for the "Ask Calvin" search. This is a
+  // hard-coded stand-in for a real AI backend: it lowercases the question
+  // and matches it against keyword groups, each mapping to a fixed location.
+  // The final `: ...` branch is the fallback when no keywords match.
   const questionLower = question.toLowerCase();
   const recommendation = question
     ? questionLower.includes('study') || questionLower.includes('exam') || questionLower.includes('quiet') || questionLower.includes('focus')
@@ -88,6 +106,7 @@ export function HomeScreen() {
                 key={filter}
                 label={filter}
                 selected={activeFilter === filter}
+                // Tapping the active chip again clears the filter (back to null).
                 onPress={() => setActiveFilter((current) => (current === filter ? null : filter))}
               />
             ))}

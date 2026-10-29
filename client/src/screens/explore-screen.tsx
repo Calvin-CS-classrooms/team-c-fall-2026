@@ -14,6 +14,7 @@ import { locations } from '@/data/locations';
 import type { Category, DensityLevel } from '@/types';
 import { formatMinutesAgo } from '@/utils/format';
 
+
 const CATEGORIES: { key: Category; label: string }[] = [
   { key: 'study', label: 'Study & Quiet' },
   { key: 'dining', label: 'Dining & Cafes' },
@@ -21,8 +22,12 @@ const CATEGORIES: { key: Category; label: string }[] = [
   { key: 'events', label: 'Events' },
 ];
 
+// Numeric ranking of each density level so an average can be computed.
 const DENSITY_ORDER: Record<DensityLevel, number> = { quiet: 0, moderate: 1, busy: 2 };
 
+// Computes the campus-wide density by averaging every location's density
+// rank, then mapping the average back to a level via fixed thresholds.
+// This is a hard-coded stand-in for live occupancy data.
 function overallDensity(): DensityLevel {
   const average =
     locations.reduce((sum, location) => sum + DENSITY_ORDER[location.density], 0) / locations.length;
@@ -31,14 +36,27 @@ function overallDensity(): DensityLevel {
   return 'busy';
 }
 
+/**
+ * Explore screen: browse all campus locations. Contains category filter
+ * chips, an overall campus density card, a scrollable landmark directory,
+ * and a recent-ratings section (global, not user-specific).
+ *
+ * Uses useMemo to cache derived values between re-renders, recomputing only
+ * when their dependencies change.
+ */
 export function ExploreScreen() {
   const { isFavorite, toggleFavorite, ratings } = useAppData();
   const [category, setCategory] = useState<Category>('study');
 
+  // Locations belonging to the currently selected category.
   const filteredLocations = useMemo(
     () => locations.filter((location) => location.category === category),
     [category],
   );
+
+  // The 3 most recent ratings for locations in the current category.
+  // Ratings are client-only for now, using each rating's hard-coded
+  // "createdMinutesAgo" value; a copy is sorted so `ratings` is not mutated.
   const recentRatings = useMemo(() => {
     const locationIds = new Set(filteredLocations.map((location) => location.id));
     return ratings
@@ -48,6 +66,9 @@ export function ExploreScreen() {
       .slice(0, 3);
   }, [filteredLocations, ratings]);
 
+  // Per-category density breakdown for the overview card. "Events" is
+  // excluded since it has no meaningful density. Math.max guards against
+  // dividing by zero when a category has no locations.
   const breakdown = useMemo(
     () =>
       CATEGORIES.filter((entry) => entry.key !== 'events').map(({ key, label }) => {
@@ -104,6 +125,8 @@ export function ExploreScreen() {
           )}
         </View>
 
+        {/* Recent ratings only make sense for real locations, so hide this
+            section when the "Events" category is selected. */}
         {category !== 'events' ? (
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>Recent Ratings</Text>
