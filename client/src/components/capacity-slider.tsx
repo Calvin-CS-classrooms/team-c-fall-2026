@@ -11,9 +11,22 @@ interface CapacitySliderProps {
 
 const THUMB_SIZE = 24;
 
+/**
+ * A draggable slider for choosing a capacity percentage (0-100). The user
+ * can drag the thumb or tap anywhere on the track to set the value. The
+ * fill color reflects the density level of the current value.
+ *
+ * @param value - Current capacity percentage (0-100).
+ * @param onChange - Called with the new value when the user changes it.
+ */
 export function CapacitySlider({ value, onChange }: CapacitySliderProps) {
+  // Measured width of the track, used to convert pixel positions to
+  // percentages. Set once the track is laid out.
   const [trackWidth, setTrackWidth] = useState(0);
 
+  // PanResponder handles drag gestures on the track. It converts the
+  // gesture's horizontal delta (dx) into a new percentage, clamped to
+  // [0, 100], and only fires onChange when the value actually changes.
   const panResponder = useMemo(
     () =>
       PanResponder.create({
@@ -28,6 +41,9 @@ export function CapacitySlider({ value, onChange }: CapacitySliderProps) {
             onChange(nextValue);
           }
         },
+        // Tapping the track jumps the value to the tapped position.
+        // TOFIX: When tapping while the slider position is already at that spot,
+        // it sets the slider back to 0.
         onPanResponderGrant: (event) => {
           if (trackWidth <= 0) return;
           const nextX = Math.min(Math.max(event.nativeEvent.locationX, 0), trackWidth);
@@ -38,6 +54,8 @@ export function CapacitySlider({ value, onChange }: CapacitySliderProps) {
   );
 
   const color = DensityColors[densityForCapacity(value)];
+  // Position the thumb so its center sits on the value; offset by half the
+  // thumb size. Before the track is measured, keep it off-screen.
   const thumbLeft = trackWidth > 0 ? (value / 100) * trackWidth - THUMB_SIZE / 2 : -THUMB_SIZE / 2;
 
   return (

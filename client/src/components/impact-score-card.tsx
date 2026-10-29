@@ -10,7 +10,16 @@ interface ImpactScoreCardProps {
   helpfulVotes: number;
 }
 
+/**
+ * A card on the ratings screen summarizing the user's impact: their rater
+ * tier (derived from rating count), progress toward the next tier, and
+ * stats for ratings submitted and helpful votes received.
+ *
+ * @param ratingsCount - Number of ratings the user has submitted.
+ * @param helpfulVotes - Number of helpful votes the user has received.
+ */
 export function ImpactScoreCard({ ratingsCount, helpfulVotes }: ImpactScoreCardProps) {
+  // Tier and progress toward the next tier, based on rating count.
   const tier = getKnightTier(ratingsCount);
 
   return (
@@ -21,6 +30,8 @@ export function ImpactScoreCard({ ratingsCount, helpfulVotes }: ImpactScoreCardP
         </View>
         <View style={styles.tierWrap}>
           <Text style={styles.tierLabel}>{tier.label} Rater</Text>
+          {/* Show progress to the next tier, or a "maxed out" message at
+              the top tier (where there is no next tier). */}
           {tier.next ? (
             <Text style={styles.tierNext}>
               {Math.round(tier.progress * 100)}% to {tier.next}
@@ -31,6 +42,7 @@ export function ImpactScoreCard({ ratingsCount, helpfulVotes }: ImpactScoreCardP
         </View>
       </View>
 
+      {/* Progress bar width matches the tier progress percentage. */}
       <View style={styles.progressTrack}>
         <View style={[styles.progressFill, { width: `${Math.round(tier.progress * 100)}%` }]} />
       </View>

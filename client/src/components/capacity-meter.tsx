@@ -8,13 +8,23 @@ interface CapacityMeterProps {
   showLabel?: boolean;
 }
 
+/**
+ * A horizontal bar that visualizes a place's capacity as a percentage.
+ * The fill width and color are derived from the capacity value, and an
+ * optional label row shows the density label and "% busy" text.
+ *
+ * @param capacity - Capacity as a percentage (0-100).
+ * @param showLabel - Whether to show the density/percent labels below the bar.
+ */
 export function CapacityMeter({ capacity, showLabel = true }: CapacityMeterProps) {
+  // Derive the density level and its color from the capacity percentage.
   const density = densityForCapacity(capacity);
   const color = DensityColors[density];
 
   return (
     <View>
       <View style={styles.track}>
+        {/* Fill width is the capacity percentage; color reflects density. */}
         <View style={[styles.fill, { width: `${capacity}%`, backgroundColor: color }]} />
       </View>
       {showLabel ? (

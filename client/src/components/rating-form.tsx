@@ -19,6 +19,16 @@ interface RatingFormProps {
   submitLabel?: string;
 }
 
+/**
+ * The rating form, shown on the ratings screen (only after the user has
+ * been verified). Lets the user pick a location, a 5-star overall rating,
+ * a capacity slider, noise level chips, amenity chips, an optional tip
+ * textbox, and a submit button.
+ *
+ * @param initialLocationId - Location preselected when the form opens.
+ * @param onSubmit - Called with the completed rating when submitted.
+ * @param submitLabel - Text for the submit button.
+ */
 export function RatingForm({ initialLocationId, onSubmit, submitLabel = 'Submit Rating' }: RatingFormProps) {
   const [locationId, setLocationId] = useState(initialLocationId ?? locations[0].id);
   const [pickerOpen, setPickerOpen] = useState(false);
@@ -28,12 +38,17 @@ export function RatingForm({ initialLocationId, onSubmit, submitLabel = 'Submit 
   const [amenities, setAmenities] = useState<string[]>([]);
   const [comment, setComment] = useState('');
 
+  // Resolve the selected location object; falls back to the first location
+  // if the stored id no longer matches (e.g. data changed).
   const selectedLocation = locations.find((location) => location.id === locationId) ?? locations[0];
 
+  // Toggle an amenity in/out of the selected set.
   const toggleAmenity = (amenity: string) => {
     setAmenities((prev) => (prev.includes(amenity) ? prev.filter((item) => item !== amenity) : [...prev, amenity]));
   };
 
+  // Builds the rating payload and submits it, then resets the form fields
+  // (comment and amenities) so it's ready for the next entry.
   const handleSubmit = () => {
     onSubmit({
       locationId: selectedLocation.id,
@@ -120,6 +135,8 @@ export function RatingForm({ initialLocationId, onSubmit, submitLabel = 'Submit 
   );
 }
 
+// Scrollable wrapper around RatingForm, for use in contexts where the form
+// needs to scroll independently (e.g. inside a modal or sheet).
 export function RatingFormScroll(props: RatingFormProps) {
   return (
     <ScrollView showsVerticalScrollIndicator={false}>
