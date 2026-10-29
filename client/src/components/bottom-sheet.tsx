@@ -12,12 +12,26 @@ interface BottomSheetProps {
   title: string;
 }
 
+/**
+ * A modal bottom sheet that slides up from the bottom of the screen.
+ * Tapping the dimmed overlay or the close button dismisses it. The sheet
+ * is padded by the safe-area inset so content clears the home indicator.
+ * This is currently only used to submit a "quick rating" on the home screen
+ * when you tap on the GPS banner.
+ *
+ * @param visible - Whether the sheet is shown.
+ * @param onClose - Called when the user dismisses the sheet.
+ * @param title - Heading shown at the top of the sheet.
+ * @param children - Content rendered inside the scrollable sheet body.
+ */
 export function BottomSheet({ visible, onClose, title, children }: PropsWithChildren<BottomSheetProps>) {
   const insets = useSafeAreaInsets();
 
   return (
     <Modal visible={visible} animationType="slide" transparent onRequestClose={onClose}>
       <View style={styles.overlay}>
+        {/* Full-screen pressable behind the sheet: tapping the dimmed
+            backdrop dismisses the sheet. */}
         <Pressable style={StyleSheet.absoluteFill} onPress={onClose} />
         <View style={[styles.sheet, { paddingBottom: insets.bottom + 20 }]}>
           <View style={styles.grabber} />

@@ -10,11 +10,21 @@ interface StarRatingProps {
   readOnly?: boolean;
 }
 
+/**
+ * A 5-star rating display. In read-only mode it just shows the stars; in
+ * interactive mode each star is tappable to set the rating.
+ *
+ * @param value - The current rating (0-5).
+ * @param onChange - Optional handler called with the tapped star value.
+ * @param size - Pixel size of each star icon.
+ * @param readOnly - Whether the stars are non-interactive.
+ */
 export function StarRating({ value, onChange, size = 22, readOnly }: StarRatingProps) {
   const stars = [1, 2, 3, 4, 5];
   return (
     <View style={styles.row}>
       {stars.map((star) => {
+        // A star is filled if its position is at or below the rounded value.
         const filled = star <= Math.round(value);
         if (readOnly) {
           return (

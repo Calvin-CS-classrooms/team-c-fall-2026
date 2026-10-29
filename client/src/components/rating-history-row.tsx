@@ -13,11 +13,21 @@ interface RatingHistoryRowProps {
   onDelete: () => void;
 }
 
+/**
+ * A single rating in the user's rating history on the ratings screen.
+ * Shows the location, star rating, optional comment, capacity/noise/age
+ * metadata, plus buttons to mark the rating helpful or delete it.
+ *
+ * @param rating - The rating to display.
+ * @param onMarkHelpful - Called when the "Helpful" button is tapped.
+ * @param onDelete - Called when the delete button is tapped.
+ */
 export function RatingHistoryRow({ rating, onMarkHelpful, onDelete }: RatingHistoryRowProps) {
   return (
     <View style={styles.card}>
       <View style={styles.headerRow}>
         <Text style={styles.location}>{rating.locationName}</Text>
+        {/* Delete button; hitSlop enlarges its tap target. */}
         <Pressable onPress={onDelete} hitSlop={8}>
           <Ionicons name="trash-outline" size={18} color={Colors.danger} />
         </Pressable>
@@ -25,6 +35,7 @@ export function RatingHistoryRow({ rating, onMarkHelpful, onDelete }: RatingHist
 
       <StarRating value={rating.stars} readOnly size={16} />
 
+      {/* Comment is optional, so only render it when present. */}
       {rating.comment ? <Text style={styles.comment}>{rating.comment}</Text> : null}
 
       <View style={styles.metaRow}>

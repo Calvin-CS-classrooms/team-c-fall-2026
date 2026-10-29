@@ -16,7 +16,18 @@ interface LandmarkCardProps {
   onToggleFavorite: () => void;
 }
 
+/**
+ * A card in the explore screen's landmark directory. Shows a location's
+ * image, name, open/closed status, description, capacity, and tags. An
+ * expandable section reveals more details (rating, amenities, wait time,
+ * and a floor-by-floor guide). A bookmark button toggles the favorite state.
+ *
+ * @param location - The campus location to display.
+ * @param isFavorite - Whether the location is currently favorited.
+ * @param onToggleFavorite - Called when the bookmark button is tapped.
+ */
 export function LandmarkCard({ location, isFavorite, onToggleFavorite }: LandmarkCardProps) {
+  // Whether the expanded details section is shown.
   const [expanded, setExpanded] = useState(false);
 
   return (
@@ -28,6 +39,7 @@ export function LandmarkCard({ location, isFavorite, onToggleFavorite }: Landmar
             <Text style={styles.name}>{location.name}</Text>
             <Text style={styles.hours}>{location.isOpenNow ? 'Open now' : 'Closed'} · {location.hoursLabel}</Text>
           </View>
+          {/* Bookmark toggles favorite; filled + gold when favorited. */}
           <Pressable onPress={onToggleFavorite} hitSlop={8}>
             <Ionicons
               name={isFavorite ? 'bookmark' : 'bookmark-outline'}
@@ -41,6 +53,7 @@ export function LandmarkCard({ location, isFavorite, onToggleFavorite }: Landmar
 
         <CapacityMeter capacity={location.capacity} />
 
+        {/* Show the noise level plus the first 3 amenities as tags. */}
         <View style={styles.tagRow}>
           <Chip label={`Noise: ${NoiseLabels[location.noise]}`} />
           {location.amenities.slice(0, 3).map((amenity) => (
@@ -48,6 +61,7 @@ export function LandmarkCard({ location, isFavorite, onToggleFavorite }: Landmar
           ))}
         </View>
 
+        {/* Toggle button for the expanded details section. */}
         <Pressable
           style={styles.expandRow}
           onPress={() => setExpanded((value) => !value)}
@@ -70,6 +84,7 @@ export function LandmarkCard({ location, isFavorite, onToggleFavorite }: Landmar
                 <Chip key={amenity} label={amenity} />
               ))}
             </View>
+            {/* Wait time is optional, so only render it when present. */}
             {location.waitTimeMinutes !== undefined ? (
               <Text style={styles.detailText}>Typical wait: {location.waitTimeMinutes} min</Text>
             ) : null}

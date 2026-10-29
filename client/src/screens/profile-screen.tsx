@@ -11,9 +11,18 @@ import { Typography } from '@/constants/typography';
 import { useAppData } from '@/context/app-context';
 import { isCalvinEmail } from '@/utils/verification';
 
+
+/**
+ * Profile screen: shows the user's account info, a section to add and
+ * verify a Calvin email, preference toggles (geolocation, anonymous mode,
+ * capacity alerts), and pinned favorite spots.
+ */
 export function ProfileScreen() {
   const { favorites, removeFavorite, settings, toggleSetting, calvinEmail, setCalvinEmail } = useAppData();
+  // Local draft of the email field, seeded from the saved email so the
+  // input shows the current value. Only committed on Save.
   const [emailInput, setEmailInput] = useState(calvinEmail ?? '');
+  // Validation message shown under the input; empty means no error.
   const [emailError, setEmailError] = useState('');
   return (
     <SafeAreaView style={styles.container} edges={['top', 'left', 'right']}>
@@ -49,6 +58,11 @@ export function ProfileScreen() {
           <Button
             title="Save Calvin Email"
             onPress={() => {
+              // Validate the entered email before saving. On success the
+              // email is normalized (trimmed + lowercased) and stored; on
+              // failure the saved email is cleared and an error is shown.
+              // Current verification: the handle must be @calvin.edu.
+              // The verification method is expected to change.
               if (isCalvinEmail(emailInput)) {
                 setCalvinEmail(emailInput.trim().toLowerCase());
                 setEmailError('');

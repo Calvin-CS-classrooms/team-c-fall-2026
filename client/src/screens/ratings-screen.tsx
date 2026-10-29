@@ -9,8 +9,15 @@ import { Colors } from '@/constants/colors';
 import { Typography } from '@/constants/typography';
 import { useAppData } from '@/context/app-context';
 
+
+/**
+ * Ratings screen: shows the user's rating "status" (number of ratings and
+ * helpful votes), lets the user submit a new rating, and lists their
+ * rating history with mark-helpful and delete actions.
+ */
 export function RatingsScreen() {
   const { ratings, addRating, markHelpful, deleteRating, calvinEmail } = useAppData();
+  // Total helpful votes across all of the user's ratings.
   const helpfulVotes = ratings.reduce((sum, rating) => sum + rating.helpfulCount, 0);
 
   return (
@@ -25,6 +32,8 @@ export function RatingsScreen() {
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Submit a Rating</Text>
           <View style={styles.formCard}>
+            {/* Rating submission requires a verified Calvin email; otherwise
+                prompt the user to add one in the profile section. */}
             {calvinEmail ? (
               <RatingForm onSubmit={addRating} />
             ) : (

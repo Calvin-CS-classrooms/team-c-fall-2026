@@ -6,6 +6,7 @@ import { Typography } from '@/constants/typography';
 import { formatMinutesAgo } from '@/utils/format';
 import type { ActivityFeedItem } from '@/types';
 
+// Maps each noise level to a matching volume icon for the feed row.
 const NOISE_ICON: Record<ActivityFeedItem['noise'], keyof typeof Ionicons.glyphMap> = {
   whisper: 'volume-mute',
   'low-buzz': 'volume-low',
@@ -13,6 +14,14 @@ const NOISE_ICON: Record<ActivityFeedItem['noise'], keyof typeof Ionicons.glyphM
   loud: 'volume-high',
 };
 
+/**
+ * A single row in the live activity feed on the home screen. Displays a
+ * location's current activity: its name, a message describing what's
+ * happening, the noise level, and when it was last updated.
+ * Currently mocked from data/activity.ts.
+ * 
+ * @param item - The activity feed entry to render.
+ */
 export function ActivityFeedRow({ item }: { item: ActivityFeedItem }) {
   return (
     <View style={styles.row}>

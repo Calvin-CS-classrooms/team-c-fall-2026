@@ -8,6 +8,9 @@ import { AppHeader } from '@/components/app-header';
 import { Colors } from '@/constants/colors';
 import { Typography } from '@/constants/typography';
 
+// The library floor plans shown in the floor selector, in display order.
+// `selectedFloor` indexes into this array, so the order here defines the
+// order of the floor buttons.
 const FLOORS = [
   { label: 'Floor 2', image: require('@/assets/images/Library_Floor_2_Map.png'), places: 'Reading Room and study tables' },
   { label: 'Floor 3', image: require('@/assets/images/Library_Floor_3_Map.png'), places: 'Group study rooms and collaboration tables' },
@@ -15,7 +18,13 @@ const FLOORS = [
   { label: 'Floor 5', image: require('@/assets/images/Library_Floor_5_Map.png'), places: 'Upper stacks and quiet study areas' },
 ];
 
+/**
+ * Map screen: shows an embedded Google Maps widget of the campus and an
+ * interactive floor selector for Hekman Library. Selecting a floor button
+ * swaps the displayed floor plan image.
+ */
 export function MapScreen() {
+  // Index of the currently selected floor in FLOORS (0 = Floor 2).
   const [selectedFloor, setSelectedFloor] = useState(0);
   const floor = FLOORS[selectedFloor];
 
@@ -50,6 +59,7 @@ export function MapScreen() {
               <Pressable
                 key={entry.label}
                 onPress={() => setSelectedFloor(index)}
+                // Apply the active style only to the currently selected floor.
                 style={[styles.floorButton, selectedFloor === index && styles.floorButtonActive]}
                 accessibilityRole="button"
                 accessibilityState={{ selected: selectedFloor === index }}
@@ -75,22 +85,98 @@ export function MapScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: Colors.background },
-  content: { paddingBottom: 32 },
-  section: { paddingHorizontal: 20, marginTop: 18, gap: 10 },
-  eyebrow: { fontFamily: Typography.semiBold, fontSize: 12, color: Colors.maroon, textTransform: 'uppercase' },
-  title: { fontFamily: Typography.bold, fontSize: 24, color: Colors.textPrimary },
-  description: { fontFamily: Typography.medium, fontSize: 13, lineHeight: 19, color: Colors.textSecondary },
-  floorRow: { flexDirection: 'row', gap: 8, flexWrap: 'wrap', marginTop: 4 },
-  floorButton: { paddingHorizontal: 14, paddingVertical: 9, borderRadius: 12, borderWidth: 1, borderColor: Colors.border, backgroundColor: Colors.surface },
-  floorButtonActive: { backgroundColor: Colors.maroon, borderColor: Colors.maroon },
-  floorButtonText: { fontFamily: Typography.semiBold, fontSize: 12, color: Colors.textSecondary },
-  floorButtonTextActive: { color: Colors.white },
-  mapCard: { overflow: 'hidden', borderRadius: 18, borderWidth: 1, borderColor: Colors.border, backgroundColor: Colors.surface, marginTop: 6 },
-  campusMapCard: { overflow: 'hidden', height: 360, borderRadius: 18, borderWidth: 1, borderColor: Colors.border, backgroundColor: Colors.surface, marginTop: 6 },
-  campusMap: { flex: 1 },
-  mapImage: { width: '100%', height: 420, backgroundColor: Colors.surfaceAlt },
-  mapCaption: { padding: 14, gap: 3 },
-  mapTitle: { fontFamily: Typography.bold, fontSize: 16, color: Colors.textPrimary },
-  mapPlaces: { fontFamily: Typography.medium, fontSize: 12, color: Colors.textSecondary },
+  container: {
+    flex: 1,
+    backgroundColor: Colors.background,
+  },
+  content: {
+    paddingBottom: 32,
+  },
+  section: {
+    paddingHorizontal: 20,
+    marginTop: 18,
+    gap: 10,
+  },
+  eyebrow: {
+    fontFamily: Typography.semiBold,
+    fontSize: 12,
+    color: Colors.maroon,
+    textTransform: 'uppercase',
+  },
+  title: {
+    fontFamily: Typography.bold,
+    fontSize: 24,
+    color: Colors.textPrimary,
+  },
+  description: {
+    fontFamily: Typography.medium,
+    fontSize: 13,
+    lineHeight: 19,
+    color: Colors.textSecondary,
+  },
+  floorRow: {
+    flexDirection: 'row',
+    gap: 8,
+    flexWrap: 'wrap',
+    marginTop: 4,
+  },
+  floorButton: {
+    paddingHorizontal: 14,
+    paddingVertical: 9,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: Colors.border,
+    backgroundColor: Colors.surface,
+  },
+  floorButtonActive: {
+    backgroundColor: Colors.maroon,
+    borderColor: Colors.maroon,
+  },
+  floorButtonText: {
+    fontFamily: Typography.semiBold,
+    fontSize: 12,
+    color: Colors.textSecondary,
+  },
+  floorButtonTextActive: {
+    color: Colors.white,
+  },
+  mapCard: {
+    overflow: 'hidden',
+    borderRadius: 18,
+    borderWidth: 1,
+    borderColor: Colors.border,
+    backgroundColor: Colors.surface,
+    marginTop: 6,
+  },
+  campusMapCard: {
+    overflow: 'hidden',
+    height: 360,
+    borderRadius: 18,
+    borderWidth: 1,
+    borderColor: Colors.border,
+    backgroundColor: Colors.surface,
+    marginTop: 6,
+  },
+  campusMap: {
+    flex: 1,
+  },
+  mapImage: {
+    width: '100%',
+    height: 420,
+    backgroundColor: Colors.surfaceAlt,
+  },
+  mapCaption: {
+    padding: 14,
+    gap: 3,
+  },
+  mapTitle: {
+    fontFamily: Typography.bold,
+    fontSize: 16,
+    color: Colors.textPrimary,
+  },
+  mapPlaces: {
+    fontFamily: Typography.medium,
+    fontSize: 12,
+    color: Colors.textSecondary,
+  },
 });
