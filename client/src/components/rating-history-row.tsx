@@ -4,13 +4,24 @@ import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { Colors, NoiseLabels } from '@/constants/colors';
 import { StarRating } from '@/components/star-rating';
 import { Typography } from '@/constants/typography';
+import { confirmAction } from '@/utils/confirm';
 import { formatMinutesAgo } from '@/utils/format';
 import type { UserRating } from '@/types';
 
 interface RatingHistoryRowProps {
   rating: UserRating;
   onMarkHelpful: () => void;
-  onDelete: () => void;
+  /** Only provided for ratings the current user owns. */
+  onDelete?: () => void;
+}
+
+export function confirmDeleteRating(rating: UserRating, onDelete: () => void) {
+  confirmAction({
+    title: 'Delete this rating?',
+    message: `Your rating for ${rating.locationName} will be permanently removed.`,
+    confirmLabel: 'Delete',
+    onConfirm: onDelete,
+  });
 }
 
 /**
@@ -27,11 +38,24 @@ export function RatingHistoryRow({ rating, onMarkHelpful, onDelete }: RatingHist
     <View style={styles.card}>
       <View style={styles.headerRow}>
         <Text style={styles.location}>{rating.locationName}</Text>
-        {/* Delete button; hitSlop enlarges its tap target. */}
-        <Pressable onPress={onDelete} hitSlop={8}>
-          <Ionicons name="trash-outline" size={18} color={Colors.danger} />
-        </Pressable>
+        {/* Delete button, only shown on the user's own ratings; hitSlop enlarges its tap target. */}
+        {onDelete ? (
+          <Pressable
+            onPress={() => confirmDeleteRating(rating, onDelete)}
+            hitSlop={8}
+            accessibilityRole="button"
+            accessibilityLabel={`Delete rating for ${rating.locationName}`}>
+            <Ionicons name="trash-outline" size={18} color={Colors.danger} />
+          </Pressable>
+        ) : null}
       </View>
+
+      {rating.isAnonymous ? (
+        <View style={styles.anonymousTag}>
+          <Ionicons name="eye-off-outline" size={12} color={Colors.textSecondary} />
+          <Text style={styles.anonymousText}>Posted as Anonymous user</Text>
+        </View>
+      ) : null}
 
       <StarRating value={rating.stars} readOnly size={16} />
 
@@ -66,7 +90,18 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
   },
+  anonymousTag: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+  },
+  anonymousText: {
+    fontFamily: Typography.medium,
+    fontSize: 11,
+    color: Colors.textSecondary,
+  },
   location: {
+    flex: 1,
     fontFamily: Typography.bold,
     fontSize: 15,
     color: Colors.textPrimary,

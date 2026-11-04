@@ -7,7 +7,7 @@ import { Chip } from '@/components/chip';
 import { StarRating } from '@/components/star-rating';
 import { Colors, NoiseLabels } from '@/constants/colors';
 import { Typography } from '@/constants/typography';
-import { locations } from '@/data/locations';
+import { useAppData } from '@/context/app-context';
 import type { NewRatingInput, NoiseLevel } from '@/types';
 
 const NOISE_LEVELS: NoiseLevel[] = ['whisper', 'low-buzz', 'social', 'loud'];
@@ -30,6 +30,7 @@ interface RatingFormProps {
  * @param submitLabel - Text for the submit button.
  */
 export function RatingForm({ initialLocationId, onSubmit, submitLabel = 'Submit Rating' }: RatingFormProps) {
+  const { locations } = useAppData();
   const [locationId, setLocationId] = useState(initialLocationId ?? locations[0].id);
   const [pickerOpen, setPickerOpen] = useState(false);
   const [capacity, setCapacity] = useState(50);

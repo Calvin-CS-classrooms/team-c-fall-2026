@@ -12,6 +12,9 @@ export const initialRatings: UserRating[] = [
     comment: 'Floor 4 was empty and perfectly quiet before finals week.',
     helpfulCount: 14,
     createdMinutesAgo: 95,
+    ownerEmail: 'emma.k@calvin.edu',
+    ownerName: 'Emma K.',
+    isAnonymous: false,
   },
   {
     id: 'rating-4',
@@ -24,6 +27,9 @@ export const initialRatings: UserRating[] = [
     comment: 'The weight room has plenty of space this afternoon.',
     helpfulCount: 3,
     createdMinutesAgo: 210,
+    ownerEmail: 'noah.d@calvin.edu',
+    ownerName: 'Noah D.',
+    isAnonymous: false,
   },
   {
     id: 'rating-2',
@@ -36,6 +42,9 @@ export const initialRatings: UserRating[] = [
     comment: 'Packed at lunch, but the new pasta station is worth the wait.',
     helpfulCount: 9,
     createdMinutesAgo: 480,
+    ownerEmail: 'grace.v@calvin.edu',
+    ownerName: 'Grace V.',
+    isAnonymous: false,
   },
   {
     id: 'rating-3',
@@ -47,5 +56,8 @@ export const initialRatings: UserRating[] = [
     amenities: ['Mobile Order', 'Study Seating'],
     helpfulCount: 5,
     createdMinutesAgo: 1420,
+    ownerEmail: 'sam.b@calvin.edu',
+    ownerName: 'Sam B.',
+    isAnonymous: true,
   },
 ];

@@ -8,17 +8,19 @@ import { Typography } from '@/constants/typography';
 interface ProfileCardProps {
   name: string;
   email: string;
+  verified?: boolean;
 }
 
 /**
  * The user's profile card on the profile screen. Shows a circular avatar
- * with the user's initials, their name, email, a verified badge, and a
- * faint Calvin logo watermark in the corner.
+ * with the user's initials, their name, email, an optional verified badge,
+ * and a faint Calvin logo watermark in the corner.
  *
  * @param name - The user's display name (used to derive the initials).
  * @param email - The user's email shown under the name.
+ * @param verified - Whether to show the calvin.edu verified badge.
  */
-export function ProfileCard({ name, email }: ProfileCardProps) {
+export function ProfileCard({ name, email, verified = true }: ProfileCardProps) {
   // Derive up to 2 uppercase initials from the name (e.g. "Calvin Student"
   // -> "CS") for the avatar.
   const initials = name
@@ -36,7 +38,7 @@ export function ProfileCard({ name, email }: ProfileCardProps) {
       </View>
       <Text style={styles.name}>{name}</Text>
       <Text style={styles.email}>{email}</Text>
-      <VerifiedBadge label="calvin.edu SSO Verified" />
+      {verified ? <VerifiedBadge label="calvin.edu Verified" /> : null}
     </View>
   );
 }

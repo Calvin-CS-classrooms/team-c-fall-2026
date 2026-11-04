@@ -1,5 +1,6 @@
-import { useMemo, useState } from 'react';
-import { FlatList, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
+import { useMemo, useRef, useState } from 'react';
+import { ActivityIndicator, FlatList, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { ActivityFeedRow } from '@/components/activity-feed-row';
@@ -14,102 +15,119 @@ import { Colors } from '@/constants/colors';
 import { Typography } from '@/constants/typography';
 import { useAppData } from '@/context/app-context';
 import { activityFeed } from '@/data/activity';
-import { getLocationById, locations } from '@/data/locations';
-
-// Available filter chips, in display order. `as const` keeps the array
-// literal so FilterOption can be derived from it.
-const FILTERS = ['Now Open', 'Quiet Spots', 'Trending'] as const;
-type FilterOption = (typeof FILTERS)[number];
+import { askSpotAgent, type SpotAgentResponse } from '@/services/spot-agent';
+import { applyDiscoveryFilters, DISCOVERY_FILTERS, type DiscoveryFilter } from '@/utils/discovery';
 
 /**
- * Home screen: the main landing view. Contains the location filter chips,
- * the "Ask Calvin" search bar with keyword-based recommendations, a
+ * Home screen: the main landing view. Contains the combinable location filter
+ * chips, the "Ask Calvin" search bar backed by the mock spot-finder agent, a
  * scrollable carousel of popular locations, and a live activity feed.
  */
 export function HomeScreen() {
-  const { addRating } = useAppData();
+  const { addRating, account, locations, ratings } = useAppData();
   const [search, setSearch] = useState('');
-  const [question, setQuestion] = useState('');
-  // null = no filter active (show all locations)
-  const [activeFilter, setActiveFilter] = useState<FilterOption | null>(null);
+  const [activeFilters, setActiveFilters] = useState<DiscoveryFilter[]>([]);
   const [quickRateVisible, setQuickRateVisible] = useState(false);
+  const [agentResponse, setAgentResponse] = useState<SpotAgentResponse | null>(null);
+  const [agentThinking, setAgentThinking] = useState(false);
+  const latestQuery = useRef(0);
 
-  // Recompute the visible locations whenever the active filter changes.
-  // Each filter applies a different predicate; "Trending" sorts by rating
-  // (a copy is sorted so the original `locations` array is not mutated).
-  const filteredLocations = useMemo(() => {
-    let result = locations;
-    if (activeFilter === 'Now Open') {
-      result = result.filter((location) => location.isOpenNow);
-    } else if (activeFilter === 'Quiet Spots') {
-      result = result.filter((location) => location.density === 'quiet');
-    } else if (activeFilter === 'Trending') {
-      result = [...result].sort((a, b) => b.rating - a.rating);
-    }
-    return result;
-  }, [activeFilter]);
+  // Recompute the visible locations whenever the active filters change.
+  // A location must meet every active filter to be shown.
+  const filteredLocations = useMemo(
+    () => applyDiscoveryFilters(locations, ratings, activeFilters),
+    [activeFilters, locations, ratings],
+  );
 
-  // Handles search submission: stores the trimmed query as the active
-  // question (which drives the recommendation logic) and clears the input.
-  const askCalvin = () => {
-    const nextQuestion = search.trim();
-    if (!nextQuestion) return;
-    setQuestion(nextQuestion);
-    setSearch('');
+  const toggleFilter = (filter: DiscoveryFilter) => {
+    setActiveFilters((current) =>
+      current.includes(filter) ? current.filter((item) => item !== filter) : [...current, filter],
+    );
   };
 
+  // Handles search submission: sends the trimmed query to the mock agent and
+  // clears the input while the answer loads.
+  const askCalvin = async () => {
+    const nextQuestion = search.trim();
+    if (!nextQuestion) return;
+    setSearch('');
+    setAgentThinking(true);
+    const queryId = ++latestQuery.current;
+    const response = await askSpotAgent(nextQuestion, locations);
+    // Ignore answers to older questions if the user asked again in the meantime.
+    if (queryId !== latestQuery.current) return;
+    setAgentResponse(response);
+    setAgentThinking(false);
+  };
 
-  // Keyword-based recommendation for the "Ask Calvin" search. This is a
-  // hard-coded stand-in for a real AI backend: it lowercases the question
-  // and matches it against keyword groups, each mapping to a fixed location.
-  // The final `: ...` branch is the fallback when no keywords match.
-  const questionLower = question.toLowerCase();
-  const recommendation = question
-    ? questionLower.includes('study') || questionLower.includes('exam') || questionLower.includes('quiet') || questionLower.includes('focus')
-      ? { location: getLocationById('hekman-library'), floor: 'Floor 4 — Silent Floor', reason: 'Best match for focused exam studying' }
-      : questionLower.includes('coffee') || questionLower.includes('cafe')
-        ? { location: getLocationById('peets-coffee'), floor: 'Main Floor', reason: 'Best match for coffee and study seating' }
-        : questionLower.includes('gym') || questionLower.includes('workout')
-          ? { location: getLocationById('morren-fitness'), floor: 'Main Gym', reason: 'Best match for workouts' }
-          : { location: getLocationById('hekman-library'), floor: 'Floor 2 — Reading Room', reason: 'Best overall campus study match' }
-    : null;
+  const firstName = account?.name.split(' ')[0];
 
   return (
     <SafeAreaView style={styles.container} edges={['top', 'left', 'right']}>
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
         <AppHeader
-          title="Hi, John 👋"
+          title={firstName ? `Hi, ${firstName} 👋` : 'Hi there 👋'}
           subtitle="Calvin University"
-          leftAccessory={<VerifiedBadge label="@calvin.edu Verified" />}
+          leftAccessory={account ? <VerifiedBadge label="@calvin.edu Verified" /> : null}
         />
 
         <View style={styles.section}>
-          <SearchBar value={search} onChangeText={setSearch} onSubmit={askCalvin} />
-          {recommendation?.location ? (
+          <SearchBar
+            value={search}
+            onChangeText={setSearch}
+            onSubmit={askCalvin}
+            placeholder='Ask: "quiet spot with outlets near the library"'
+          />
+          {agentThinking ? (
+            <View style={styles.recommendationCard}>
+              <View style={styles.thinkingRow}>
+                <ActivityIndicator color={Colors.goldSoft} size="small" />
+                <Text style={styles.recommendationQuestion}>Finding the best spot for you…</Text>
+              </View>
+            </View>
+          ) : agentResponse ? (
             <View style={styles.recommendationCard}>
               <View style={styles.recommendationEyebrow}>
-                <Text style={styles.recommendationLabel}>Calvin Ratings recommendation</Text>
-                <Text style={styles.recommendationQuestion}>{question}</Text>
-              </View>
-              <Pressable style={styles.recommendationBody}>
-                <View style={styles.recommendationCopy}>
-                  <Text style={styles.recommendationTitle}>{recommendation.location.name} · {recommendation.floor}</Text>
-                  <Text style={styles.recommendationReason}>{recommendation.reason}</Text>
-                  <Text style={styles.recommendationNote}>Based on campus ratings, not live conditions.</Text>
+                <View style={styles.eyebrowRow}>
+                  <Text style={styles.recommendationLabel}>Spot Finder · mock AI</Text>
+                  <Pressable onPress={() => setAgentResponse(null)} hitSlop={8} accessibilityLabel="Dismiss recommendation">
+                    <Ionicons name="close" size={16} color={Colors.goldSoft} />
+                  </Pressable>
                 </View>
-              </Pressable>
+                <Text style={styles.recommendationQuestion}>&ldquo;{agentResponse.query}&rdquo;</Text>
+                <Text style={styles.recommendationReason}>{agentResponse.message}</Text>
+              </View>
+              {agentResponse.recommendations.map((recommendation) => (
+                <View key={recommendation.location.id} style={styles.recommendationBody}>
+                  <Text style={styles.recommendationTitle}>
+                    {recommendation.location.name}
+                    {recommendation.suggestedFloor ? ` · ${recommendation.suggestedFloor}` : ''}
+                  </Text>
+                  {recommendation.reasons.map((reason) => (
+                    <Text key={reason} style={styles.recommendationReason}>
+                      ✓ {reason}
+                    </Text>
+                  ))}
+                  {recommendation.missing.length > 0 ? (
+                    <Text style={styles.recommendationNote}>Missing: {recommendation.missing.join(', ')}</Text>
+                  ) : null}
+                </View>
+              ))}
+              <Text style={styles.recommendationNote}>Based on campus ratings, not live conditions.</Text>
             </View>
           ) : null}
           <View style={styles.filterRow}>
-            {FILTERS.map((filter) => (
+            {DISCOVERY_FILTERS.map((filter) => (
               <Chip
-                key={filter}
-                label={filter}
-                selected={activeFilter === filter}
-                // Tapping the active chip again clears the filter (back to null).
-                onPress={() => setActiveFilter((current) => (current === filter ? null : filter))}
+                key={filter.key}
+                label={filter.label}
+                selected={activeFilters.includes(filter.key)}
+                onPress={() => toggleFilter(filter.key)}
               />
             ))}
+            {activeFilters.length > 0 ? (
+              <Chip label="Clear" icon="close" onPress={() => setActiveFilters([])} />
+            ) : null}
           </View>
         </View>
 
@@ -126,6 +144,9 @@ export function HomeScreen() {
             keyExtractor={(item) => item.id}
             contentContainerStyle={styles.carousel}
             renderItem={({ item }) => <LocationCard location={item} />}
+            ListEmptyComponent={
+              <Text style={styles.emptyText}>No spots match all of your filters. Tap Clear to reset.</Text>
+            }
           />
         </View>
 
@@ -164,7 +185,24 @@ const styles = StyleSheet.create({
   },
   filterRow: {
     flexDirection: 'row',
+    flexWrap: 'wrap',
     gap: 8,
+  },
+  thinkingRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+  },
+  eyebrowRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  emptyText: {
+    fontFamily: Typography.medium,
+    fontSize: 13,
+    color: Colors.textSecondary,
+    paddingVertical: 12,
   },
   recommendationCard: {
     backgroundColor: Colors.maroon,
@@ -190,9 +228,7 @@ const styles = StyleSheet.create({
     borderTopWidth: 1,
     borderTopColor: Colors.maroonSoft,
     paddingTop: 10,
-  },
-  recommendationCopy: {
-    gap: 4,
+    gap: 3,
   },
   recommendationTitle: {
     fontFamily: Typography.bold,

@@ -1,4 +1,4 @@
-import type { ImageSourcePropType } from 'react-native';
+import type { ImageProps } from 'expo-image';
 
 export type Category = 'study' | 'dining' | 'athletics' | 'events';
 
@@ -16,7 +16,7 @@ export interface CampusLocation {
   id: string;
   name: string;
   category: Category;
-  image: ImageSourcePropType;
+  image: ImageProps['source'];
   capacity: number;
   density: DensityLevel;
   noise: NoiseLevel;
@@ -50,6 +50,46 @@ export interface UserRating {
   comment?: string;
   helpfulCount: number;
   createdMinutesAgo: number;
+  /** Internal owner reference. Kept for anonymous ratings, cleared when the account is deleted. */
+  ownerEmail: string | null;
+  ownerName?: string;
+  isAnonymous: boolean;
+}
+
+export interface Account {
+  name: string;
+  email: string;
+  createdAt: number;
+  /** Epoch ms when the account will be permanently deleted, or null if no deletion is pending. */
+  deletionScheduledFor: number | null;
+}
+
+export type SuggestionVote = 1 | -1;
+
+export type AmenityVote = 'keep' | 'remove';
+
+export interface SuggestedAmenity {
+  name: string;
+  votes: Record<string, AmenityVote>;
+}
+
+export interface SpaceSuggestion {
+  id: string;
+  name: string;
+  description: string;
+  usage: string;
+  amenities: SuggestedAmenity[];
+  submittedBy: string | null;
+  submittedAt: number;
+  votes: Record<string, SuggestionVote>;
+  status: 'pending' | 'official';
+}
+
+export interface NewSuggestionInput {
+  name: string;
+  description: string;
+  usage: string;
+  amenities: string[];
 }
 
 export interface NewRatingInput {
