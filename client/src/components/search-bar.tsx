@@ -11,6 +11,15 @@ interface SearchBarProps {
   placeholder?: string;
 }
 
+/**
+ * The "Ask Calvin" search input on the home screen. A text field with a
+ * sparkles icon; pressing the keyboard's send key triggers onSubmit.
+ *
+ * @param value - The current input text.
+ * @param onChangeText - Called with new text as the user types.
+ * @param onSubmit - Optional handler called when the user submits (presses send).
+ * @param placeholder - Placeholder text shown when the field is empty.
+ */
 export function SearchBar({ value, onChangeText, onSubmit, placeholder = 'Ask Calvin Ratings' }: SearchBarProps) {
   return (
     <View style={styles.container}>
@@ -21,6 +30,7 @@ export function SearchBar({ value, onChangeText, onSubmit, placeholder = 'Ask Ca
         placeholder={placeholder}
         placeholderTextColor={Colors.textMuted}
         style={styles.input}
+        // The keyboard's send key submits the query.
         returnKeyType="send"
         onSubmitEditing={onSubmit}
       />

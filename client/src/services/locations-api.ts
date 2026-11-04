@@ -1,3 +1,5 @@
+// Fetches campus location data from the Express server and connects the returned information to the correct local images
+
 import type { CampusLocation } from '@/types';
 
 type ApiLocation = Omit<CampusLocation, 'image'> & {

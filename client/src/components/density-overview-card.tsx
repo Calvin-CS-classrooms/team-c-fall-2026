@@ -9,11 +9,20 @@ interface DensityOverviewCardProps {
   breakdown: { category: string; density: DensityLevel }[];
 }
 
+/**
+ * A card showing campus density, used on the explore screen. Displays an
+ * overall density badge plus a per-category breakdown, each color-coded by
+ * its density level.
+ *
+ * @param overallDensity - The campus-wide density level for the badge.
+ * @param breakdown - Per-category density entries shown in the list.
+ */
 export function DensityOverviewCard({ overallDensity, breakdown }: DensityOverviewCardProps) {
   return (
     <View style={styles.card}>
       <View style={styles.headerRow}>
         <Text style={styles.title}>Campus Density Right Now</Text>
+        {/* Badge color and label reflect the overall density level. */}
         <View style={[styles.badge, { backgroundColor: DensityColors[overallDensity] }]}>
           <Text style={styles.badgeText}>{DensityLabels[overallDensity]}</Text>
         </View>
@@ -21,6 +30,7 @@ export function DensityOverviewCard({ overallDensity, breakdown }: DensityOvervi
       <View style={styles.breakdownRow}>
         {breakdown.map((item) => (
           <View key={item.category} style={styles.breakdownItem}>
+            {/* Colored dot and value both use the category's density color. */}
             <View style={[styles.dot, { backgroundColor: DensityColors[item.density] }]} />
             <Text style={styles.breakdownLabel}>{item.category}</Text>
             <Text style={[styles.breakdownValue, { color: DensityColors[item.density] }]}>

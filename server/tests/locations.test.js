@@ -1,3 +1,5 @@
+// Tests the RESTful API to make sure locations are retrieved correctly and invalid requests return the proper errors
+
 const request = require("supertest");
 const app = require("../app");
 

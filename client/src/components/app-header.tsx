@@ -11,6 +11,17 @@ interface AppHeaderProps {
   leftAccessory?: React.ReactNode;
 }
 
+
+/**
+ * The header shown at the top of each app page. Displays a title, an
+ * optional subtitle, an optional left accessory, and the Calvin logo
+ * (which is persistent across pages). Pads the top by the safe-area inset
+ * so content clears the device's notch/status bar.
+ *
+ * @param title - Main heading text.
+ * @param subtitle - Optional secondary text under the title.
+ * @param leftAccessory - Optional element rendered under the subtitle.
+ */
 export function AppHeader({ title, subtitle, leftAccessory }: AppHeaderProps) {
   const insets = useSafeAreaInsets();
 

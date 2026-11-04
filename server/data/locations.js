@@ -1,3 +1,5 @@
+// Stores mock campus location data, including ratings, capacity, noise levels, amenities, and other information
+
 const locations = [
   {
     id: "hekman-library",

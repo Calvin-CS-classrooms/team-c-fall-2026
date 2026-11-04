@@ -67,6 +67,8 @@ interface AppContextValue {
 
 const AppContext = createContext<AppContextValue | undefined>(undefined);
 
+// Module-level counters used to generate unique ids for locally created
+// ratings and suggestions (there is no backend yet).
 let ratingIdCounter = 0;
 let suggestionIdCounter = 0;
 let deletedUserCounter = 0;
@@ -87,6 +89,11 @@ function rekeyVotes<T>(votes: Record<string, T>, from: string, to: string): Reco
   return { ...rest, [to]: value };
 }
 
+/**
+ * Provides all app-wide state (account, ratings, suggestions, favorites,
+ * settings) to the component tree via context. Acts as a client-only stand-in
+ * for a backend: state lives in memory and is seeded from mock data.
+ */
 export function AppProvider({ children }: PropsWithChildren) {
   const [account, setAccount] = useState<Account | null>(null);
   const [ratings, setRatings] = useState<UserRating[]>(initialRatings);
@@ -158,6 +165,8 @@ export function AppProvider({ children }: PropsWithChildren) {
     return () => clearTimeout(timer);
   }, [account?.deletionScheduledFor, finalizeAccountDeletion]);
 
+  // Adds a rating only if the user is logged in; new ratings are prepended so
+  // the most recent appears first. Anonymous Mode at submit time is recorded.
   const addRating = useCallback(
     (input: NewRatingInput) => {
       if (!account) {
@@ -179,12 +188,14 @@ export function AppProvider({ children }: PropsWithChildren) {
     [account, settings.anonymousMode],
   );
 
+  // Increments the helpful count on the matching rating.
   const markHelpful = useCallback((id: string) => {
     setRatings((prev) =>
       prev.map((rating) => (rating.id === id ? { ...rating, helpfulCount: rating.helpfulCount + 1 } : rating)),
     );
   }, []);
 
+  // Removes the rating with the given id, but only if the current user owns it.
   const deleteRating = useCallback(
     (id: string) => {
       if (!calvinEmail) return;
@@ -290,6 +301,8 @@ export function AppProvider({ children }: PropsWithChildren) {
     }));
   }, [ratings, suggestions]);
 
+  // Adds the location to favorites if absent, or removes it if already
+  // present (i.e. toggles the favorite state).
   const toggleFavorite = useCallback((location: CampusLocation) => {
     setFavorites((prev) => {
       const exists = prev.some((favorite) => favorite.locationId === location.id);
@@ -300,15 +313,18 @@ export function AppProvider({ children }: PropsWithChildren) {
     });
   }, []);
 
+  // Removes the favorite with the given location id.
   const removeFavorite = useCallback((locationId: string) => {
     setFavorites((prev) => prev.filter((favorite) => favorite.locationId !== locationId));
   }, []);
 
+  // Whether the given location id is currently favorited.
   const isFavorite = useCallback(
     (locationId: string) => favorites.some((favorite) => favorite.locationId === locationId),
     [favorites],
   );
 
+  // Flips the boolean value of the given setting key.
   const toggleSetting = useCallback((key: keyof AppSettings) => {
     setSettings((prev) => ({ ...prev, [key]: !prev[key] }));
   }, []);
@@ -369,6 +385,8 @@ export function AppProvider({ children }: PropsWithChildren) {
   return <AppContext.Provider value={value}>{children}</AppContext.Provider>;
 }
 
+// Hook for consuming app state; throws if used outside an AppProvider so
+// misuse fails loudly instead of silently returning undefined.
 export function useAppData() {
   const context = useContext(AppContext);
   if (!context) {

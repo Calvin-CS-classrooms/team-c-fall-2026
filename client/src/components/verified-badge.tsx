@@ -4,6 +4,12 @@ import { StyleSheet, Text, View } from 'react-native';
 import { Colors } from '@/constants/colors';
 import { Typography } from '@/constants/typography';
 
+/**
+ * A small pill badge with a checkmark icon and label, used to indicate a
+ * verified status (e.g. a verified @calvin.edu email).
+ *
+ * @param label - Text shown next to the checkmark.
+ */
 export function VerifiedBadge({ label = 'Verified' }: { label?: string }) {
   return (
     <View style={styles.container}>

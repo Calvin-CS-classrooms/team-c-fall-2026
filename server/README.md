@@ -22,9 +22,9 @@ Client Changes:
 
 `client/src/data/locations.ts` - Allows locations to be updated with API data.
 
-`client/src/app/_layout.tsx` - Loads the API data when the app starts.
+`client/src/app/_layout.tsx` - Loads the API data when the app starts and shows a retryable error if the server is unavailable.
 
-The existing screens were left unchanged. If the server is unavailable, the app uses the original mock data.
+The existing screens were left unchanged. The client requires the server's location data before showing the app; it does not silently fall back to the original mock data.
 
 How to Run
 

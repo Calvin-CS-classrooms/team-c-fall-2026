@@ -15,6 +15,16 @@ interface SettingToggleRowProps {
   onValueChange: (value: boolean) => void;
 }
 
+/**
+ * A single preference row on the profile screen: an icon, a title and
+ * subtitle, and a toggle switch bound to a boolean setting.
+ *
+ * @param icon - Icon shown on the left.
+ * @param title - The setting's name.
+ * @param subtitle - Short description of the setting.
+ * @param value - Current on/off state of the switch.
+ * @param onValueChange - Called with the new state when toggled.
+ */
 export function SettingToggleRow({ icon, title, subtitle, value, onValueChange }: SettingToggleRowProps) {
   return (
     <View style={styles.row}>
@@ -25,6 +35,7 @@ export function SettingToggleRow({ icon, title, subtitle, value, onValueChange }
         <Text style={styles.title}>{title}</Text>
         <Text style={styles.subtitle}>{subtitle}</Text>
       </View>
+      {/* Switch colors: maroon track when on, border-colored when off. */}
       <Switch
         value={value}
         onValueChange={onValueChange}

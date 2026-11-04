@@ -18,6 +18,11 @@ import { activityFeed } from '@/data/activity';
 import { askSpotAgent, type SpotAgentResponse } from '@/services/spot-agent';
 import { applyDiscoveryFilters, DISCOVERY_FILTERS, type DiscoveryFilter } from '@/utils/discovery';
 
+/**
+ * Home screen: the main landing view. Contains the combinable location filter
+ * chips, the "Ask Calvin" search bar backed by the mock spot-finder agent, a
+ * scrollable carousel of popular locations, and a live activity feed.
+ */
 export function HomeScreen() {
   const { addRating, account, locations, ratings } = useAppData();
   const [search, setSearch] = useState('');
@@ -27,6 +32,8 @@ export function HomeScreen() {
   const [agentThinking, setAgentThinking] = useState(false);
   const latestQuery = useRef(0);
 
+  // Recompute the visible locations whenever the active filters change.
+  // A location must meet every active filter to be shown.
   const filteredLocations = useMemo(
     () => applyDiscoveryFilters(locations, ratings, activeFilters),
     [activeFilters, locations, ratings],
@@ -38,6 +45,8 @@ export function HomeScreen() {
     );
   };
 
+  // Handles search submission: sends the trimmed query to the mock agent and
+  // clears the input while the answer loads.
   const askCalvin = async () => {
     const nextQuestion = search.trim();
     if (!nextQuestion) return;

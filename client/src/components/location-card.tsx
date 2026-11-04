@@ -12,12 +12,23 @@ interface LocationCardProps {
   onPress?: () => void;
 }
 
+/**
+ * A compact card used in the home screen's "Popular On-Campus Today"
+ * carousel. Shows a location's image, name, rating, open/closed status,
+ * and a capacity meter. The whole card is tappable. However, currently
+ * no action is taken when tapping a card.
+ *
+ * @param location - The campus location to display.
+ * @param onPress - Optional handler called when the card is tapped.
+ */
 export function LocationCard({ location, onPress }: LocationCardProps) {
   return (
+    // Slight opacity dim while pressed gives tactile feedback.
     <Pressable onPress={onPress} style={({ pressed }) => [styles.card, pressed && styles.pressed]}>
       <Image source={location.image} style={styles.image} contentFit="cover" />
       <View style={styles.body}>
         <View style={styles.titleRow}>
+          {/* numberOfLines truncates long names to a single line. */}
           <Text style={styles.name} numberOfLines={1}>
             {location.name}
           </Text>

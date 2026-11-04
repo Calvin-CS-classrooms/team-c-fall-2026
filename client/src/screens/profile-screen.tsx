@@ -13,6 +13,11 @@ import { useAppData } from '@/context/app-context';
 import { confirmAction } from '@/utils/confirm';
 import { formatDate } from '@/utils/format';
 
+/**
+ * Profile screen: shows the logged-in user's account info, account deletion
+ * status, preference toggles (geolocation, anonymous mode, capacity alerts),
+ * pinned favorite spots, and log out / delete account buttons.
+ */
 export function ProfileScreen() {
   const {
     account,

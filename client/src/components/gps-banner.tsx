@@ -9,8 +9,17 @@ interface GpsBannerProps {
   onPress: () => void;
 }
 
+/**
+ * A tappable banner on the home screen prompting the user to rate their
+ * current location. Shows a location icon, a title, the detected location
+ * label, and a chevron. Tapping it opens the quick-rate sheet.
+ *
+ * @param locationLabel - The detected location shown under the title.
+ * @param onPress - Called when the banner is tapped.
+ */
 export function GpsBanner({ locationLabel, onPress }: GpsBannerProps) {
   return (
+    // Slight opacity dim while pressed gives tactile feedback.
     <Pressable onPress={onPress} style={({ pressed }) => [styles.container, pressed && styles.pressed]}>
       <View style={styles.iconWrap}>
         <Ionicons name="location" size={18} color={Colors.white} />

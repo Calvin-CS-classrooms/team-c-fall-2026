@@ -15,11 +15,24 @@ interface ChipProps {
   disabled?: boolean;
 }
 
+/**
+ * A pill-shaped selectable button, used for filter chips (e.g. noise
+ * levels, amenities, categories). Shows an optional icon and label, and
+ * changes appearance when selected, pressed, or disabled.
+ *
+ * @param label - Text shown on the chip.
+ * @param selected - Whether the chip is in its selected (highlighted) state.
+ * @param onPress - Called when the chip is tapped.
+ * @param icon - Optional icon shown before the label.
+ * @param disabled - Whether the chip is non-interactive.
+ */
 export function Chip({ label, selected, onPress, icon, disabled }: ChipProps) {
   return (
     <Pressable
       disabled={disabled}
       onPress={onPress}
+      // Style array: base chip style, plus conditional styles for the
+      // selected, pressed, and disabled states.
       style={({ pressed }) => [
         styles.chip,
         selected && styles.chipSelected,

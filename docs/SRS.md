@@ -167,7 +167,7 @@ The application should be simple enough that students can quickly check a locati
 
 ---
 
-## 3.4 System Features
+## 3.3 System Features
 
 ### Campus Place Browsing
 
@@ -345,7 +345,7 @@ These user stories describe the main features from the student's point of view. 
 
 **Acceptance Criteria:**
 - An anonymous rating's owner will not be displayed publicly.
-- An anonymous rating's owner will still be stored internally for documentation purposes, and to mitigate the amount unhelpful ratings.
+- An anonymous rating's owner will still be stored internally for documentation purposes, and to mitigate the amount of unhelpful ratings.
 - Anonymous ratings will only apply to ratings created while the setting is enabled.
 
 ---
@@ -380,8 +380,43 @@ These user stories describe the main features from the student's point of view. 
 **User Story:** As a Calvin student, I can receive a push notification when one of my favorite spots opens up.
 
 **Acceptance Criteria:**
-- When the number of reviews for a student's favorite space in a short time have dwindled (e.g., 20 reviews in the past hour, but < 3 reviews in the past 15 minutes), a student can receive a push notification suggesting that the place could be less busy.
+- When the number of reviews for a student's favorite space in a short time has dwindled (e.g., 20 reviews in the past hour, but < 3 reviews in the past 15 minutes), a student can receive a push notification suggesting that the place could be less busy.
 - Push notifications can be disabled.
+
+---
+
+## US-13: Delete Ratings
+
+**User Story:** As a Calvin student, I can delete a rating that I have created if I no longer want it public.
+
+**Acceptance Criteria:**
+- When a student views a rating they created, a delete option is accessible directly from that review.
+- Upon confirming deletion, the rating is permanently removed from the location's public list and the overall average rating recalculates immediately.
+- A user cannot delete or edit ratings created by other students.
+
+---
+
+## US-14: AI Spot Recommendation Agent
+
+**User Story:** As a user, I can ask an AI agent a question related to finding the best place for my current needs and receive a personalized answer.
+
+**Acceptance Criteria:**
+- When a user submits a natural-language query describing their current needs (e.g., "quiet spot near science building with power outlets"), the AI agent generates a response recommending matching locations.
+- The recommendation references relevant attributes (such as current noise levels, distance, amenities, or hours) to explain why the location fits the request.
+- If no location meets the criteria, the AI agent prompts the user to relax constraints or suggests the closest matching alternative.
+
+---
+
+## US-15: Multi-Category Location Sorting
+
+**User Story:** As a user, I can sort locations by multiple categories like "now open", "quiet spots", or "trending".
+
+**Acceptance Criteria:**
+- A user can select from predefined filter/sort options, including "now open", "quiet spots", and "trending", on the location discovery screen.
+- When multiple filters or sort criteria are combined, the list updates dynamically to show only locations meeting all active conditions.
+- Active sort options and filters can be cleared or reset with a single tap to return to the default view.
+
+---
 
 # Current Prototype Goal
 
