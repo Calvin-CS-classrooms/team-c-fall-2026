@@ -1,18 +1,21 @@
+import { Ionicons } from '@expo/vector-icons';
+import { useRouter } from 'expo-router';
 import { useMemo, useState } from 'react';
-import { ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { AppHeader } from '@/components/app-header';
 import { Chip } from '@/components/chip';
 import { DensityOverviewCard } from '@/components/density-overview-card';
 import { LandmarkCard } from '@/components/landmark-card';
+import { confirmDeleteRating } from '@/components/rating-history-row';
 import { StarRating } from '@/components/star-rating';
 import { Colors } from '@/constants/colors';
 import { Typography } from '@/constants/typography';
 import { useAppData } from '@/context/app-context';
-import { locations } from '@/data/locations';
-import type { Category, DensityLevel } from '@/types';
+import type { CampusLocation, Category, DensityLevel } from '@/types';
 import { formatMinutesAgo } from '@/utils/format';
+import { isOwnRating, ratingAuthorLabel } from '@/utils/ratings';
 
 const CATEGORIES: { key: Category; label: string }[] = [
   { key: 'study', label: 'Study & Quiet' },
@@ -23,7 +26,7 @@ const CATEGORIES: { key: Category; label: string }[] = [
 
 const DENSITY_ORDER: Record<DensityLevel, number> = { quiet: 0, moderate: 1, busy: 2 };
 
-function overallDensity(): DensityLevel {
+function overallDensity(locations: CampusLocation[]): DensityLevel {
   const average =
     locations.reduce((sum, location) => sum + DENSITY_ORDER[location.density], 0) / locations.length;
   if (average < 0.66) return 'quiet';
@@ -32,12 +35,13 @@ function overallDensity(): DensityLevel {
 }
 
 export function ExploreScreen() {
-  const { isFavorite, toggleFavorite, ratings } = useAppData();
+  const router = useRouter();
+  const { isFavorite, toggleFavorite, ratings, locations, calvinEmail, deleteRating } = useAppData();
   const [category, setCategory] = useState<Category>('study');
 
   const filteredLocations = useMemo(
     () => locations.filter((location) => location.category === category),
-    [category],
+    [category, locations],
   );
   const recentRatings = useMemo(() => {
     const locationIds = new Set(filteredLocations.map((location) => location.id));
@@ -58,7 +62,7 @@ export function ExploreScreen() {
         const density: DensityLevel = average < 0.66 ? 'quiet' : average < 1.33 ? 'moderate' : 'busy';
         return { category: label, density };
       }),
-    [],
+    [locations],
   );
 
   return (
@@ -80,7 +84,7 @@ export function ExploreScreen() {
         </View>
 
         <View style={styles.section}>
-          <DensityOverviewCard overallDensity={overallDensity()} breakdown={breakdown} />
+          <DensityOverviewCard overallDensity={overallDensity(locations)} breakdown={breakdown} />
         </View>
 
         <View style={styles.section}>
@@ -102,6 +106,14 @@ export function ExploreScreen() {
               <Text style={styles.emptySubtitle}>Check back soon for campus events and happenings.</Text>
             </View>
           )}
+          <Pressable style={styles.suggestCard} onPress={() => router.push('/suggestions')} accessibilityRole="button">
+            <Ionicons name="add-circle-outline" size={22} color={Colors.maroon} />
+            <View style={styles.suggestCopy}>
+              <Text style={styles.suggestTitle}>Don&apos;t see your spot?</Text>
+              <Text style={styles.suggestSubtitle}>Suggest a space or vote on what other students found.</Text>
+            </View>
+            <Ionicons name="chevron-forward" size={18} color={Colors.textMuted} />
+          </Pressable>
         </View>
 
         {category !== 'events' ? (
@@ -114,7 +126,17 @@ export function ExploreScreen() {
                     <View style={styles.ratingHeader}>
                       <Text style={styles.ratingLocation}>{rating.locationName}</Text>
                       <Text style={styles.ratingTime}>{formatMinutesAgo(rating.createdMinutesAgo)}</Text>
+                      {isOwnRating(rating, calvinEmail) ? (
+                        <Pressable
+                          onPress={() => confirmDeleteRating(rating, () => deleteRating(rating.id))}
+                          hitSlop={8}
+                          accessibilityRole="button"
+                          accessibilityLabel={`Delete your rating for ${rating.locationName}`}>
+                          <Ionicons name="trash-outline" size={16} color={Colors.danger} />
+                        </Pressable>
+                      ) : null}
                     </View>
+                    <Text style={styles.ratingAuthor}>{ratingAuthorLabel(rating)}</Text>
                     <StarRating value={rating.stars} readOnly size={15} />
                     {rating.comment ? <Text style={styles.ratingComment}>{rating.comment}</Text> : null}
                     <Text style={styles.ratingMeta}>
@@ -189,6 +211,36 @@ const styles = StyleSheet.create({
     fontFamily: Typography.medium,
     fontSize: 11,
     color: Colors.textMuted,
+  },
+  ratingAuthor: {
+    fontFamily: Typography.semiBold,
+    fontSize: 11,
+    color: Colors.textSecondary,
+  },
+  suggestCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    backgroundColor: Colors.surface,
+    borderRadius: 16,
+    borderWidth: 1,
+    borderStyle: 'dashed',
+    borderColor: Colors.maroonSoft,
+    padding: 14,
+  },
+  suggestCopy: {
+    flex: 1,
+    gap: 2,
+  },
+  suggestTitle: {
+    fontFamily: Typography.bold,
+    fontSize: 14,
+    color: Colors.textPrimary,
+  },
+  suggestSubtitle: {
+    fontFamily: Typography.medium,
+    fontSize: 12,
+    color: Colors.textSecondary,
   },
   ratingComment: {
     fontFamily: Typography.medium,

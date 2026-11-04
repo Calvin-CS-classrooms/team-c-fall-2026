@@ -36,3 +36,7 @@ export function getKnightTier(ratingsCount: number): KnightTier {
   const progress = span === 0 ? 1 : (ratingsCount - current.min) / span;
   return { label: current.label, next: next.label, progress: Math.min(Math.max(progress, 0), 1) };
 }
+
+export function formatDate(timestamp: number): string {
+  return new Date(timestamp).toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' });
+}

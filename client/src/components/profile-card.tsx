@@ -8,9 +8,10 @@ import { Typography } from '@/constants/typography';
 interface ProfileCardProps {
   name: string;
   email: string;
+  verified?: boolean;
 }
 
-export function ProfileCard({ name, email }: ProfileCardProps) {
+export function ProfileCard({ name, email, verified = true }: ProfileCardProps) {
   const initials = name
     .split(' ')
     .map((part) => part[0])
@@ -26,7 +27,7 @@ export function ProfileCard({ name, email }: ProfileCardProps) {
       </View>
       <Text style={styles.name}>{name}</Text>
       <Text style={styles.email}>{email}</Text>
-      <VerifiedBadge label="calvin.edu SSO Verified" />
+      {verified ? <VerifiedBadge label="calvin.edu Verified" /> : null}
     </View>
   );
 }
