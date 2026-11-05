@@ -14,33 +14,49 @@ import { useAppData } from '@/context/app-context';
 import type { SpaceSuggestion } from '@/types';
 import { amenityTally, hasSuggestedToday, netScore, PROMOTION_THRESHOLD } from '@/utils/suggestions';
 
+// Preset amenity options shown as selectable chips when suggesting a space.
 const AMENITY_OPTIONS = ['Wi-Fi', 'Outlets', 'Seating', 'Quiet', 'Group Friendly', 'Natural Light', 'Food Nearby'];
 
+/**
+ * Suggestions screen: lets users propose new study spaces for the community.
+ * Contains a suggestion form (name, description, usage, amenities), a list of
+ * pending suggestions that others can vote on, and a section for suggestions
+ * that have been promoted to official spaces.
+ */
 export function SuggestionsScreen() {
   const router = useRouter();
   const { calvinEmail, suggestions, submitSuggestion } = useAppData();
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
   const [usage, setUsage] = useState('');
+  // Selected amenity chips for the new suggestion.
   const [amenities, setAmenities] = useState<string[]>([]);
+  // Text for adding a custom amenity not in the preset list.
   const [customAmenity, setCustomAmenity] = useState('');
+  // Validation/submission error message to display, if any.
   const [error, setError] = useState('');
+  // Whether the current suggestion was successfully submitted.
   const [submitted, setSubmitted] = useState(false);
 
+  // Suggestions awaiting votes vs. those already promoted to official.
   const pending = suggestions.filter((suggestion) => suggestion.status === 'pending');
   const official = suggestions.filter((suggestion) => suggestion.status === 'official');
+  // Whether the user has already used their one suggestion per day.
   const limitReached = calvinEmail ? hasSuggestedToday(suggestions, calvinEmail) : false;
 
+  // Adds or removes an amenity from the selected set.
   const toggleAmenity = (amenity: string) => {
     setAmenities((prev) => (prev.includes(amenity) ? prev.filter((item) => item !== amenity) : [...prev, amenity]));
   };
 
+  // Adds the typed custom amenity if it is non-empty and not already selected.
   const addCustomAmenity = () => {
     const value = customAmenity.trim();
     if (value && !amenities.includes(value)) setAmenities((prev) => [...prev, value]);
     setCustomAmenity('');
   };
 
+  // Submits the suggestion; on success clears the form and shows a thank-you.
   const handleSubmit = () => {
     const result = submitSuggestion({ name, description, usage, amenities });
     setError(result ?? '');
@@ -148,6 +164,11 @@ export function SuggestionsScreen() {
   );
 }
 
+/**
+ * Renders a single community suggestion with its vote progress, helpful/not
+ * helpful voting, and per-amenity keep/remove voting. Users cannot vote on
+ * their own suggestion.
+ */
 function SuggestionCard({ suggestion }: { suggestion: SpaceSuggestion }) {
   const { calvinEmail, voteOnSuggestion, voteOnAmenity, proposeAmenity } = useAppData();
   const [newAmenity, setNewAmenity] = useState('');
@@ -156,6 +177,7 @@ function SuggestionCard({ suggestion }: { suggestion: SpaceSuggestion }) {
   const isOwn = Boolean(calvinEmail) && suggestion.submittedBy === calvinEmail;
   const canVote = Boolean(calvinEmail) && !isOwn;
 
+  // Proposes the typed amenity for this suggestion and clears the input.
   const submitAmenity = () => {
     proposeAmenity(suggestion.id, newAmenity);
     setNewAmenity('');
