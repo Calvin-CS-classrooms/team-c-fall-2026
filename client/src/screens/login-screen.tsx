@@ -9,13 +9,22 @@ import { Colors } from '@/constants/colors';
 import { Typography } from '@/constants/typography';
 import { useAppData } from '@/context/app-context';
 
+
+/**
+ * Login screen: the sign-in view shown to signed-out users. Contains input
+ * fields for the Calvin email and password, a show/hide password toggle, and
+ * a sign-in button. Only @calvin.edu accounts are accepted.
+ */
 export function LoginScreen() {
   const { logIn } = useAppData();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  // Whether the password is currently visible (toggled by the eye icon).
   const [showPassword, setShowPassword] = useState(false);
+  // Validation/login error message to display, if any.
   const [error, setError] = useState('');
 
+  // Attempts to log in and surfaces any error returned by the auth logic.
   const handleLogIn = () => {
     setError(logIn(email, password) ?? '');
   };
