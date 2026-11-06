@@ -9,7 +9,6 @@ import {
 import { Stack } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { useEffect, useState } from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { Colors } from '@/constants/colors';
 import { AppProvider, useAppData } from '@/context/app-context';
@@ -28,8 +27,8 @@ SplashScreen.preventAutoHideAsync();
  * Responsibilities:
  *  - Load the Montserrat font family.
  *  - Fetch campus locations from the server before showing the UI.
- *  - Show a retryable error screen if the location server cannot be reached.
- *  - Render the app (via AppProvider + RootNavigator) once initialization succeeds.
+ *  - Fall back to the bundled location data if the server cannot be reached.
+ *  - Render the app (via AppProvider + RootNavigator) once initialization finishes.
  *
  * @returns The app's root UI, or null while still initializing.
  */
@@ -43,12 +42,8 @@ export default function RootLayout() {
     Montserrat_800ExtraBold,
   });
 
-  // Whether campus locations were successfully fetched from the server.
+  // Whether location loading has finished (from the server or the bundled fallback).
   const [locationsLoaded, setLocationsLoaded] = useState(false);
-  // Holds the error that prevented locations from loading, if any.
-  const [loadError, setLoadError] = useState<Error | null>(null);
-  // Incremented by the Retry button to re-trigger the initialization effect.
-  const [retryCount, setRetryCount] = useState(0);
 
   useEffect(() => {
     // Wait for fonts before attempting to load locations.
@@ -56,47 +51,27 @@ export default function RootLayout() {
 
     async function initializeApp() {
       try {
-        setLoadError(null);
-        // Fetch locations from the server and store them for the rest of the app.
+        // Prefer live data from the server and store it for the rest of the app.
         const serverLocations = await fetchLocations();
         setLocations(serverLocations);
-        setLocationsLoaded(true);
       } catch (error) {
-        // Normalize the error so we always have a message to display.
-        const initializationError =
-          error instanceof Error ? error : new Error('The location server could not be reached.');
-        setLoadError(initializationError);
-        setLocationsLoaded(false);
+        // Server unreachable: keep the bundled mock data in @/data/locations so
+        // the client can also run on its own without the server.
+        const reason = error instanceof Error ? error.message : String(error);
+        console.warn(`Location server unavailable (${reason}); using bundled location data.`);
       } finally {
-        // Always hide the splash screen once initialization finishes, success or failure.
+        // Always continue and hide the splash screen, success or fallback.
+        setLocationsLoaded(true);
         await SplashScreen.hideAsync();
       }
     }
 
     initializeApp();
-    // Re-run when fonts finish loading or when the user taps Retry.
-  }, [fontsLoaded, retryCount]);
+  }, [fontsLoaded]);
 
-  // Keep the splash screen up (render nothing) until fonts are ready and
-  // locations have either loaded or failed.
-  if (!fontsLoaded || (!locationsLoaded && !loadError)) {
+  // Keep the splash screen up (render nothing) until fonts and locations are ready.
+  if (!fontsLoaded || !locationsLoaded) {
     return null;
-  }
-
-  // Show a friendly error screen with a Retry button when the server is unreachable.
-  if (loadError) {
-    return (
-      <View style={styles.errorContainer}>
-        <Text style={styles.errorTitle}>Unable to load campus locations</Text>
-        <Text style={styles.errorMessage}>
-          Connect to the local server and try again. The app does not use offline location data.
-        </Text>
-        <Text style={styles.errorDetails}>{loadError.message}</Text>
-        <Pressable style={styles.retryButton} onPress={() => setRetryCount((count) => count + 1)}>
-          <Text style={styles.retryButtonText}>Retry</Text>
-        </Pressable>
-      </View>
-    );
   }
 
   return (
@@ -130,40 +105,3 @@ function RootNavigator() {
     </Stack>
   );
 }
-const styles = StyleSheet.create({
-  errorContainer: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    padding: 24,
-    backgroundColor: Colors.background,
-  },
-  errorTitle: {
-    color: Colors.textPrimary,
-    fontSize: 20,
-    fontWeight: '700',
-    textAlign: 'center',
-  },
-  errorMessage: {
-    marginTop: 12,
-    color: Colors.textSecondary,
-    textAlign: 'center',
-  },
-  errorDetails: {
-    marginTop: 8,
-    color: Colors.textMuted,
-    fontSize: 12,
-    textAlign: 'center',
-  },
-  retryButton: {
-    marginTop: 24,
-    paddingHorizontal: 24,
-    paddingVertical: 12,
-    borderRadius: 8,
-    backgroundColor: Colors.maroon,
-  },
-  retryButtonText: {
-    color: Colors.white,
-    fontWeight: '600',
-  },
-});
