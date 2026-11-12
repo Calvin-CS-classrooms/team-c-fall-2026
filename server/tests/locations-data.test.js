@@ -1,26 +1,10 @@
-// Validates the mock location data the API serves, so a typo in data/locations.js
+// Validates the mock location data the API serves, so a typo in data-mock/locations.js
 // is caught here instead of crashing or mis-rendering the client.
 
-const locations = require("../data/locations");
+const locations = require("../data-mock/locations");
 
 // These must match the client types in client/src/types/index.ts.
-const CATEGORIES = ["study", "dining", "athletics", "events"];
-const DENSITY_LEVELS = ["quiet", "moderate", "busy"];
-const NOISE_LEVELS = ["whisper", "low-buzz", "social", "loud"];
-
-// The client can only show images it has bundled. Keep this list in sync with the
-// `images` map in client/src/services/locations-api.ts.
-const CLIENT_IMAGE_KEYS = [
-  "hekman_library",
-  "dining-hall-min",
-  "business-building",
-  "north-hall",
-  "spoelhof-fieldhouse",
-  "devries-greenhouse",
-  "cfac-practice-lounges",
-  "morren-fitness",
-  "peets-coffee"
-];
+const NOISE_LEVELS = ["whisper", "lowBuzz", "social", "loud"];
 
 describe("Location mock data", () => {
 
@@ -29,14 +13,11 @@ describe("Location mock data", () => {
     expect(locations.length).toBeGreaterThan(0);
   });
 
-  test("every location has a unique id", () => {
+  test("every location has a unique numeric id", () => {
     const ids = locations.map(loc => loc.id);
     expect(new Set(ids).size).toBe(ids.length);
-  });
-
-  test("ids are URL-safe kebab-case slugs", () => {
-    for (const loc of locations) {
-      expect(loc.id).toMatch(/^[a-z0-9]+(-[a-z0-9]+)*$/);
+    for (const id of ids) {
+      expect(Number.isInteger(id)).toBe(true);
     }
   });
 
@@ -45,67 +26,24 @@ describe("Location mock data", () => {
     (_id, loc) => {
       expect(typeof loc.name).toBe("string");
       expect(loc.name.length).toBeGreaterThan(0);
-      expect(typeof loc.imageKey).toBe("string");
-      expect(typeof loc.hoursLabel).toBe("string");
-      expect(typeof loc.isOpenNow).toBe("boolean");
-      expect(typeof loc.shortDescription).toBe("string");
-      expect(Array.isArray(loc.amenities)).toBe(true);
-      expect(Array.isArray(loc.floors)).toBe(true);
+      expect(typeof loc.image).toBe("string");
+      expect(typeof loc.description).toBe("string");
+      expect(Number.isInteger(loc.numFloors)).toBe(true);
+      expect(loc.numFloors).toBeGreaterThanOrEqual(1);
+      expect(Number.isInteger(loc.numSpaces)).toBe(true);
+      expect(loc.numSpaces).toBeGreaterThanOrEqual(0);
+      expect(typeof loc.hours).toBe("object");
+      expect(typeof loc.hours.openingTime).toBe("string");
+      expect(typeof loc.hours.closingTime).toBe("string");
     }
   );
 
-  test.each(locations.map(loc => [loc.id, loc]))(
-    "%s uses only values the client understands",
-    (_id, loc) => {
-      expect(CATEGORIES).toContain(loc.category);
-      expect(DENSITY_LEVELS).toContain(loc.density);
-      expect(NOISE_LEVELS).toContain(loc.noise);
-      expect(CLIENT_IMAGE_KEYS).toContain(loc.imageKey);
-    }
-  );
-
-  test("capacity is a percentage between 0 and 100", () => {
+  test("hours use HH:MM format", () => {
     for (const loc of locations) {
-      expect(Number.isInteger(loc.capacity)).toBe(true);
-      expect(loc.capacity).toBeGreaterThanOrEqual(0);
-      expect(loc.capacity).toBeLessThanOrEqual(100);
-    }
-  });
-
-  test("rating is between 0 and 5", () => {
-    for (const loc of locations) {
-      expect(typeof loc.rating).toBe("number");
-      expect(loc.rating).toBeGreaterThanOrEqual(0);
-      expect(loc.rating).toBeLessThanOrEqual(5);
-    }
-  });
-
-  test("wait time, when present, is a non-negative number of minutes", () => {
-    for (const loc of locations.filter(l => l.waitTimeMinutes !== undefined)) {
-      expect(Number.isInteger(loc.waitTimeMinutes)).toBe(true);
-      expect(loc.waitTimeMinutes).toBeGreaterThanOrEqual(0);
-    }
-  });
-
-  test("amenities are non-empty strings without duplicates", () => {
-    for (const loc of locations) {
-      for (const amenity of loc.amenities) {
-        expect(typeof amenity).toBe("string");
-        expect(amenity.trim().length).toBeGreaterThan(0);
-      }
-      expect(new Set(loc.amenities).size).toBe(loc.amenities.length);
-    }
-  });
-
-  test("every location has at least one floor with a valid noise level", () => {
-    for (const loc of locations) {
-      expect(loc.floors.length).toBeGreaterThan(0);
-      for (const floor of loc.floors) {
-        expect(typeof floor.floor).toBe("string");
-        expect(typeof floor.description).toBe("string");
-        expect(NOISE_LEVELS).toContain(floor.noise);
-      }
+      expect(loc.hours.openingTime).toMatch(/^\d{2}:\d{2}$/);
+      expect(loc.hours.closingTime).toMatch(/^\d{2}:\d{2}$/);
     }
   });
 
 });
+

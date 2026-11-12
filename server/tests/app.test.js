@@ -3,7 +3,7 @@
 
 const request = require("supertest");
 const app = require("../app");
-const locations = require("../data/locations");
+const locations = require("../data-mock/locations");
 
 const CLIENT_ORIGIN = "http://localhost:8081";
 
@@ -57,12 +57,11 @@ describe("Responses", () => {
     expect(response.body.map(loc => loc.id)).toEqual(locations.map(loc => loc.id));
   });
 
-  test("sends imageKey instead of a client-side image", async () => {
+  test("sends the location image key", async () => {
     const response = await request(app).get("/api/locations");
 
     for (const loc of response.body) {
-      expect(loc).toHaveProperty("imageKey");
-      expect(loc).not.toHaveProperty("image");
+      expect(loc).toHaveProperty("image");
     }
   });
 
@@ -74,17 +73,17 @@ describe("GET /api/locations/:id", () => {
     const response = await request(app).get(`/api/locations/${id}`);
 
     expect(response.statusCode).toBe(200);
-    expect(response.body).toEqual(locations.find(loc => loc.id === id));
+    expect(response.body.id).toBe(id);
   });
 
-  test("ids are case-sensitive", async () => {
+  test("a non-numeric id returns 404", async () => {
     const response = await request(app).get("/api/locations/HEKMAN-LIBRARY");
 
     expect(response.statusCode).toBe(404);
   });
 
   test("a URL-encoded id that does not exist returns 404", async () => {
-    const response = await request(app).get("/api/locations/hekman%20library");
+    const response = await request(app).get("/api/locations/999");
 
     expect(response.statusCode).toBe(404);
     expect(response.body.error).toBe("Location not found");
@@ -109,13 +108,13 @@ describe("Unknown routes and methods", () => {
   test("locations are read-only for now (POST is not handled)", async () => {
     const response = await request(app)
       .post("/api/locations")
-      .send({ id: "new-place", name: "New Place" });
+      .send({ id: 1, name: "New Place" });
 
     expect(response.statusCode).toBe(404);
   });
 
   test("DELETE on a location is not handled", async () => {
-    const response = await request(app).delete("/api/locations/hekman-library");
+    const response = await request(app).delete("/api/locations/1");
 
     expect(response.statusCode).toBe(404);
   });

@@ -1,25 +1,28 @@
 const express = require("express");
 const router = express.Router();
-const locations = require("../data/locations");
+const { getLocations, getLocationById } = require("../services/campus-service");
 
-// Get all locations
-router.get("/", (req, res) => {
-  res.json(locations);
+// Get all locations (each with its floors and spaces)
+router.get("/", async (req, res) => {
+  try {
+    const locations = await getLocations();
+    res.json(locations);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
 });
 
 // Get one location by ID
-router.get("/:id", (req, res) => {
-  const location = locations.find(
-    loc => loc.id === req.params.id
-  );
-
-  if (!location) {
-    return res.status(404).json({
-      error: "Location not found"
-    });
+router.get("/:id", async (req, res) => {
+  try {
+    const location = await getLocationById(req.params.id);
+    if (!location) {
+      return res.status(404).json({ error: "Location not found" });
+    }
+    res.json(location);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
   }
-
-  res.json(location);
 });
 
 module.exports = router;
