@@ -34,24 +34,35 @@ Terminal 1 - Server
 
 From the main project folder:
 
-cd server npm install npm start
+```bash
+cd server
+npm install
+cp .env.example .env   # then fill in SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY
+npm start
+```
 
-The server runs at `http://localhost:3000`.
+The server runs at `http://localhost:3000` and logs whether it is using Supabase or mock data.
+To run without a database, set `USE_MOCK_DATA=true` in `server/.env`.
+Never commit `server/.env`; it holds the service role key and is git-ignored.
 
 Terminal 2 - React Native
 
 From the main project folder, open another terminal:
 
-cd client npm install npx expo start
+```bash
+cd client
+npm install
+npx expo start
+```
 
-Press W to open the website.
-
-Keep both terminals running so the React Native app can retrieve data from the API.
+Press W to open the website. If the server is not running, the client falls back to its bundled data.
 
 Testing:
 
-To run the API tests, open a terminal inside `server` and run:
+To run the server tests, open a terminal inside `server` and run:
 
+```bash
 npm test
+```
 
-All four API tests passed.
+Server tests always use mock data (see `jest.setup.js`) and mock the Supabase client, so they need no database or credentials.
