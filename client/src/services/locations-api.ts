@@ -2,12 +2,8 @@
 
 import type { ImageProps } from 'expo-image';
 
+import { fetchJson } from '@/services/api-client';
 import type { Location } from '@/types';
-
-const API_URL = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:3000';
-
-// Give up quickly when the server isn't running so the app can fall back to bundled data.
-const REQUEST_TIMEOUT_MS = 3000;
 
 // Location images are bundled with the app (they are static and few), so the
 // server sends a stable string key rather than an asset. This map resolves
@@ -39,22 +35,13 @@ function resolveImage(image: string | undefined, name: string): ImageProps['sour
   return { uri: `https://placehold.co/400x200?text=${encodeURIComponent(name)}` };
 }
 
+/**
+ * Fetches every location from GET /api/locations, resolving each image key to
+ * a renderable source. The server also nests each location's `floors` and
+ * `spaces`; they are passed through untouched (see campus-api.ts).
+ */
 export async function fetchLocations(): Promise<Location[]> {
-  const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
-
-  let response: Response;
-  try {
-    response = await fetch(`${API_URL}/api/locations`, { signal: controller.signal });
-  } finally {
-    clearTimeout(timeout);
-  }
-
-  if (!response.ok) {
-    throw new Error(`API returned ${response.status}`);
-  }
-
-  const locations = (await response.json()) as Location[];
+  const locations = await fetchJson<Location[]>('/api/locations');
   return locations.map((location) => ({
     ...location,
     image: resolveImage(location.image as string | undefined, location.name),

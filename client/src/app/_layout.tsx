@@ -13,12 +13,11 @@ import { useEffect, useState } from 'react';
 import { Colors } from '@/constants/colors';
 import { AppProvider, useAppData } from '@/context/app-context';
 
-// REST API: load campus locations from the server and cache them in memory.
-import { setLocations } from '@/data/locations';
-import { fetchLocations } from '@/services/locations-api';
+// REST API: load locations, spaces, and ratings from the server into memory.
+import { loadCampusData } from '@/services/campus-api';
 
 // Keep the native splash screen visible until the app finishes initializing
-// (fonts loaded and locations fetched) so users don't see a blank screen.
+// (fonts loaded and campus data fetched) so users don't see a blank screen.
 SplashScreen.preventAutoHideAsync();
 
 /**
@@ -26,8 +25,8 @@ SplashScreen.preventAutoHideAsync();
  *
  * Responsibilities:
  *  - Load the Montserrat font family.
- *  - Fetch campus locations from the server before showing the UI.
- *  - Fall back to the bundled location data if the server cannot be reached.
+ *  - Fetch campus locations, spaces, and ratings from the server before showing the UI.
+ *  - Fall back to the bundled data if the server cannot be reached.
  *  - Render the app (via AppProvider + RootNavigator) once initialization finishes.
  *
  * @returns The app's root UI, or null while still initializing.
@@ -51,14 +50,9 @@ export default function RootLayout() {
 
     async function initializeApp() {
       try {
-        // Prefer live data from the server and store it for the rest of the app.
-        const serverLocations = await fetchLocations();
-        setLocations(serverLocations);
-      } catch (error) {
-        // Server unreachable: keep the bundled mock data in @/data/locations so
-        // the client can also run on its own without the server.
-        const reason = error instanceof Error ? error.message : String(error);
-        console.warn(`Location server unavailable (${reason}); using bundled location data.`);
+        // Prefer live data from the server. On failure this keeps the bundled
+        // data (and logs a warning) so the client can also run on its own.
+        await loadCampusData();
       } finally {
         // Always continue and hide the splash screen, success or fallback.
         setLocationsLoaded(true);

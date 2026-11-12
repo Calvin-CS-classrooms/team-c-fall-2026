@@ -1,6 +1,8 @@
 import type { Rating } from '@/types';
 
-export const initialRatings: Rating[] = [
+// Bundled ratings, used when the server is unreachable. Replaced with the
+// server's ratings at startup by loadCampusData (src/services/campus-api.ts).
+export let initialRatings: Rating[] = [
   {
     id: 1,
     userId: 1,
@@ -46,3 +48,8 @@ export const initialRatings: Rating[] = [
     numUpvotes: 5,
   },
 ];
+
+/** Replaces the starting ratings, e.g. with the server's data. Call before AppProvider mounts. */
+export function setInitialRatings(nextRatings: Rating[]) {
+  initialRatings = nextRatings;
+}

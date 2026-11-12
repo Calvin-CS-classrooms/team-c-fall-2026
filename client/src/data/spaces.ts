@@ -1,6 +1,8 @@
 import type { Space } from '@/types';
 
-export const spaces: Space[] = [
+// Bundled spaces, used when the server is unreachable. Replaced with the
+// server's spaces at startup by loadCampusData (src/services/campus-api.ts).
+export let spaces: Space[] = [
   // Hekman Library (location 1)
   { id: 1, locationId: 1, categoryId: 1, floorId: 1, name: 'Hekman Commons', description: 'Group tables, service desk, and cafe seating.', noiseLevel: 'social', spotSuggestionId: null, overallRating: 4.6, crowdRating: 50, currentNoiseLevel: 'social' },
   { id: 2, locationId: 1, categoryId: 1, floorId: 2, name: 'Hekman Reading Room', description: 'Long tables and lounge chairs for focused work.', noiseLevel: 'lowBuzz', spotSuggestionId: null, overallRating: 4.7, crowdRating: 40, currentNoiseLevel: 'lowBuzz' },
@@ -38,4 +40,9 @@ export function getSpacesByLocationId(locationId: number): Space[] {
 
 export function getSpaceById(id: number): Space | undefined {
   return spaces.find((space) => space.id === id);
+}
+
+/** Replaces the spaces, e.g. with the server's data. Call before AppProvider mounts. */
+export function setSpaces(nextSpaces: Space[]) {
+  spaces = nextSpaces;
 }
