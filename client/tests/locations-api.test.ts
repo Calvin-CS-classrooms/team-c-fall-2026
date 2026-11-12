@@ -1,22 +1,16 @@
 // Tests the locations API client with a mocked fetch, so no server is needed:
-// image mapping, HTTP errors, network failures, and the request timeout that
-// lets the app fall back to bundled data.
+// HTTP errors, network failures, and the request timeout that lets the app
+// fall back to bundled data.
 import { fetchLocations } from '@/services/locations-api';
 
-const apiLocation = (id: string, imageKey: string) => ({
+const apiLocation = (id: number, name: string) => ({
   id,
-  name: id,
-  category: 'study',
-  imageKey,
-  capacity: 10,
-  density: 'quiet',
-  noise: 'whisper',
-  hoursLabel: 'Open',
-  isOpenNow: true,
-  rating: 4,
-  shortDescription: 'Test location',
-  amenities: [],
-  floors: [],
+  name,
+  image: `https://example.com/${name}.jpg`,
+  description: 'Test location',
+  numFloors: 2,
+  numSpaces: 10,
+  hours: { openingTime: '07:00', closingTime: '22:00' },
 });
 
 function mockFetchResponse(body: unknown, init: { ok?: boolean; status?: number } = {}) {
@@ -48,31 +42,14 @@ describe('fetchLocations', () => {
     expect(options.signal).toBeDefined();
   });
 
-  it('replaces imageKey with a local image and keeps the other fields', async () => {
-    mockFetchResponse([apiLocation('north-hall', 'north-hall')]);
+  it('returns the locations from the server', async () => {
+    mockFetchResponse([apiLocation(1, 'north-hall')]);
 
     const [location] = await fetchLocations();
 
-    expect(location).not.toHaveProperty('imageKey');
-    expect(location.image).toBeDefined();
-    expect(location.id).toBe('north-hall');
-    expect(location.rating).toBe(4);
-  });
-
-  it('maps different imageKeys to different images', async () => {
-    mockFetchResponse([apiLocation('a', 'north-hall'), apiLocation('b', 'peets-coffee')]);
-
-    const [first, second] = await fetchLocations();
-
-    expect(first.image).not.toEqual(second.image);
-  });
-
-  it('falls back to the Hekman Library image for an unknown imageKey', async () => {
-    mockFetchResponse([apiLocation('mystery', 'does-not-exist'), apiLocation('hekman', 'hekman_library')]);
-
-    const [unknown, hekman] = await fetchLocations();
-
-    expect(unknown.image).toEqual(hekman.image);
+    expect(location.id).toBe(1);
+    expect(location.name).toBe('north-hall');
+    expect(location.image).toBe('https://example.com/north-hall.jpg');
   });
 
   it('returns an empty list when the server has no locations', async () => {
@@ -108,5 +85,27 @@ describe('fetchLocations', () => {
     jest.advanceTimersByTime(1);
     await expect(pending).rejects.toThrow('Aborted');
     expect(receivedSignal?.aborted).toBe(true);
+  });
+
+  it('clears the timeout once the response arrives', async () => {
+    jest.useFakeTimers();
+    mockFetchResponse([]);
+    const clearTimeoutSpy = jest.spyOn(globalThis, 'clearTimeout');
+
+    const pending = fetchLocations();
+    await jest.advanceTimersByTimeAsync(0);
+    await pending;
+
+    expect(clearTimeoutSpy).toHaveBeenCalled();
+  });
+
+  it('throws when the response body is not valid JSON', async () => {
+    globalThis.fetch = jest.fn().mockResolvedValue({
+      ok: true,
+      status: 200,
+      json: () => Promise.reject(new SyntaxError('Unexpected token')),
+    }) as unknown as typeof fetch;
+
+    await expect(fetchLocations()).rejects.toThrow('Unexpected token');
   });
 });

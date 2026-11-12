@@ -8,114 +8,96 @@ import { StarRating } from '@/components/star-rating';
 import { Colors, NoiseLabels } from '@/constants/colors';
 import { Typography } from '@/constants/typography';
 import { useAppData } from '@/context/app-context';
+import { getLocationById } from '@/data/locations';
 import type { NewRatingInput, NoiseLevel } from '@/types';
 
-const NOISE_LEVELS: NoiseLevel[] = ['whisper', 'low-buzz', 'social', 'loud'];
-const AMENITY_OPTIONS = ['Wi-Fi', 'Outlets', 'Seating', 'Quiet', 'Group Friendly', 'Food Nearby'];
+const NOISE_LEVELS: NoiseLevel[] = ['whisper', 'lowBuzz', 'social', 'loud'];
 
 interface RatingFormProps {
-  initialLocationId?: string;
+  initialSpaceId?: number;
   onSubmit: (input: NewRatingInput) => void;
   submitLabel?: string;
 }
 
 /**
  * The rating form, shown on the ratings screen (only after the user has
- * been verified). Lets the user pick a location, a 5-star overall rating,
- * a capacity slider, noise level chips, amenity chips, an optional tip
- * textbox, and a submit button.
+ * been verified). Lets the user pick a space, a 5-star overall rating,
+ * a crowd rating slider, noise level chips, an optional tip textbox, and
+ * a submit button.
  *
- * @param initialLocationId - Location preselected when the form opens.
+ * @param initialSpaceId - Space preselected when the form opens.
  * @param onSubmit - Called with the completed rating when submitted.
  * @param submitLabel - Text for the submit button.
  */
-export function RatingForm({ initialLocationId, onSubmit, submitLabel = 'Submit Rating' }: RatingFormProps) {
-  const { locations } = useAppData();
-  const [locationId, setLocationId] = useState(initialLocationId ?? locations[0].id);
+export function RatingForm({ initialSpaceId, onSubmit, submitLabel = 'Submit Rating' }: RatingFormProps) {
+  const { spaces } = useAppData();
+  const [spaceId, setSpaceId] = useState(initialSpaceId ?? spaces[0].id);
   const [pickerOpen, setPickerOpen] = useState(false);
   const [capacity, setCapacity] = useState(50);
-  const [noise, setNoise] = useState<NoiseLevel>('low-buzz');
+  const [noise, setNoise] = useState<NoiseLevel>('lowBuzz');
   const [stars, setStars] = useState(4);
-  const [amenities, setAmenities] = useState<string[]>([]);
   const [comment, setComment] = useState('');
 
-  // Resolve the selected location object; falls back to the first location
-  // if the stored id no longer matches (e.g. data changed).
-  const selectedLocation = locations.find((location) => location.id === locationId) ?? locations[0];
-
-  // Toggle an amenity in/out of the selected set.
-  const toggleAmenity = (amenity: string) => {
-    setAmenities((prev) => (prev.includes(amenity) ? prev.filter((item) => item !== amenity) : [...prev, amenity]));
-  };
+  // Resolve the selected space object; falls back to the first space if the
+  // stored id no longer matches (e.g. data changed).
+  const selectedSpace = spaces.find((space) => space.id === spaceId) ?? spaces[0];
+  const selectedLocation = getLocationById(selectedSpace.locationId);
 
   // Builds the rating payload and submits it, then resets the form fields
-  // (comment and amenities) so it's ready for the next entry.
+  // (comment) so it's ready for the next entry.
   const handleSubmit = () => {
     onSubmit({
-      locationId: selectedLocation.id,
-      locationName: selectedLocation.name,
-      stars,
-      capacity,
-      noise,
-      amenities,
-      comment: comment.trim() || undefined,
+      spaceId: selectedSpace.id,
+      numStars: stars,
+      crowdRating: capacity,
+      perceivedNoise: noise,
+      description: comment.trim() || undefined,
     });
     setComment('');
-    setAmenities([]);
   };
 
   return (
     <View style={styles.container}>
-      <Text style={styles.label}>Location</Text>
+      <Text style={styles.label}>Space</Text>
       <Pressable style={styles.picker} onPress={() => setPickerOpen((open) => !open)}>
         <View style={styles.pickerLeft}>
           <Ionicons name="location-outline" size={16} color={Colors.maroon} />
-          <Text style={styles.pickerText}>{selectedLocation.name}</Text>
+          <Text style={styles.pickerText}>{selectedLocation?.name ?? `Space ${selectedSpace.id}`}</Text>
         </View>
         <Ionicons name={pickerOpen ? 'chevron-up' : 'chevron-down'} size={16} color={Colors.textSecondary} />
       </Pressable>
       {pickerOpen ? (
         <View style={styles.pickerList}>
-          {locations.map((location) => (
-            <Pressable
-              key={location.id}
-              style={styles.pickerOption}
-              onPress={() => {
-                setLocationId(location.id);
-                setPickerOpen(false);
-              }}>
-              <Text
-                style={[styles.pickerOptionText, location.id === locationId && styles.pickerOptionTextActive]}>
-                {location.name}
-              </Text>
-              {location.id === locationId ? <Ionicons name="checkmark" size={16} color={Colors.maroon} /> : null}
-            </Pressable>
-          ))}
+          {spaces.map((space) => {
+            const loc = getLocationById(space.locationId);
+            return (
+              <Pressable
+                key={space.id}
+                style={styles.pickerOption}
+                onPress={() => {
+                  setSpaceId(space.id);
+                  setPickerOpen(false);
+                }}>
+                <Text style={[styles.pickerOptionText, space.id === spaceId && styles.pickerOptionTextActive]}>
+                  {loc?.name ?? `Space ${space.id}`}
+                </Text>
+                {space.id === spaceId ? <Ionicons name="checkmark" size={16} color={Colors.maroon} /> : null}
+              </Pressable>
+            );
+          })}
         </View>
       ) : null}
 
       <Text style={styles.label}>Overall Rating</Text>
       <StarRating value={stars} onChange={setStars} size={28} />
 
-      <Text style={styles.label}>Capacity</Text>
+      <Text style={styles.label}>Crowd Rating</Text>
       <CapacitySlider value={capacity} onChange={setCapacity} />
 
       <Text style={styles.label}>Noise Level</Text>
       <View style={styles.chipRow}>
         {NOISE_LEVELS.map((level) => (
           <Chip key={level} label={NoiseLabels[level]} selected={noise === level} onPress={() => setNoise(level)} />
-        ))}
-      </View>
-
-      <Text style={styles.label}>Amenities</Text>
-      <View style={styles.chipRow}>
-        {AMENITY_OPTIONS.map((amenity) => (
-          <Chip
-            key={amenity}
-            label={amenity}
-            selected={amenities.includes(amenity)}
-            onPress={() => toggleAmenity(amenity)}
-          />
         ))}
       </View>
 

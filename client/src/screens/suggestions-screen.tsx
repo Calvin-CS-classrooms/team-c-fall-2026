@@ -11,60 +11,37 @@ import { TextField } from '@/components/text-field';
 import { Colors } from '@/constants/colors';
 import { Typography } from '@/constants/typography';
 import { useAppData } from '@/context/app-context';
-import type { SpaceSuggestion } from '@/types';
-import { amenityTally, hasSuggestedToday, netScore, PROMOTION_THRESHOLD } from '@/utils/suggestions';
-
-// Preset amenity options shown as selectable chips when suggesting a space.
-const AMENITY_OPTIONS = ['Wi-Fi', 'Outlets', 'Seating', 'Quiet', 'Group Friendly', 'Natural Light', 'Food Nearby'];
+import type { SpotSuggestion } from '@/types';
+import { hasSuggestedToday, PROMOTION_THRESHOLD } from '@/utils/suggestions';
 
 /**
  * Suggestions screen: lets users propose new study spaces for the community.
- * Contains a suggestion form (name, description, usage, amenities), a list of
- * pending suggestions that others can vote on, and a section for suggestions
- * that have been promoted to official spaces.
+ * Contains a suggestion form (name, description), a list of suggestions that
+ * others can vote on, and a section for suggestions that have been approved.
  */
 export function SuggestionsScreen() {
   const router = useRouter();
-  const { calvinEmail, suggestions, submitSuggestion } = useAppData();
+  const { account, suggestions, submitSuggestion } = useAppData();
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
-  const [usage, setUsage] = useState('');
-  // Selected amenity chips for the new suggestion.
-  const [amenities, setAmenities] = useState<string[]>([]);
-  // Text for adding a custom amenity not in the preset list.
-  const [customAmenity, setCustomAmenity] = useState('');
   // Validation/submission error message to display, if any.
   const [error, setError] = useState('');
   // Whether the current suggestion was successfully submitted.
   const [submitted, setSubmitted] = useState(false);
 
-  // Suggestions awaiting votes vs. those already promoted to official.
-  const pending = suggestions.filter((suggestion) => suggestion.status === 'pending');
-  const official = suggestions.filter((suggestion) => suggestion.status === 'official');
+  // Suggestions awaiting votes vs. those already approved.
+  const pending = suggestions.filter((suggestion) => suggestion.status === 'beingTested');
+  const approved = suggestions.filter((suggestion) => suggestion.status === 'approved');
   // Whether the user has already used their one suggestion per day.
-  const limitReached = calvinEmail ? hasSuggestedToday(suggestions, calvinEmail) : false;
-
-  // Adds or removes an amenity from the selected set.
-  const toggleAmenity = (amenity: string) => {
-    setAmenities((prev) => (prev.includes(amenity) ? prev.filter((item) => item !== amenity) : [...prev, amenity]));
-  };
-
-  // Adds the typed custom amenity if it is non-empty and not already selected.
-  const addCustomAmenity = () => {
-    const value = customAmenity.trim();
-    if (value && !amenities.includes(value)) setAmenities((prev) => [...prev, value]);
-    setCustomAmenity('');
-  };
+  const limitReached = account ? hasSuggestedToday(suggestions, account.id) : false;
 
   // Submits the suggestion; on success clears the form and shows a thank-you.
   const handleSubmit = () => {
-    const result = submitSuggestion({ name, description, usage, amenities });
+    const result = submitSuggestion({ name, description, usage: '', amenities: [] });
     setError(result ?? '');
     if (!result) {
       setName('');
       setDescription('');
-      setUsage('');
-      setAmenities([]);
       setSubmitted(true);
     }
   };
@@ -84,7 +61,7 @@ export function SuggestionsScreen() {
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>New Suggestion</Text>
           <View style={styles.card}>
-            {!calvinEmail ? (
+            {!account ? (
               <Text style={styles.helperText}>Log in with your Calvin email to suggest a space.</Text>
             ) : limitReached ? (
               <Text style={styles.helperText}>
@@ -101,35 +78,6 @@ export function SuggestionsScreen() {
                   onChangeText={setDescription}
                   multiline
                 />
-                <TextField
-                  label="What is it normally used for?"
-                  placeholder="e.g. Lectures during the day, empty in the evening"
-                  value={usage}
-                  onChangeText={setUsage}
-                  multiline
-                />
-                <Text style={styles.label}>Amenities</Text>
-                <View style={styles.chipRow}>
-                  {[...AMENITY_OPTIONS, ...amenities.filter((item) => !AMENITY_OPTIONS.includes(item))].map((amenity) => (
-                    <Chip
-                      key={amenity}
-                      label={amenity}
-                      selected={amenities.includes(amenity)}
-                      onPress={() => toggleAmenity(amenity)}
-                    />
-                  ))}
-                </View>
-                <View style={styles.inlineRow}>
-                  <TextInput
-                    placeholder="Add another amenity"
-                    placeholderTextColor={Colors.textMuted}
-                    value={customAmenity}
-                    onChangeText={setCustomAmenity}
-                    onSubmitEditing={addCustomAmenity}
-                    style={styles.inlineInput}
-                  />
-                  <ActionButton label="Add" variant="outline" onPress={addCustomAmenity} />
-                </View>
                 {error ? <Text style={styles.errorText}>{error}</Text> : null}
                 <ActionButton label="Submit Suggestion" icon="send-outline" onPress={handleSubmit} />
               </>
@@ -148,10 +96,10 @@ export function SuggestionsScreen() {
           {pending.length === 0 ? <Text style={styles.helperText}>No suggestions waiting for votes.</Text> : null}
         </View>
 
-        {official.length > 0 ? (
+        {approved.length > 0 ? (
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>Now Official</Text>
-            {official.map((suggestion) => (
+            {approved.map((suggestion) => (
               <View key={suggestion.id} style={styles.officialRow}>
                 <Ionicons name="checkmark-circle" size={18} color={Colors.success} />
                 <Text style={styles.officialText}>{suggestion.name} is now listed under Study &amp; Quiet.</Text>
@@ -165,37 +113,22 @@ export function SuggestionsScreen() {
 }
 
 /**
- * Renders a single community suggestion with its vote progress, helpful/not
- * helpful voting, and per-amenity keep/remove voting. Users cannot vote on
- * their own suggestion.
+ * Renders a single community suggestion with its vote count and helpful/not
+ * helpful voting. Users cannot vote on their own suggestion.
  */
-function SuggestionCard({ suggestion }: { suggestion: SpaceSuggestion }) {
-  const { calvinEmail, voteOnSuggestion, voteOnAmenity, proposeAmenity } = useAppData();
-  const [newAmenity, setNewAmenity] = useState('');
-  const score = netScore(suggestion);
-  const myVote = calvinEmail ? suggestion.votes[calvinEmail] : undefined;
-  const isOwn = Boolean(calvinEmail) && suggestion.submittedBy === calvinEmail;
-  const canVote = Boolean(calvinEmail) && !isOwn;
-
-  // Proposes the typed amenity for this suggestion and clears the input.
-  const submitAmenity = () => {
-    proposeAmenity(suggestion.id, newAmenity);
-    setNewAmenity('');
-  };
+function SuggestionCard({ suggestion }: { suggestion: SpotSuggestion }) {
+  const { account, voteOnSuggestion, suggestionVotes } = useAppData();
+  const myVote = account ? suggestionVotes.find((v) => v.suggestionId === suggestion.id && v.userId === account.id)?.vote : undefined;
+  const isOwn = Boolean(account) && suggestion.userId === account?.id;
+  const canVote = Boolean(account) && !isOwn;
 
   return (
     <View style={styles.card}>
       <View style={styles.suggestionHeader}>
         <Text style={styles.suggestionName}>{suggestion.name}</Text>
-        <Text style={styles.scoreText}>
-          {score} / {PROMOTION_THRESHOLD}
-        </Text>
-      </View>
-      <View style={styles.progressTrack}>
-        <View style={[styles.progressFill, { width: `${Math.min(Math.max(score, 0) / PROMOTION_THRESHOLD, 1) * 100}%` }]} />
+        <Text style={styles.scoreText}>{suggestion.numUpvotes} votes</Text>
       </View>
       {suggestion.description ? <Text style={styles.bodyText}>{suggestion.description}</Text> : null}
-      {suggestion.usage ? <Text style={styles.metaText}>Usually used for: {suggestion.usage}</Text> : null}
 
       <Text style={styles.label}>Is this a helpful space?</Text>
       {isOwn ? (
@@ -218,48 +151,7 @@ function SuggestionCard({ suggestion }: { suggestion: SpaceSuggestion }) {
           />
         </View>
       )}
-
-      <Text style={styles.label}>Amenities</Text>
-      {suggestion.amenities.map((amenity) => {
-        const tally = amenityTally(amenity);
-        const mine = calvinEmail ? amenity.votes[calvinEmail] : undefined;
-        return (
-          <View key={amenity.name} style={styles.amenityRow}>
-            <Text style={styles.amenityName}>{amenity.name}</Text>
-            <Pressable
-              disabled={!calvinEmail}
-              onPress={() => voteOnAmenity(suggestion.id, amenity.name, 'keep')}
-              style={[styles.amenityVote, mine === 'keep' && styles.amenityVoteActive]}
-              accessibilityLabel={`Keep ${amenity.name}`}>
-              <Ionicons name="add" size={14} color={mine === 'keep' ? Colors.white : Colors.success} />
-              <Text style={[styles.amenityCount, mine === 'keep' && styles.amenityCountActive]}>{tally.keep}</Text>
-            </Pressable>
-            <Pressable
-              disabled={!calvinEmail}
-              onPress={() => voteOnAmenity(suggestion.id, amenity.name, 'remove')}
-              style={[styles.amenityVote, mine === 'remove' && styles.amenityVoteActive]}
-              accessibilityLabel={`Remove ${amenity.name}`}>
-              <Ionicons name="remove" size={14} color={mine === 'remove' ? Colors.white : Colors.danger} />
-              <Text style={[styles.amenityCount, mine === 'remove' && styles.amenityCountActive]}>{tally.remove}</Text>
-            </Pressable>
-          </View>
-        );
-      })}
-      {calvinEmail ? (
-        <View style={styles.inlineRow}>
-          <TextInput
-            placeholder="Suggest an amenity to add"
-            placeholderTextColor={Colors.textMuted}
-            value={newAmenity}
-            onChangeText={setNewAmenity}
-            onSubmitEditing={submitAmenity}
-            style={styles.inlineInput}
-          />
-          <ActionButton label="Add" variant="outline" onPress={submitAmenity} />
-        </View>
-      ) : (
-        <Text style={styles.metaText}>Log in with your Calvin email to vote.</Text>
-      )}
+      {!account ? <Text style={styles.metaText}>Log in with your Calvin email to vote.</Text> : null}
     </View>
   );
 }
@@ -321,22 +213,6 @@ const styles = StyleSheet.create({
     flexWrap: 'wrap',
     gap: 8,
   },
-  inlineRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-  },
-  inlineInput: {
-    flex: 1,
-    borderWidth: 1,
-    borderColor: Colors.border,
-    borderRadius: 12,
-    paddingHorizontal: 12,
-    paddingVertical: 10,
-    fontFamily: Typography.medium,
-    fontSize: 14,
-    color: Colors.textPrimary,
-  },
   suggestionHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -354,16 +230,6 @@ const styles = StyleSheet.create({
     fontSize: 13,
     color: Colors.maroon,
   },
-  progressTrack: {
-    height: 6,
-    borderRadius: 3,
-    backgroundColor: Colors.surfaceAlt,
-    overflow: 'hidden',
-  },
-  progressFill: {
-    height: '100%',
-    backgroundColor: Colors.gold,
-  },
   bodyText: {
     fontFamily: Typography.medium,
     fontSize: 13,
@@ -373,37 +239,6 @@ const styles = StyleSheet.create({
     fontFamily: Typography.medium,
     fontSize: 12,
     color: Colors.textMuted,
-  },
-  amenityRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-  },
-  amenityName: {
-    flex: 1,
-    fontFamily: Typography.medium,
-    fontSize: 13,
-    color: Colors.textPrimary,
-  },
-  amenityVote: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: 999,
-    backgroundColor: Colors.surfaceAlt,
-  },
-  amenityVoteActive: {
-    backgroundColor: Colors.maroon,
-  },
-  amenityCount: {
-    fontFamily: Typography.semiBold,
-    fontSize: 12,
-    color: Colors.textSecondary,
-  },
-  amenityCountActive: {
-    color: Colors.white,
   },
   officialRow: {
     flexDirection: 'row',

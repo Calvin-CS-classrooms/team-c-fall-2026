@@ -8,36 +8,42 @@ import { Chip } from '@/components/chip';
 import { StarRating } from '@/components/star-rating';
 import { Colors, NoiseLabels } from '@/constants/colors';
 import { Typography } from '@/constants/typography';
-import type { CampusLocation } from '@/types';
+import type { Space } from '@/types';
 
 interface LandmarkCardProps {
-  location: CampusLocation;
+  space: Space;
+  name: string;
+  categoryName: string;
+  floorName: string;
   isFavorite: boolean;
   onToggleFavorite: () => void;
 }
 
 /**
- * A card in the explore screen's landmark directory. Shows a location's
- * image, name, open/closed status, description, capacity, and tags. An
- * expandable section reveals more details (rating, amenities, wait time,
- * and a floor-by-floor guide). A bookmark button toggles the favorite state.
+ * A card in the explore screen's landmark directory. Shows a space's
+ * image, name, category, description, crowd rating, and noise level. An
+ * expandable section reveals more details (overall rating, floor, and
+ * current noise). A bookmark button toggles the favorite state.
  *
- * @param location - The campus location to display.
- * @param isFavorite - Whether the location is currently favorited.
+ * @param space - The space to display.
+ * @param name - The resolved name of the space's location.
+ * @param categoryName - The resolved category name.
+ * @param floorName - The resolved floor name.
+ * @param isFavorite - Whether the space is currently favorited.
  * @param onToggleFavorite - Called when the bookmark button is tapped.
  */
-export function LandmarkCard({ location, isFavorite, onToggleFavorite }: LandmarkCardProps) {
+export function LandmarkCard({ space, name, categoryName, floorName, isFavorite, onToggleFavorite }: LandmarkCardProps) {
   // Whether the expanded details section is shown.
   const [expanded, setExpanded] = useState(false);
 
   return (
     <View style={styles.card}>
-      <Image source={location.image} style={styles.image} contentFit="cover" />
+      <Image source={{ uri: `https://placehold.co/400x200?text=${encodeURIComponent(name)}` }} style={styles.image} contentFit="cover" />
       <View style={styles.body}>
         <View style={styles.headerRow}>
           <View style={styles.headerText}>
-            <Text style={styles.name}>{location.name}</Text>
-            <Text style={styles.hours}>{location.isOpenNow ? 'Open now' : 'Closed'} · {location.hoursLabel}</Text>
+            <Text style={styles.name}>{name}</Text>
+            <Text style={styles.hours}>{categoryName} · {floorName}</Text>
           </View>
           {/* Bookmark toggles favorite; filled + gold when favorited. */}
           <Pressable onPress={onToggleFavorite} hitSlop={8}>
@@ -49,16 +55,13 @@ export function LandmarkCard({ location, isFavorite, onToggleFavorite }: Landmar
           </Pressable>
         </View>
 
-        <Text style={styles.description}>{location.shortDescription}</Text>
+        <Text style={styles.description}>{space.description}</Text>
 
-        <CapacityMeter capacity={location.capacity} />
+        <CapacityMeter capacity={space.crowdRating} />
 
-        {/* Show the noise level plus the first 3 amenities as tags. */}
+        {/* Show the current noise level as a tag. */}
         <View style={styles.tagRow}>
-          <Chip label={`Noise: ${NoiseLabels[location.noise]}`} />
-          {location.amenities.slice(0, 3).map((amenity) => (
-            <Chip key={amenity} label={amenity} />
-          ))}
+          <Chip label={`Noise: ${NoiseLabels[space.currentNoiseLevel]}`} />
         </View>
 
         {/* Toggle button for the expanded details section. */}
@@ -66,7 +69,7 @@ export function LandmarkCard({ location, isFavorite, onToggleFavorite }: Landmar
           style={styles.expandRow}
           onPress={() => setExpanded((value) => !value)}
           accessibilityRole="button"
-          accessibilityLabel={`${expanded ? 'Hide' : 'View'} details for ${location.name}`}>
+          accessibilityLabel={`${expanded ? 'Hide' : 'View'} details for ${name}`}>
           <Text style={styles.expandLabel}>{expanded ? 'Hide place details' : 'More about this place'}</Text>
           <Ionicons name={expanded ? 'chevron-up' : 'chevron-down'} size={16} color={Colors.maroon} />
         </Pressable>
@@ -74,28 +77,14 @@ export function LandmarkCard({ location, isFavorite, onToggleFavorite }: Landmar
         {expanded ? (
           <View style={styles.detailsWrap}>
             <View style={styles.ratingRow}>
-              <StarRating value={location.rating} readOnly size={16} />
-              <Text style={styles.ratingText}>{location.rating.toFixed(1)} / 5</Text>
+              <StarRating value={space.overallRating} readOnly size={16} />
+              <Text style={styles.ratingText}>{space.overallRating.toFixed(1)} / 5</Text>
             </View>
-            <Text style={styles.detailDescription}>{location.shortDescription}</Text>
-            <Text style={styles.detailHeading}>Amenities</Text>
-            <View style={styles.tagRow}>
-              {location.amenities.map((amenity) => (
-                <Chip key={amenity} label={amenity} />
-              ))}
-            </View>
-            {/* Wait time is optional, so only render it when present. */}
-            {location.waitTimeMinutes !== undefined ? (
-              <Text style={styles.detailText}>Typical wait: {location.waitTimeMinutes} min</Text>
-            ) : null}
-            <Text style={styles.detailHeading}>Floor-by-floor guide</Text>
-            {location.floors.map((floor) => (
-              <View key={floor.floor} style={styles.floorRow}>
-                <Text style={styles.floorName}>{floor.floor}</Text>
-                <Text style={styles.floorDescription}>{floor.description}</Text>
-                <Text style={styles.floorNoise}>Expected noise: {NoiseLabels[floor.noise]}</Text>
-              </View>
-            ))}
+            <Text style={styles.detailDescription}>{space.description}</Text>
+            <Text style={styles.detailHeading}>Floor</Text>
+            <Text style={styles.detailText}>{floorName}</Text>
+            <Text style={styles.detailHeading}>Current noise</Text>
+            <Text style={styles.detailText}>{NoiseLabels[space.currentNoiseLevel]}</Text>
           </View>
         ) : null}
       </View>

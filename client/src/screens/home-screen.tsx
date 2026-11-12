@@ -15,16 +15,17 @@ import { Colors } from '@/constants/colors';
 import { Typography } from '@/constants/typography';
 import { useAppData } from '@/context/app-context';
 import { activityFeed } from '@/data/activity';
+import { getLocationById } from '@/data/locations';
 import { askSpotAgent, type SpotAgentResponse } from '@/services/spot-agent';
 import { applyDiscoveryFilters, DISCOVERY_FILTERS, type DiscoveryFilter } from '@/utils/discovery';
 
 /**
- * Home screen: the main landing view. Contains the combinable location filter
+ * Home screen: the main landing view. Contains the combinable space filter
  * chips, the "Ask Calvin" search bar backed by the mock spot-finder agent, a
- * scrollable carousel of popular locations, and a live activity feed.
+ * scrollable carousel of popular spaces, and a live activity feed.
  */
 export function HomeScreen() {
-  const { addRating, account, locations, ratings } = useAppData();
+  const { addRating, account, spaces, ratings } = useAppData();
   const [search, setSearch] = useState('');
   const [activeFilters, setActiveFilters] = useState<DiscoveryFilter[]>([]);
   const [quickRateVisible, setQuickRateVisible] = useState(false);
@@ -32,11 +33,11 @@ export function HomeScreen() {
   const [agentThinking, setAgentThinking] = useState(false);
   const latestQuery = useRef(0);
 
-  // Recompute the visible locations whenever the active filters change.
-  // A location must meet every active filter to be shown.
-  const filteredLocations = useMemo(
-    () => applyDiscoveryFilters(locations, ratings, activeFilters),
-    [activeFilters, locations, ratings],
+  // Recompute the visible spaces whenever the active filters change.
+  // A space must meet every active filter to be shown.
+  const filteredSpaces = useMemo(
+    () => applyDiscoveryFilters(spaces, ratings, activeFilters),
+    [activeFilters, spaces, ratings],
   );
 
   const toggleFilter = (filter: DiscoveryFilter) => {
@@ -53,7 +54,7 @@ export function HomeScreen() {
     setSearch('');
     setAgentThinking(true);
     const queryId = ++latestQuery.current;
-    const response = await askSpotAgent(nextQuestion, locations);
+    const response = await askSpotAgent(nextQuestion, spaces);
     // Ignore answers to older questions if the user asked again in the meantime.
     if (queryId !== latestQuery.current) return;
     setAgentResponse(response);
@@ -97,22 +98,22 @@ export function HomeScreen() {
                 <Text style={styles.recommendationQuestion}>&ldquo;{agentResponse.query}&rdquo;</Text>
                 <Text style={styles.recommendationReason}>{agentResponse.message}</Text>
               </View>
-              {agentResponse.recommendations.map((recommendation) => (
-                <View key={recommendation.location.id} style={styles.recommendationBody}>
-                  <Text style={styles.recommendationTitle}>
-                    {recommendation.location.name}
-                    {recommendation.suggestedFloor ? ` · ${recommendation.suggestedFloor}` : ''}
-                  </Text>
-                  {recommendation.reasons.map((reason) => (
-                    <Text key={reason} style={styles.recommendationReason}>
-                      ✓ {reason}
-                    </Text>
-                  ))}
-                  {recommendation.missing.length > 0 ? (
-                    <Text style={styles.recommendationNote}>Missing: {recommendation.missing.join(', ')}</Text>
-                  ) : null}
-                </View>
-              ))}
+              {agentResponse.recommendations.map((recommendation) => {
+                const loc = getLocationById(recommendation.space.locationId);
+                return (
+                  <View key={recommendation.space.id} style={styles.recommendationBody}>
+                    <Text style={styles.recommendationTitle}>{loc?.name ?? `Space ${recommendation.space.id}`}</Text>
+                    {recommendation.reasons.map((reason) => (
+                      <Text key={reason} style={styles.recommendationReason}>
+                        ✓ {reason}
+                      </Text>
+                    ))}
+                    {recommendation.missing.length > 0 ? (
+                      <Text style={styles.recommendationNote}>Missing: {recommendation.missing.join(', ')}</Text>
+                    ) : null}
+                  </View>
+                );
+              })}
               <Text style={styles.recommendationNote}>Based on campus ratings, not live conditions.</Text>
             </View>
           ) : null}
@@ -138,12 +139,21 @@ export function HomeScreen() {
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Popular On-Campus Today</Text>
           <FlatList
-            data={filteredLocations}
+            data={filteredSpaces}
             horizontal
             showsHorizontalScrollIndicator={false}
-            keyExtractor={(item) => item.id}
+            keyExtractor={(item) => String(item.id)}
             contentContainerStyle={styles.carousel}
-            renderItem={({ item }) => <LocationCard location={item} />}
+            renderItem={({ item }) => {
+              const location = getLocationById(item.locationId);
+              return (
+                <LocationCard
+                  space={item}
+                  name={location?.name ?? `Space ${item.id}`}
+                  image={location?.image}
+                />
+              );
+            }}
             ListEmptyComponent={
               <Text style={styles.emptyText}>No spots match all of your filters. Tap Clear to reset.</Text>
             }
@@ -163,7 +173,7 @@ export function HomeScreen() {
       <QuickRateSheet
         visible={quickRateVisible}
         onClose={() => setQuickRateVisible(false)}
-        locationId="hekman-library"
+        spaceId={1}
         onSubmit={addRating}
       />
     </SafeAreaView>

@@ -23,7 +23,7 @@ export const activityFeed: ActivityFeedItem[] = [
     locationId: 'peets-coffee',
     locationName: "Peet's Coffee",
     message: 'Short line, mobile orders ready in under 5 minutes.',
-    noise: 'low-buzz',
+    noise: 'lowBuzz',
     waitMinutes: 4,
     minutesAgo: 11,
   },

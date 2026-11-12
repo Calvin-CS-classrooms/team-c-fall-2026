@@ -1,46 +1,53 @@
-import { Image } from 'expo-image';
+import { Image, type ImageProps } from 'expo-image';
 import { Ionicons } from '@expo/vector-icons';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { CapacityMeter } from '@/components/capacity-meter';
 import { Colors } from '@/constants/colors';
 import { Typography } from '@/constants/typography';
-import type { CampusLocation } from '@/types';
+import type { Space } from '@/types';
 
 interface LocationCardProps {
-  location: CampusLocation;
+  space: Space;
+  name: string;
+  image?: ImageProps['source'];
+  width?: number | `${number}%`;
   onPress?: () => void;
 }
 
 /**
  * A compact card used in the home screen's "Popular On-Campus Today"
- * carousel. Shows a location's image, name, rating, open/closed status,
- * and a capacity meter. The whole card is tappable. However, currently
- * no action is taken when tapping a card.
+ * carousel. Shows a space's image, name, rating, and a capacity meter.
+ * The whole card is tappable. However, currently no action is taken when
+ * tapping a card.
  *
- * @param location - The campus location to display.
+ * @param space - The space to display.
+ * @param name - The resolved name of the space's location.
+ * @param image - The location's image source. Falls back to a placeholder
+ *   showing the name when not provided.
+ * @param width - Card width. Defaults to 220 (carousel); pass '100%' to fill
+ *   the container (e.g. in a vertical list).
  * @param onPress - Optional handler called when the card is tapped.
  */
-export function LocationCard({ location, onPress }: LocationCardProps) {
+export function LocationCard({ space, name, image, width = 220, onPress }: LocationCardProps) {
+  const imageSource = image ?? { uri: `https://placehold.co/400x200?text=${encodeURIComponent(name)}` };
+
   return (
     // Slight opacity dim while pressed gives tactile feedback.
-    <Pressable onPress={onPress} style={({ pressed }) => [styles.card, pressed && styles.pressed]}>
-      <Image source={location.image} style={styles.image} contentFit="cover" />
+    <Pressable onPress={onPress} style={({ pressed }) => [styles.card, { width }, pressed && styles.pressed]}>
+      <Image source={imageSource} style={styles.image} contentFit="cover" />
       <View style={styles.body}>
         <View style={styles.titleRow}>
           {/* numberOfLines truncates long names to a single line. */}
           <Text style={styles.name} numberOfLines={1}>
-            {location.name}
+            {name}
           </Text>
           <View style={styles.ratingRow}>
             <Ionicons name="star" size={12} color={Colors.gold} />
-            <Text style={styles.ratingText}>{location.rating.toFixed(1)}</Text>
+            <Text style={styles.ratingText}>{space.overallRating.toFixed(1)}</Text>
           </View>
         </View>
-        <Text style={styles.hours} numberOfLines={1}>
-          {location.isOpenNow ? 'Open now' : 'Closed'} · {location.hoursLabel}
-        </Text>
-        <CapacityMeter capacity={location.capacity} />
+        <CapacityMeter capacity={space.crowdRating} />
       </View>
     </Pressable>
   );
@@ -48,7 +55,6 @@ export function LocationCard({ location, onPress }: LocationCardProps) {
 
 const styles = StyleSheet.create({
   card: {
-    width: 220,
     borderRadius: 18,
     backgroundColor: Colors.surface,
     overflow: 'hidden',

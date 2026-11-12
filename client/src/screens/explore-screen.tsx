@@ -7,83 +7,85 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { AppHeader } from '@/components/app-header';
 import { Chip } from '@/components/chip';
 import { DensityOverviewCard } from '@/components/density-overview-card';
-import { LandmarkCard } from '@/components/landmark-card';
+import { LocationCard } from '@/components/location-card';
 import { confirmDeleteRating } from '@/components/rating-history-row';
 import { StarRating } from '@/components/star-rating';
 import { Colors } from '@/constants/colors';
 import { Typography } from '@/constants/typography';
 import { useAppData } from '@/context/app-context';
-import type { CampusLocation, Category, DensityLevel } from '@/types';
+import { categories } from '@/data/categories';
+import { getLocationById } from '@/data/locations';
+import { getSpacesByLocationId } from '@/data/spaces';
+import type { DensityLevel } from '@/types';
 import { formatMinutesAgo } from '@/utils/format';
-import { isOwnRating, ratingAuthorLabel } from '@/utils/ratings';
+import { isOwnRating } from '@/utils/ratings';
 
-
-const CATEGORIES: { key: Category; label: string }[] = [
-  { key: 'study', label: 'Study & Quiet' },
-  { key: 'dining', label: 'Dining & Cafes' },
-  { key: 'athletics', label: 'Athletics & Rec' },
-  { key: 'events', label: 'Events' },
-];
-
-// Numeric ranking of each density level so an average can be computed.
-const DENSITY_ORDER: Record<DensityLevel, number> = { quiet: 0, moderate: 1, busy: 2 };
-
-// Computes the campus-wide density by averaging every location's density
-// rank, then mapping the average back to a level via fixed thresholds.
-// This is a hard-coded stand-in for live occupancy data.
-function overallDensity(locations: CampusLocation[]): DensityLevel {
-  const average =
-    locations.reduce((sum, location) => sum + DENSITY_ORDER[location.density], 0) / locations.length;
-  if (average < 0.66) return 'quiet';
-  if (average < 1.33) return 'moderate';
+// Maps a crowd rating (0-100) to a density level.
+function densityForCrowd(crowd: number): DensityLevel {
+  if (crowd < 40) return 'quiet';
+  if (crowd < 75) return 'moderate';
   return 'busy';
+}
+
+// Stable "now" used to compute relative timestamps without calling the
+// impure Date.now() during render.
+const NOW = Date.now();
+
+// Computes the campus-wide density by averaging every space's crowd rating.
+function overallDensity(crowds: number[]): DensityLevel {
+  if (crowds.length === 0) return 'quiet';
+  const average = crowds.reduce((sum, value) => sum + value, 0) / crowds.length;
+  return densityForCrowd(average);
 }
 
 /**
  * Explore screen: browse all campus locations. Contains category filter
- * chips, an overall campus density card, a scrollable landmark directory,
- * and a recent-ratings section (global, not user-specific).
+ * chips (derived from the categories table), an overall campus density
+ * card, a scrollable landmark directory, and a recent-ratings section.
+ * Tapping a location opens its detail screen listing its spaces.
  *
  * Uses useMemo to cache derived values between re-renders, recomputing only
  * when their dependencies change.
  */
 export function ExploreScreen() {
   const router = useRouter();
-  const { isFavorite, toggleFavorite, ratings, locations, calvinEmail, deleteRating } = useAppData();
-  const [category, setCategory] = useState<Category>('study');
+  const { ratings, locations, spaces, account, deleteRating } = useAppData();
+  const [category, setCategory] = useState<number>(categories[0]?.id ?? 1);
 
-  // Locations belonging to the currently selected category.
+  // Locations that have at least one space in the currently selected category.
   const filteredLocations = useMemo(
-    () => locations.filter((location) => location.category === category),
+    () =>
+      locations.filter((location) =>
+        getSpacesByLocationId(location.id).some((space) => space.categoryId === category),
+      ),
     [category, locations],
   );
 
-  // The 3 most recent ratings for locations in the current category.
-  // Ratings are client-only for now, using each rating's hard-coded
-  // "createdMinutesAgo" value; a copy is sorted so `ratings` is not mutated.
+  // The 3 most recent ratings for spaces in the currently selected category.
   const recentRatings = useMemo(() => {
-    const locationIds = new Set(filteredLocations.map((location) => location.id));
+    const spaceIds = new Set(
+      filteredLocations.flatMap((location) => getSpacesByLocationId(location.id).map((space) => space.id)),
+    );
     return ratings
-      .filter((rating) => locationIds.has(rating.locationId))
-      .slice()
-      .sort((first, second) => first.createdMinutesAgo - second.createdMinutesAgo)
+      .filter((rating) => spaceIds.has(rating.spaceId))
+      .map((rating) => ({
+        rating,
+        minutesAgo: Math.floor((NOW - new Date(rating.createdAt).getTime()) / 60000),
+      }))
+      .sort((first, second) => new Date(second.rating.createdAt).getTime() - new Date(first.rating.createdAt).getTime())
       .slice(0, 3);
   }, [filteredLocations, ratings]);
 
-  // Per-category density breakdown for the overview card. "Events" is
-  // excluded since it has no meaningful density. Math.max guards against
-  // dividing by zero when a category has no locations.
+  // Per-category density breakdown for the overview card.
   const breakdown = useMemo(
     () =>
-      CATEGORIES.filter((entry) => entry.key !== 'events').map(({ key, label }) => {
-        const inCategory = locations.filter((location) => location.category === key);
+      categories.map(({ id, name }) => {
+        const inCategory = spaces.filter((space) => space.categoryId === id);
         const average =
-          inCategory.reduce((sum, location) => sum + DENSITY_ORDER[location.density], 0) /
-          Math.max(inCategory.length, 1);
-        const density: DensityLevel = average < 0.66 ? 'quiet' : average < 1.33 ? 'moderate' : 'busy';
-        return { category: label, density };
+          inCategory.reduce((sum, space) => sum + space.crowdRating, 0) / Math.max(inCategory.length, 1);
+        return { category: name, density: densityForCrowd(average) };
       }),
-    [locations],
+    [spaces],
   );
 
   return (
@@ -93,38 +95,46 @@ export function ExploreScreen() {
 
         <View style={styles.section}>
           <View style={styles.categoryRow}>
-            {CATEGORIES.map((entry) => (
+            {categories.map((entry) => (
               <Chip
-                key={entry.key}
-                label={entry.label}
-                selected={category === entry.key}
-                onPress={() => setCategory(entry.key)}
+                key={entry.id}
+                label={entry.name}
+                selected={category === entry.id}
+                onPress={() => setCategory(entry.id)}
               />
             ))}
           </View>
         </View>
 
         <View style={styles.section}>
-          <DensityOverviewCard overallDensity={overallDensity(locations)} breakdown={breakdown} />
+          <DensityOverviewCard
+            overallDensity={overallDensity(spaces.map((space) => space.crowdRating))}
+            breakdown={breakdown}
+          />
         </View>
 
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Landmark Directory</Text>
           {filteredLocations.length > 0 ? (
             <View style={styles.landmarkList}>
-              {filteredLocations.map((location) => (
-                <LandmarkCard
-                  key={location.id}
-                  location={location}
-                  isFavorite={isFavorite(location.id)}
-                  onToggleFavorite={() => toggleFavorite(location)}
-                />
-              ))}
+              {filteredLocations.map((location) => {
+                const firstSpace = getSpacesByLocationId(location.id)[0];
+                return (
+                  <LocationCard
+                    key={location.id}
+                    space={firstSpace}
+                    name={location.name}
+                    image={location.image}
+                    width="100%"
+                    onPress={() => router.push(`/location/${location.id}` as never)}
+                  />
+                );
+              })}
             </View>
           ) : (
             <View style={styles.emptyState}>
-              <Text style={styles.emptyTitle}>No live events right now</Text>
-              <Text style={styles.emptySubtitle}>Check back soon for campus events and happenings.</Text>
+              <Text style={styles.emptyTitle}>No locations in this category</Text>
+              <Text style={styles.emptySubtitle}>Try another category.</Text>
             </View>
           )}
           <Pressable style={styles.suggestCard} onPress={() => router.push('/suggestions')} accessibilityRole="button">
@@ -137,45 +147,42 @@ export function ExploreScreen() {
           </Pressable>
         </View>
 
-        {/* Recent ratings only make sense for real locations, so hide this
-            section when the "Events" category is selected. */}
-        {category !== 'events' ? (
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Recent Ratings</Text>
-            {recentRatings.length > 0 ? (
-              <View style={styles.ratingList}>
-                {recentRatings.map((rating) => (
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Recent Ratings</Text>
+          {recentRatings.length > 0 ? (
+            <View style={styles.ratingList}>
+              {recentRatings.map(({ rating, minutesAgo }) => {
+                const space = spaces.find((s) => s.id === rating.spaceId);
+                const location = space ? getLocationById(space.locationId) : undefined;
+                const name = location?.name ?? `Space ${rating.spaceId}`;
+                return (
                   <View key={rating.id} style={styles.ratingCard}>
                     <View style={styles.ratingHeader}>
-                      <Text style={styles.ratingLocation}>{rating.locationName}</Text>
-                      <Text style={styles.ratingTime}>{formatMinutesAgo(rating.createdMinutesAgo)}</Text>
-                      {isOwnRating(rating, calvinEmail) ? (
+                      <Text style={styles.ratingLocation}>{name}</Text>
+                      <Text style={styles.ratingTime}>{formatMinutesAgo(minutesAgo)}</Text>
+                      {isOwnRating(rating, account?.id) ? (
                         <Pressable
-                          onPress={() => confirmDeleteRating(rating, () => deleteRating(rating.id))}
+                          onPress={() => confirmDeleteRating(rating, name, () => deleteRating(rating.id))}
                           hitSlop={8}
                           accessibilityRole="button"
-                          accessibilityLabel={`Delete your rating for ${rating.locationName}`}>
+                          accessibilityLabel={`Delete your rating for ${name}`}>
                           <Ionicons name="trash-outline" size={16} color={Colors.danger} />
                         </Pressable>
                       ) : null}
                     </View>
-                    <Text style={styles.ratingAuthor}>{ratingAuthorLabel(rating)}</Text>
-                    <StarRating value={rating.stars} readOnly size={15} />
-                    {rating.comment ? <Text style={styles.ratingComment}>{rating.comment}</Text> : null}
-                    <Text style={styles.ratingMeta}>
-                      {rating.capacity}% busy ·{' '}
-                      {rating.amenities.length > 0 ? rating.amenities.join(', ') : 'No amenities noted'}
-                    </Text>
+                    <StarRating value={rating.numStars} readOnly size={15} />
+                    {rating.description ? <Text style={styles.ratingComment}>{rating.description}</Text> : null}
+                    <Text style={styles.ratingMeta}>{rating.crowdRating}% busy</Text>
                   </View>
-                ))}
-              </View>
-            ) : (
-              <View style={styles.emptyState}>
-                <Text style={styles.emptySubtitle}>No ratings for this category yet.</Text>
-              </View>
-            )}
-          </View>
-        ) : null}
+                );
+              })}
+            </View>
+          ) : (
+            <View style={styles.emptyState}>
+              <Text style={styles.emptySubtitle}>No ratings for this category yet.</Text>
+            </View>
+          )}
+        </View>
       </ScrollView>
     </SafeAreaView>
   );

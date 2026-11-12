@@ -1,6 +1,6 @@
-import type { FavoriteSpot } from '@/types';
+import type { Favorites } from '@/types';
 
-export const initialFavorites: FavoriteSpot[] = [
-  { locationId: 'hekman-library', name: 'Hekman Library', category: 'study' },
-  { locationId: 'peets-coffee', name: "Peet's Coffee", category: 'dining' },
+export const initialFavorites: Favorites[] = [
+  { userId: 1, spaceId: 4, createdAt: new Date().toISOString() },
+  { userId: 1, spaceId: 20, createdAt: new Date().toISOString() },
 ];
