@@ -1,29 +1,13 @@
-// Fetches campus location data from the Express server and connects the returned information to the correct local images
+// Fetches campus location data from the Express server
 
-import type { CampusLocation } from '@/types';
-
-type ApiLocation = Omit<CampusLocation, 'image'> & {
-  imageKey: string;
-};
-
-const images: Record<string, CampusLocation['image']> = {
-  hekman_library: require('@/assets/images/hekman_library.jpg'),
-  'dining-hall-min': require('@/assets/images/dining-hall-min.jpg'),
-  'business-building': require('@/assets/images/business-building.jpg'),
-  'north-hall': require('@/assets/images/north-hall.jpg'),
-  'spoelhof-fieldhouse': require('@/assets/images/spoelhof-fieldhouse.avif'),
-  'devries-greenhouse': require('@/assets/images/devries-greenhouse.webp'),
-  'cfac-practice-lounges': require('@/assets/images/cfac-practice-lounges.jpg'),
-  'morren-fitness': require('@/assets/images/morren-fitness.jpg'),
-  'peets-coffee': require('@/assets/images/peets-coffee.webp'),
-};
+import type { Location } from '@/types';
 
 const API_URL = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:3000';
 
 // Give up quickly when the server isn't running so the app can fall back to bundled data.
 const REQUEST_TIMEOUT_MS = 3000;
 
-export async function fetchLocations(): Promise<CampusLocation[]> {
+export async function fetchLocations(): Promise<Location[]> {
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
 
@@ -38,10 +22,5 @@ export async function fetchLocations(): Promise<CampusLocation[]> {
     throw new Error(`API returned ${response.status}`);
   }
 
-  const data: ApiLocation[] = await response.json();
-
-  return data.map(({ imageKey, ...location }) => ({
-    ...location,
-    image: images[imageKey] || images.hekman_library,
-  }));
+  return (await response.json()) as Location[];
 }

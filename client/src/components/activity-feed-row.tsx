@@ -9,7 +9,7 @@ import type { ActivityFeedItem } from '@/types';
 // Maps each noise level to a matching volume icon for the feed row.
 const NOISE_ICON: Record<ActivityFeedItem['noise'], keyof typeof Ionicons.glyphMap> = {
   whisper: 'volume-mute',
-  'low-buzz': 'volume-low',
+  lowBuzz: 'volume-low',
   social: 'volume-medium',
   loud: 'volume-high',
 };

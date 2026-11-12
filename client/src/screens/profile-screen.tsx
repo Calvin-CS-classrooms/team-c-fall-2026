@@ -10,6 +10,8 @@ import { SettingToggleRow } from '@/components/setting-toggle-row';
 import { Colors } from '@/constants/colors';
 import { Typography } from '@/constants/typography';
 import { useAppData } from '@/context/app-context';
+import { getLocationById } from '@/data/locations';
+import { getSpaceById } from '@/data/spaces';
 import { confirmAction } from '@/utils/confirm';
 import { formatDate } from '@/utils/format';
 
@@ -99,13 +101,17 @@ export function ProfileScreen() {
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Pinned Favorite Spots</Text>
           <View style={styles.card}>
-            {favorites.map((favorite) => (
-              <FavoriteSpotRow
-                key={favorite.locationId}
-                favorite={favorite}
-                onRemove={() => removeFavorite(favorite.locationId)}
-              />
-            ))}
+            {favorites.map((favorite) => {
+              const space = getSpaceById(favorite.spaceId);
+              const location = space ? getLocationById(space.locationId) : undefined;
+              return (
+                <FavoriteSpotRow
+                  key={favorite.spaceId}
+                  name={location?.name ?? `Space ${favorite.spaceId}`}
+                  onRemove={() => removeFavorite(favorite.spaceId)}
+                />
+              );
+            })}
             {favorites.length === 0 ? (
               <Text style={styles.emptyText}>Pin spots from Explore to see them here.</Text>
             ) : null}

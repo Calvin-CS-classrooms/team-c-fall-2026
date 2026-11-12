@@ -1,4 +1,4 @@
-import type { CampusLocation, UserRating } from '@/types';
+import type { Rating, Space } from '@/types';
 
 export type DiscoveryFilter = 'now-open' | 'quiet' | 'trending';
 
@@ -8,36 +8,36 @@ export const DISCOVERY_FILTERS: { key: DiscoveryFilter; label: string }[] = [
   { key: 'trending', label: 'Trending' },
 ];
 
-/** A location is trending when it has community ratings within this window. */
+/** A space is trending when it has community ratings within this window. */
 export const TRENDING_WINDOW_MINUTES = 360;
 
-export function isQuietSpot(location: CampusLocation): boolean {
-  return location.density === 'quiet' || location.noise === 'whisper';
+export function isQuietSpot(space: Space): boolean {
+  return space.currentNoiseLevel === 'whisper' || space.currentNoiseLevel === 'lowBuzz';
 }
 
-export function recentRatingCount(locationId: string, ratings: UserRating[]): number {
+export function recentRatingCount(spaceId: number, ratings: Rating[]): number {
+  const cutoff = Date.now() - TRENDING_WINDOW_MINUTES * 60 * 1000;
   return ratings.filter(
-    (rating) => rating.locationId === locationId && rating.createdMinutesAgo <= TRENDING_WINDOW_MINUTES,
+    (rating) => rating.spaceId === spaceId && new Date(rating.createdAt).getTime() >= cutoff,
   ).length;
 }
 
-/** Keeps only locations meeting every active filter. With "trending" active, the busiest-rated come first. */
+/** Keeps only spaces meeting every active filter. With "trending" active, the busiest-rated come first. */
 export function applyDiscoveryFilters(
-  locations: CampusLocation[],
-  ratings: UserRating[],
+  spaces: Space[],
+  ratings: Rating[],
   filters: DiscoveryFilter[],
-): CampusLocation[] {
+): Space[] {
   const active = new Set(filters);
-  const result = locations.filter(
-    (location) =>
-      (!active.has('now-open') || location.isOpenNow) &&
-      (!active.has('quiet') || isQuietSpot(location)) &&
-      (!active.has('trending') || recentRatingCount(location.id, ratings) > 0),
+  const result = spaces.filter(
+    (space) =>
+      (!active.has('quiet') || isQuietSpot(space)) &&
+      (!active.has('trending') || recentRatingCount(space.id, ratings) > 0),
   );
 
   if (active.has('trending')) {
     return [...result].sort(
-      (a, b) => recentRatingCount(b.id, ratings) - recentRatingCount(a.id, ratings) || b.rating - a.rating,
+      (a, b) => recentRatingCount(b.id, ratings) - recentRatingCount(a.id, ratings) || b.overallRating - a.overallRating,
     );
   }
   return result;

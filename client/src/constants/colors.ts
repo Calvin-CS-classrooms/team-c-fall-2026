@@ -34,7 +34,7 @@ export const DensityLabels: Record<DensityLevel, string> = {
 
 export const NoiseLabels: Record<NoiseLevel, string> = {
   whisper: 'Whisper',
-  'low-buzz': 'Low Buzz',
+  lowBuzz: 'Low Buzz',
   social: 'Social',
   loud: 'Loud',
 };

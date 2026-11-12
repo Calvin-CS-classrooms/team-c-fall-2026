@@ -1,7 +1,5 @@
 import { getLocationById, locations } from '@/data/locations';
 
-const getAssetValue = (asset: unknown) => asset;
-
 describe('campus location mock data', () => {
   it('contains all campus locations', () => {
     expect(locations).toHaveLength(9);
@@ -18,18 +16,27 @@ describe('campus location mock data', () => {
     ]);
   });
 
-  it('includes usable capacity, category, amenities, and floor data', () => {
+  it('includes usable floor, space, hours, and image data', () => {
     for (const location of locations) {
-      expect(location.capacity).toBeGreaterThanOrEqual(0);
-      expect(location.capacity).toBeLessThanOrEqual(100);
-      expect(location.amenities.length).toBeGreaterThan(0);
-      expect(location.floors.length).toBeGreaterThan(0);
-      expect(getAssetValue(location.image)).toBeDefined();
+      expect(location.numFloors).toBeGreaterThanOrEqual(1);
+      expect(location.numSpaces).toBeGreaterThanOrEqual(0);
+      expect(location.hours.openingTime).toBeDefined();
+      expect(location.hours.closingTime).toBeDefined();
+      expect(location.image).toBeDefined();
     }
   });
 
   it('finds a location by id and returns undefined for an unknown id', () => {
-    expect(getLocationById('hekman-library')?.name).toBe('Hekman Library');
-    expect(getLocationById('missing-location')).toBeUndefined();
+    expect(getLocationById(1)?.name).toBe('Hekman Library');
+    expect(getLocationById(999)).toBeUndefined();
+  });
+
+  it('has unique ids and valid hours', () => {
+    const ids = locations.map((location) => location.id);
+    expect(new Set(ids).size).toBe(ids.length);
+    for (const location of locations) {
+      expect(location.hours.openingTime).toMatch(/^\d{2}:\d{2}$/);
+      expect(location.hours.closingTime).toMatch(/^\d{2}:\d{2}$/);
+    }
   });
 });

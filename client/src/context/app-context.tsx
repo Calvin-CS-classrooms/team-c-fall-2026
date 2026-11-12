@@ -11,22 +11,22 @@ import {
 import { initialFavorites } from '@/data/favorites';
 import { locations as baseLocations } from '@/data/locations';
 import { initialRatings } from '@/data/ratings';
+import { spaces as baseSpaces } from '@/data/spaces';
 import { createInitialSuggestions } from '@/data/suggestions';
 import type {
   Account,
-  AmenityVote,
   AppSettings,
-  CampusLocation,
-  FavoriteSpot,
+  Favorites,
+  Location,
   NewRatingInput,
   NewSuggestionInput,
-  SpaceSuggestion,
+  Rating,
+  Space,
+  SpotSuggestion,
   SuggestionVote,
-  UserRating,
 } from '@/types';
-import { computeLocationRating } from '@/utils/ratings';
-import { hasSuggestedToday, netScore, PROMOTION_THRESHOLD, suggestionToLocation } from '@/utils/suggestions';
 import { isCalvinEmail } from '@/utils/verification';
+import { hasSuggestedToday } from '@/utils/suggestions';
 
 export const ACCOUNT_DELETION_DELAY_MS = 7 * 24 * 60 * 60 * 1000;
 
@@ -47,20 +47,20 @@ interface AppContextValue {
   requestAccountDeletion: () => void;
   cancelAccountDeletion: () => void;
   finalizeAccountDeletion: () => void;
-  locations: CampusLocation[];
-  ratings: UserRating[];
+  locations: Location[];
+  spaces: Space[];
+  ratings: Rating[];
   addRating: (input: NewRatingInput) => void;
-  markHelpful: (id: string) => void;
-  deleteRating: (id: string) => void;
-  suggestions: SpaceSuggestion[];
+  markHelpful: (id: number) => void;
+  deleteRating: (id: number) => void;
+  suggestions: SpotSuggestion[];
+  suggestionVotes: SuggestionVote[];
   submitSuggestion: (input: NewSuggestionInput) => string | null;
-  voteOnSuggestion: (id: string, vote: SuggestionVote) => void;
-  voteOnAmenity: (id: string, amenity: string, vote: AmenityVote) => void;
-  proposeAmenity: (id: string, amenity: string) => void;
-  favorites: FavoriteSpot[];
-  toggleFavorite: (location: CampusLocation) => void;
-  removeFavorite: (locationId: string) => void;
-  isFavorite: (locationId: string) => boolean;
+  voteOnSuggestion: (id: number, vote: 1 | -1) => void;
+  favorites: Favorites[];
+  toggleFavorite: (space: Space) => void;
+  removeFavorite: (spaceId: number) => void;
+  isFavorite: (spaceId: number) => boolean;
   settings: AppSettings;
   toggleSetting: (key: keyof AppSettings) => void;
 }
@@ -68,10 +68,10 @@ interface AppContextValue {
 const AppContext = createContext<AppContextValue | undefined>(undefined);
 
 // Module-level counters used to generate unique ids for locally created
-// ratings and suggestions (there is no backend yet).
-let ratingIdCounter = 0;
-let suggestionIdCounter = 0;
-let deletedUserCounter = 0;
+// ratings and suggestions (there is no backend yet). They start above the
+// highest seeded id so locally created rows never collide with mock data.
+let ratingIdCounter = Math.max(0, ...initialRatings.map((rating) => rating.id));
+let suggestionIdCounter = Math.max(0, ...createInitialSuggestions().map((suggestion) => suggestion.id));
 
 /** "jane.doe@calvin.edu" -> "Jane Doe" */
 export function nameFromEmail(email: string): string {
@@ -83,12 +83,6 @@ export function nameFromEmail(email: string): string {
     .join(' ');
 }
 
-function rekeyVotes<T>(votes: Record<string, T>, from: string, to: string): Record<string, T> {
-  if (!(from in votes)) return votes;
-  const { [from]: value, ...rest } = votes;
-  return { ...rest, [to]: value };
-}
-
 /**
  * Provides all app-wide state (account, ratings, suggestions, favorites,
  * settings) to the component tree via context. Acts as a client-only stand-in
@@ -96,9 +90,10 @@ function rekeyVotes<T>(votes: Record<string, T>, from: string, to: string): Reco
  */
 export function AppProvider({ children }: PropsWithChildren) {
   const [account, setAccount] = useState<Account | null>(null);
-  const [ratings, setRatings] = useState<UserRating[]>(initialRatings);
-  const [suggestions, setSuggestions] = useState<SpaceSuggestion[]>(() => createInitialSuggestions());
-  const [favorites, setFavorites] = useState<FavoriteSpot[]>(initialFavorites);
+  const [ratings, setRatings] = useState<Rating[]>(initialRatings);
+  const [suggestions, setSuggestions] = useState<SpotSuggestion[]>(() => createInitialSuggestions());
+  const [suggestionVotes, setSuggestionVotes] = useState<SuggestionVote[]>([]);
+  const [favorites, setFavorites] = useState<Favorites[]>(initialFavorites);
   const [settings, setSettings] = useState<AppSettings>(DEFAULT_SETTINGS);
 
   const calvinEmail = account?.email ?? null;
@@ -113,6 +108,7 @@ export function AppProvider({ children }: PropsWithChildren) {
 
     const normalizedEmail = email.trim().toLowerCase();
     setAccount({
+      id: 1,
       name: nameFromEmail(normalizedEmail),
       email: normalizedEmail,
       createdAt: Date.now(),
@@ -134,26 +130,6 @@ export function AppProvider({ children }: PropsWithChildren) {
   // Permanently removes account information. Ratings stay, but lose their owner and show as anonymous.
   const finalizeAccountDeletion = useCallback(() => {
     if (!account) return;
-    const email = account.email;
-    deletedUserCounter += 1;
-    const placeholder = `deleted-user-${deletedUserCounter}`;
-
-    setRatings((prev) =>
-      prev.map((rating) =>
-        rating.ownerEmail === email ? { ...rating, ownerEmail: null, ownerName: undefined, isAnonymous: true } : rating,
-      ),
-    );
-    setSuggestions((prev) =>
-      prev.map((suggestion) => ({
-        ...suggestion,
-        submittedBy: suggestion.submittedBy === email ? null : suggestion.submittedBy,
-        votes: rekeyVotes(suggestion.votes, email, placeholder),
-        amenities: suggestion.amenities.map((amenity) => ({
-          ...amenity,
-          votes: rekeyVotes(amenity.votes, email, placeholder),
-        })),
-      })),
-    );
     setFavorites([]);
     setSettings(DEFAULT_SETTINGS);
     setAccount(null);
@@ -174,153 +150,105 @@ export function AppProvider({ children }: PropsWithChildren) {
       }
 
       ratingIdCounter += 1;
-      const newRating: UserRating = {
-        id: `local-rating-${ratingIdCounter}`,
-        helpfulCount: 0,
-        createdMinutesAgo: 0,
-        ownerEmail: account.email,
-        ownerName: account.name,
-        isAnonymous: settings.anonymousMode,
-        ...input,
+      const newRating: Rating = {
+        id: ratingIdCounter,
+        userId: account.id,
+        spaceId: input.spaceId,
+        createdAt: new Date().toISOString(),
+        numStars: input.numStars,
+        crowdRating: input.crowdRating,
+        perceivedNoise: input.perceivedNoise,
+        description: input.description ?? '',
+        numUpvotes: 0,
       };
       setRatings((prev) => [newRating, ...prev]);
     },
-    [account, settings.anonymousMode],
+    [account],
   );
 
   // Increments the helpful count on the matching rating.
-  const markHelpful = useCallback((id: string) => {
+  const markHelpful = useCallback((id: number) => {
     setRatings((prev) =>
-      prev.map((rating) => (rating.id === id ? { ...rating, helpfulCount: rating.helpfulCount + 1 } : rating)),
+      prev.map((rating) => (rating.id === id ? { ...rating, numUpvotes: rating.numUpvotes + 1 } : rating)),
     );
   }, []);
 
   // Removes the rating with the given id, but only if the current user owns it.
   const deleteRating = useCallback(
-    (id: string) => {
-      if (!calvinEmail) return;
-      setRatings((prev) => prev.filter((rating) => !(rating.id === id && rating.ownerEmail === calvinEmail)));
+    (id: number) => {
+      if (!account) return;
+      setRatings((prev) => prev.filter((rating) => !(rating.id === id && rating.userId === account.id)));
     },
-    [calvinEmail],
+    [account],
   );
 
   const submitSuggestion = useCallback(
     (input: NewSuggestionInput) => {
-      if (!calvinEmail) return 'Log in with your Calvin email to suggest a space.';
-      if (hasSuggestedToday(suggestions, calvinEmail)) return 'You can suggest one space per day. Try again tomorrow.';
+      if (!account) return 'Log in with your Calvin email to suggest a space.';
+      if (hasSuggestedToday(suggestions, account.id)) return 'You can suggest one space per day. Try again tomorrow.';
       const name = input.name.trim();
       if (!name) return 'Please enter a name for the space.';
 
       suggestionIdCounter += 1;
-      const amenityNames = [...new Set(input.amenities.map((amenity) => amenity.trim()).filter(Boolean))];
-      const suggestion: SpaceSuggestion = {
-        id: `local-suggestion-${suggestionIdCounter}`,
+      const suggestion: SpotSuggestion = {
+        id: suggestionIdCounter,
+        userId: account?.id ?? 0,
+        locationId: 1,
         name,
         description: input.description.trim(),
-        usage: input.usage.trim(),
-        amenities: amenityNames.map((amenity) => ({ name: amenity, votes: { [calvinEmail]: 'keep' } })),
-        submittedBy: calvinEmail,
-        submittedAt: Date.now(),
-        votes: { [calvinEmail]: 1 },
-        status: 'pending',
+        type: 'addition',
+        createdAt: new Date().toISOString(),
+        numUpvotes: 1,
+        status: 'beingTested',
       };
       setSuggestions((prev) => [suggestion, ...prev]);
       return null;
     },
-    [calvinEmail, suggestions],
+    [suggestions, account],
   );
 
   const voteOnSuggestion = useCallback(
-    (id: string, vote: SuggestionVote) => {
-      if (!calvinEmail) return;
-      setSuggestions((prev) =>
-        prev.map((suggestion) => {
-          if (suggestion.id !== id || suggestion.status !== 'pending' || suggestion.submittedBy === calvinEmail) {
-            return suggestion;
-          }
-          const votes = { ...suggestion.votes };
-          // Tapping the same vote again clears it.
-          if (votes[calvinEmail] === vote) delete votes[calvinEmail];
-          else votes[calvinEmail] = vote;
-          const next = { ...suggestion, votes };
-          return netScore(next) >= PROMOTION_THRESHOLD ? { ...next, status: 'official' } : next;
-        }),
-      );
+    (id: number, vote: 1 | -1) => {
+      if (!account) return;
+      const userId = account.id;
+      setSuggestionVotes((prev) => {
+        const existing = prev.find((v) => v.suggestionId === id && v.userId === userId);
+        // Tapping the same vote again clears it.
+        if (existing && existing.vote === vote) {
+          return prev.filter((v) => !(v.suggestionId === id && v.userId === userId));
+        }
+        const next = existing
+          ? prev.map((v) => (v.suggestionId === id && v.userId === userId ? { ...v, vote } : v))
+          : [...prev, { suggestionId: id, userId, vote, createdAt: new Date().toISOString() }];
+        return next;
+      });
     },
-    [calvinEmail],
+    [account],
   );
 
-  const voteOnAmenity = useCallback(
-    (id: string, amenityName: string, vote: AmenityVote) => {
-      if (!calvinEmail) return;
-      setSuggestions((prev) =>
-        prev.map((suggestion) =>
-          suggestion.id !== id || suggestion.status !== 'pending'
-            ? suggestion
-            : {
-                ...suggestion,
-                amenities: suggestion.amenities.map((amenity) => {
-                  if (amenity.name !== amenityName) return amenity;
-                  const votes = { ...amenity.votes };
-                  if (votes[calvinEmail] === vote) delete votes[calvinEmail];
-                  else votes[calvinEmail] = vote;
-                  return { ...amenity, votes };
-                }),
-              },
-        ),
-      );
-    },
-    [calvinEmail],
-  );
+  const locations = useMemo(() => baseLocations, []);
 
-  const proposeAmenity = useCallback(
-    (id: string, amenityName: string) => {
-      const name = amenityName.trim();
-      if (!calvinEmail || !name) return;
-      setSuggestions((prev) =>
-        prev.map((suggestion) => {
-          if (suggestion.id !== id || suggestion.status !== 'pending') return suggestion;
-          if (suggestion.amenities.some((amenity) => amenity.name.toLowerCase() === name.toLowerCase())) {
-            return suggestion;
-          }
-          return { ...suggestion, amenities: [...suggestion.amenities, { name, votes: { [calvinEmail]: 'keep' } }] };
-        }),
-      );
-    },
-    [calvinEmail],
-  );
+  const spaces = useMemo(() => baseSpaces, []);
 
-  const locations = useMemo(() => {
-    const official = suggestions.filter((suggestion) => suggestion.status === 'official').map(suggestionToLocation);
-    return [...baseLocations, ...official].map((location) => ({
-      ...location,
-      rating: computeLocationRating(
-        location.rating,
-        ratings.filter((rating) => rating.locationId === location.id).map((rating) => rating.stars),
-      ),
-    }));
-  }, [ratings, suggestions]);
-
-  // Adds the location to favorites if absent, or removes it if already
-  // present (i.e. toggles the favorite state).
-  const toggleFavorite = useCallback((location: CampusLocation) => {
+  // Adds the space to favorites if absent, or removes it if already present.
+  const toggleFavorite = useCallback((space: Space) => {
     setFavorites((prev) => {
-      const exists = prev.some((favorite) => favorite.locationId === location.id);
+      const exists = prev.some((favorite) => favorite.spaceId === space.id);
       if (exists) {
-        return prev.filter((favorite) => favorite.locationId !== location.id);
+        return prev.filter((favorite) => favorite.spaceId !== space.id);
       }
-      return [...prev, { locationId: location.id, name: location.name, category: location.category }];
+      return [...prev, { userId: 1, spaceId: space.id, createdAt: new Date().toISOString() }];
     });
   }, []);
 
-  // Removes the favorite with the given location id.
-  const removeFavorite = useCallback((locationId: string) => {
-    setFavorites((prev) => prev.filter((favorite) => favorite.locationId !== locationId));
+  // Removes the favorite with the given space id.
+  const removeFavorite = useCallback((spaceId: number) => {
+    setFavorites((prev) => prev.filter((favorite) => favorite.spaceId !== spaceId));
   }, []);
 
-  // Whether the given location id is currently favorited.
+  // Whether the given space id is currently favorited.
   const isFavorite = useCallback(
-    (locationId: string) => favorites.some((favorite) => favorite.locationId === locationId),
+    (spaceId: number) => favorites.some((favorite) => favorite.spaceId === spaceId),
     [favorites],
   );
 
@@ -339,15 +267,15 @@ export function AppProvider({ children }: PropsWithChildren) {
       cancelAccountDeletion,
       finalizeAccountDeletion,
       locations,
+      spaces,
       ratings,
       addRating,
       markHelpful,
       deleteRating,
       suggestions,
+      suggestionVotes,
       submitSuggestion,
       voteOnSuggestion,
-      voteOnAmenity,
-      proposeAmenity,
       favorites,
       toggleFavorite,
       removeFavorite,
@@ -364,15 +292,15 @@ export function AppProvider({ children }: PropsWithChildren) {
       cancelAccountDeletion,
       finalizeAccountDeletion,
       locations,
+      spaces,
       ratings,
       addRating,
       markHelpful,
       deleteRating,
       suggestions,
+      suggestionVotes,
       submitSuggestion,
       voteOnSuggestion,
-      voteOnAmenity,
-      proposeAmenity,
       favorites,
       toggleFavorite,
       removeFavorite,

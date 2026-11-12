@@ -6,19 +6,24 @@ import { StarRating } from '@/components/star-rating';
 import { Typography } from '@/constants/typography';
 import { confirmAction } from '@/utils/confirm';
 import { formatMinutesAgo } from '@/utils/format';
-import type { UserRating } from '@/types';
+import type { Rating } from '@/types';
+
+// Stable "now" used to compute relative timestamps without calling the
+// impure Date.now() during render.
+const NOW = Date.now();
 
 interface RatingHistoryRowProps {
-  rating: UserRating;
+  rating: Rating;
+  name: string;
   onMarkHelpful: () => void;
   /** Only provided for ratings the current user owns. */
   onDelete?: () => void;
 }
 
-export function confirmDeleteRating(rating: UserRating, onDelete: () => void) {
+export function confirmDeleteRating(rating: Rating, name: string, onDelete: () => void) {
   confirmAction({
     title: 'Delete this rating?',
-    message: `Your rating for ${rating.locationName} will be permanently removed.`,
+    message: `Your rating for ${name} will be permanently removed.`,
     confirmLabel: 'Delete',
     onConfirm: onDelete,
   });
@@ -26,51 +31,45 @@ export function confirmDeleteRating(rating: UserRating, onDelete: () => void) {
 
 /**
  * A single rating in the user's rating history on the ratings screen.
- * Shows the location, star rating, optional comment, capacity/noise/age
+ * Shows the space, star rating, optional description, crowd/noise/age
  * metadata, plus buttons to mark the rating helpful or delete it.
  *
  * @param rating - The rating to display.
+ * @param name - The resolved name of the rated space's location.
  * @param onMarkHelpful - Called when the "Helpful" button is tapped.
  * @param onDelete - Called when the delete button is tapped.
  */
-export function RatingHistoryRow({ rating, onMarkHelpful, onDelete }: RatingHistoryRowProps) {
+export function RatingHistoryRow({ rating, name, onMarkHelpful, onDelete }: RatingHistoryRowProps) {
   return (
     <View style={styles.card}>
       <View style={styles.headerRow}>
-        <Text style={styles.location}>{rating.locationName}</Text>
+        <Text style={styles.location}>{name}</Text>
         {/* Delete button, only shown on the user's own ratings; hitSlop enlarges its tap target. */}
         {onDelete ? (
           <Pressable
-            onPress={() => confirmDeleteRating(rating, onDelete)}
+            onPress={() => confirmDeleteRating(rating, name, onDelete)}
             hitSlop={8}
             accessibilityRole="button"
-            accessibilityLabel={`Delete rating for ${rating.locationName}`}>
+            accessibilityLabel={`Delete rating for ${name}`}>
             <Ionicons name="trash-outline" size={18} color={Colors.danger} />
           </Pressable>
         ) : null}
       </View>
 
-      {rating.isAnonymous ? (
-        <View style={styles.anonymousTag}>
-          <Ionicons name="eye-off-outline" size={12} color={Colors.textSecondary} />
-          <Text style={styles.anonymousText}>Posted as Anonymous user</Text>
-        </View>
-      ) : null}
+      <StarRating value={rating.numStars} readOnly size={16} />
 
-      <StarRating value={rating.stars} readOnly size={16} />
-
-      {/* Comment is optional, so only render it when present. */}
-      {rating.comment ? <Text style={styles.comment}>{rating.comment}</Text> : null}
+      {/* Description is optional, so only render it when present. */}
+      {rating.description ? <Text style={styles.comment}>{rating.description}</Text> : null}
 
       <View style={styles.metaRow}>
-        <Text style={styles.meta}>{rating.capacity}% busy</Text>
-        <Text style={styles.meta}>· {NoiseLabels[rating.noise]}</Text>
-        <Text style={styles.meta}>· {formatMinutesAgo(rating.createdMinutesAgo)}</Text>
+        <Text style={styles.meta}>{rating.crowdRating}% busy</Text>
+        <Text style={styles.meta}>· {NoiseLabels[rating.perceivedNoise]}</Text>
+        <Text style={styles.meta}>· {formatMinutesAgo(Math.floor((NOW - new Date(rating.createdAt).getTime()) / 60000))}</Text>
       </View>
 
       <Pressable style={styles.helpfulButton} onPress={onMarkHelpful}>
         <Ionicons name="thumbs-up-outline" size={14} color={Colors.maroon} />
-        <Text style={styles.helpfulText}>Helpful ({rating.helpfulCount})</Text>
+        <Text style={styles.helpfulText}>Helpful ({rating.numUpvotes})</Text>
       </Pressable>
     </View>
   );

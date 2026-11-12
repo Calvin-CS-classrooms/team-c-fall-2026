@@ -8,6 +8,8 @@ import { RatingHistoryRow } from '@/components/rating-history-row';
 import { Colors } from '@/constants/colors';
 import { Typography } from '@/constants/typography';
 import { useAppData } from '@/context/app-context';
+import { getLocationById } from '@/data/locations';
+import { getSpaceById } from '@/data/spaces';
 import { isOwnRating } from '@/utils/ratings';
 
 
@@ -17,10 +19,10 @@ import { isOwnRating } from '@/utils/ratings';
  * rating history with mark-helpful and delete actions.
  */
 export function RatingsScreen() {
-  const { ratings, addRating, markHelpful, deleteRating, calvinEmail, settings } = useAppData();
-  const myRatings = ratings.filter((rating) => isOwnRating(rating, calvinEmail));
+  const { ratings, addRating, markHelpful, deleteRating, account, settings } = useAppData();
+  const myRatings = ratings.filter((rating) => isOwnRating(rating, account?.id));
   // Total helpful votes across all of the user's ratings.
-  const helpfulVotes = myRatings.reduce((sum, rating) => sum + rating.helpfulCount, 0);
+  const helpfulVotes = myRatings.reduce((sum, rating) => sum + rating.numUpvotes, 0);
 
   return (
     <SafeAreaView style={styles.container} edges={['top', 'left', 'right']}>
@@ -36,7 +38,7 @@ export function RatingsScreen() {
           <View style={styles.formCard}>
             {/* Rating submission requires a verified Calvin email; otherwise
                 prompt the user to add one in the profile section. */}
-            {calvinEmail ? (
+            {account ? (
               <>
                 {settings.anonymousMode ? (
                   <Text style={styles.noticeText}>Anonymous Mode is on: this rating will show as Anonymous user.</Text>
@@ -54,14 +56,19 @@ export function RatingsScreen() {
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Your Rating History</Text>
           <View style={styles.historyList}>
-            {myRatings.map((rating) => (
-              <RatingHistoryRow
-                key={rating.id}
-                rating={rating}
-                onMarkHelpful={() => markHelpful(rating.id)}
-                onDelete={() => deleteRating(rating.id)}
-              />
-            ))}
+            {myRatings.map((rating) => {
+              const space = getSpaceById(rating.spaceId);
+              const location = space ? getLocationById(space.locationId) : undefined;
+              return (
+                <RatingHistoryRow
+                  key={rating.id}
+                  rating={rating}
+                  name={location?.name ?? `Space ${rating.spaceId}`}
+                  onMarkHelpful={() => markHelpful(rating.id)}
+                  onDelete={() => deleteRating(rating.id)}
+                />
+              );
+            })}
             {myRatings.length === 0 ? <Text style={styles.emptyText}>No ratings yet. Submit your first one above!</Text> : null}
           </View>
         </View>

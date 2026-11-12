@@ -23,6 +23,16 @@ describe('formatMinutesAgo', () => {
     expect(formatMinutesAgo(1439)).toBe('1 day ago');
     expect(formatMinutesAgo(2 * 1440)).toBe('2 days ago');
   });
+
+  it('treats negative and fractional minutes as "just now"', () => {
+    expect(formatMinutesAgo(-5)).toBe('just now');
+    expect(formatMinutesAgo(0.9)).toBe('just now');
+  });
+
+  it('handles very large values without crashing', () => {
+    expect(formatMinutesAgo(Number.MAX_SAFE_INTEGER)).toMatch(/day/);
+    expect(formatMinutesAgo(100000)).toMatch(/day/);
+  });
 });
 
 describe('formatDate', () => {
@@ -62,5 +72,18 @@ describe('getKnightTier', () => {
       expect(progress).toBeGreaterThanOrEqual(0);
       expect(progress).toBeLessThanOrEqual(1);
     }
+  });
+
+  it('handles negative counts as the lowest tier', () => {
+    // With no next tier, progress is capped at 1.
+    expect(getKnightTier(-1)).toEqual({ label: 'Page', progress: 1 });
+  });
+
+  it('reports progress within a tier between thresholds', () => {
+    // Squire spans 5..15, so 10 is halfway.
+    expect(getKnightTier(10)).toEqual({ label: 'Squire', next: 'Knight', progress: 0.5 });
+    // Knight spans 15..30, so 22.5 would be halfway; 22 is just under.
+    expect(getKnightTier(22).label).toBe('Knight');
+    expect(getKnightTier(22).progress).toBeCloseTo((22 - 15) / 15);
   });
 });
