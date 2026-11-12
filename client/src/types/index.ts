@@ -41,6 +41,8 @@ export interface Space {
   categoryId: number;
   floorId: number;
   name: string;
+  /** Optional image; when absent, cards fall back to showing the space name. */
+  image?: ImageProps['source'];
   description: string;
   /** General/expected noise level of the area (DB column). */
   noiseLevel: NoiseLevel;
