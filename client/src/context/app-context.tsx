@@ -179,7 +179,7 @@ export function AppProvider({ children }: PropsWithChildren) {
       if (!account) return;
       setRatings((prev) => prev.filter((rating) => !(rating.id === id && rating.userId === account.id)));
     },
-    [calvinEmail],
+    [account],
   );
 
   const submitSuggestion = useCallback(
@@ -204,7 +204,7 @@ export function AppProvider({ children }: PropsWithChildren) {
       setSuggestions((prev) => [suggestion, ...prev]);
       return null;
     },
-    [calvinEmail, suggestions, account],
+    [suggestions, account],
   );
 
   const voteOnSuggestion = useCallback(

@@ -3,6 +3,9 @@
 import type { ImageProps } from 'expo-image';
 
 export type NoiseLevel = 'whisper' | 'lowBuzz' | 'social' | 'loud';
+export type DensityLevel = 'quiet' | 'moderate' | 'busy';
+export type AmenityVote = 'keep' | 'remove';
+
 
 export interface User {
   id: number;
@@ -159,7 +162,6 @@ export interface Account {
   deletionScheduledFor: number | null;
 }
 
-export type AmenityVote = 'keep' | 'remove';
 
 export interface SuggestedAmenity {
   name: string;
@@ -187,7 +189,6 @@ export interface AppSettings {
   capacityAlerts: boolean;
 }
 
-export type DensityLevel = 'quiet' | 'moderate' | 'busy';
 
 export interface FloorGuide {
   floor: string;

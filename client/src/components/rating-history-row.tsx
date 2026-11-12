@@ -8,6 +8,10 @@ import { confirmAction } from '@/utils/confirm';
 import { formatMinutesAgo } from '@/utils/format';
 import type { Rating } from '@/types';
 
+// Stable "now" used to compute relative timestamps without calling the
+// impure Date.now() during render.
+const NOW = Date.now();
+
 interface RatingHistoryRowProps {
   rating: Rating;
   name: string;
@@ -60,7 +64,7 @@ export function RatingHistoryRow({ rating, name, onMarkHelpful, onDelete }: Rati
       <View style={styles.metaRow}>
         <Text style={styles.meta}>{rating.crowdRating}% busy</Text>
         <Text style={styles.meta}>· {NoiseLabels[rating.perceivedNoise]}</Text>
-        <Text style={styles.meta}>· {formatMinutesAgo(Math.floor((Date.now() - new Date(rating.createdAt).getTime()) / 60000))}</Text>
+        <Text style={styles.meta}>· {formatMinutesAgo(Math.floor((NOW - new Date(rating.createdAt).getTime()) / 60000))}</Text>
       </View>
 
       <Pressable style={styles.helpfulButton} onPress={onMarkHelpful}>
