@@ -2,6 +2,7 @@
 
 const request = require("supertest");
 const app = require("../app");
+const mockLocations = require("../data-mock/locations");
 
 describe("Locations API", () => {
 
@@ -10,33 +11,29 @@ describe("Locations API", () => {
 
     expect(response.statusCode).toBe(200);
     expect(Array.isArray(response.body)).toBe(true);
-    expect(response.body.length).toBe(9);
+    expect(response.body.length).toBe(mockLocations.length);
   });
 
-  test("GET Hekman Library", async () => {
-    const response = await request(app).get(
-      "/api/locations/hekman-library"
-    );
+  test("GET a location by numeric id", async () => {
+    const response = await request(app).get("/api/locations/1");
 
     expect(response.statusCode).toBe(200);
-    expect(response.body.id).toBe("hekman-library");
-    expect(response.body.name).toBe("Hekman Library");
-    expect(response.body.category).toBe("study");
+    expect(response.body.id).toBe(1);
+    expect(response.body.name).toBe("Prince Conference Center");
   });
 
   test("GET location includes required data", async () => {
-    const response = await request(app).get(
-      "/api/locations/hekman-library"
-    );
+    const response = await request(app).get("/api/locations/1");
 
     expect(response.statusCode).toBe(200);
-    expect(response.body).toHaveProperty("capacity");
-    expect(response.body).toHaveProperty("density");
-    expect(response.body).toHaveProperty("noise");
-    expect(response.body).toHaveProperty("rating");
-    expect(response.body).toHaveProperty("amenities");
-    expect(response.body).toHaveProperty("floors");
-    expect(response.body).toHaveProperty("imageKey");
+    expect(response.body).toHaveProperty("name");
+    expect(response.body).toHaveProperty("image");
+    expect(response.body).toHaveProperty("description");
+    expect(response.body).toHaveProperty("numFloors");
+    expect(response.body).toHaveProperty("numSpaces");
+    expect(response.body).toHaveProperty("hours");
+    expect(Array.isArray(response.body.floors)).toBe(true);
+    expect(Array.isArray(response.body.spaces)).toBe(true);
   });
 
   test("GET invalid location returns 404", async () => {

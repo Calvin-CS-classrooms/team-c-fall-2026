@@ -1,12 +1,12 @@
-// Tests the locations API client with a mocked fetch, so no server is needed:
-// HTTP errors, network failures, and the request timeout that lets the app
-// fall back to bundled data.
+﻿// Tests the locations API client with a mocked fetch, so no server is needed:
+// image mapping, HTTP errors, network failures, and the request timeout that
+// lets the app fall back to bundled data.
 import { fetchLocations } from '@/services/locations-api';
 
-const apiLocation = (id: number, name: string) => ({
+const apiLocation = (id: number, name: string, image?: string) => ({
   id,
   name,
-  image: `https://example.com/${name}.jpg`,
+  image: image ?? `https://example.com/${name}.jpg`,
   description: 'Test location',
   numFloors: 2,
   numSpaces: 10,
@@ -49,7 +49,27 @@ describe('fetchLocations', () => {
 
     expect(location.id).toBe(1);
     expect(location.name).toBe('north-hall');
-    expect(location.image).toBe('https://example.com/north-hall.jpg');
+    expect(location.image).toEqual({ uri: 'https://example.com/north-hall.jpg' });
+  });
+
+  it('maps a known location image key to a bundled asset', async () => {
+    mockFetchResponse([apiLocation(1, 'Hekman Library', 'hekman_library')]);
+
+    const [location] = await fetchLocations();
+
+    expect(location.image).toBeDefined();
+    // A bundled asset is an object with a numeric id (from require), not a URL.
+    expect(typeof location.image).not.toBe('string');
+  });
+
+  it('falls back to a name-based placeholder for an unknown image key', async () => {
+    mockFetchResponse([apiLocation(1, 'Some New Building', 'unknown-key')]);
+
+    const [location] = await fetchLocations();
+
+    expect(location.image).toEqual({
+      uri: 'https://placehold.co/400x200?text=Some%20New%20Building',
+    });
   });
 
   it('returns an empty list when the server has no locations', async () => {
