@@ -1,5 +1,6 @@
 import { spaces } from '@/data/spaces';
 import { initialRatings } from '@/data/ratings';
+import type { Location, Space } from '@/types';
 import { applyDiscoveryFilters, isQuietSpot, recentRatingCount, TRENDING_WINDOW_MINUTES } from '@/utils/discovery';
 
 describe('discovery filters', () => {
@@ -121,5 +122,61 @@ describe('discovery filters', () => {
     const ids = applyDiscoveryFilters([first, second], ratings, ['trending']).map((space) => space.id);
     const higherRated = first.overallRating >= second.overallRating ? first.id : second.id;
     expect(ids[0]).toBe(higherRated);
+  });
+});
+
+describe('Now Open filter', () => {
+  // Two buildings: one open during the day, one only in the evening, and one with no hours.
+  const building = (id: number, hours?: Location['hours']): Location => ({
+    id,
+    name: `Building ${id}`,
+    image: undefined,
+    description: '',
+    numFloors: 1,
+    numSpaces: 1,
+    hours: hours as Location['hours'],
+  });
+  const buildings = [
+    building(1, { openingTime: '07:00', closingTime: '22:00' }),
+    building(2, { openingTime: '18:00', closingTime: '23:00' }),
+    building(3),
+  ];
+  const findLocation = (id: number) => buildings.find((b) => b.id === id);
+  const space = (id: number, locationId: number): Space => ({ ...spaces[0], id, locationId });
+  const testSpaces = [space(1, 1), space(2, 2), space(3, 3)];
+  const noon = new Date(2026, 10, 13, 12, 0);
+  const evening = new Date(2026, 10, 13, 19, 0);
+
+  it("keeps only spaces whose building is open at the current time", () => {
+    const ids = (now: Date) =>
+      applyDiscoveryFilters(testSpaces, [], ['now-open'], { now, findLocation })
+        .map((s) => s.id)
+        .filter((id) => id !== 3);
+
+    expect(ids(noon)).toEqual([1]);
+    expect(ids(evening)).toEqual([1, 2]);
+  });
+
+  it("keeps spaces whose building has no hours, since we can't tell", () => {
+    const ids = applyDiscoveryFilters(testSpaces, [], ['now-open'], { now: noon, findLocation }).map((s) => s.id);
+
+    expect(ids).toContain(3);
+  });
+
+  it('does not filter by hours when Now Open is off', () => {
+    expect(applyDiscoveryFilters(testSpaces, [], [], { now: noon, findLocation })).toHaveLength(3);
+  });
+
+  it('combines with the other filters', () => {
+    const quietClosed = { ...space(4, 2), noiseLevel: 'whisper' as const, currentNoiseLevel: 'whisper' as const };
+    const quietOpen = { ...space(5, 1), noiseLevel: 'whisper' as const, currentNoiseLevel: 'whisper' as const };
+
+    const ids = applyDiscoveryFilters([...testSpaces, quietClosed, quietOpen], [], ['now-open', 'quiet'], {
+      now: noon,
+      findLocation,
+    }).map((s) => s.id);
+
+    expect(ids).toContain(5);
+    expect(ids).not.toContain(4);
   });
 });
