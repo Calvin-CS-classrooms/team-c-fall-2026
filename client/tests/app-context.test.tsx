@@ -32,6 +32,10 @@ function ContextProbe() {
       <Pressable testID="log-in-short-password" onPress={() => data.logIn('student@calvin.edu', '123')} />
       <Pressable testID="log-out" onPress={data.logOut} />
       <Text testID="account-name">{data.account?.name ?? 'none'}</Text>
+      <Text testID="first-anonymous">{String(firstRating?.isAnonymous ?? false)}</Text>
+      <Text testID="own-public-count">
+        {data.ratings.filter((rating) => rating.userId === 1 && !rating.isAnonymous).length}
+      </Text>
       <Pressable
         testID="delete-other-rating"
         onPress={() => data.deleteRating(data.ratings.find((r) => r.userId !== data.account?.id)!.id)}
@@ -202,6 +206,33 @@ describe('AppProvider', () => {
     act(() => getNode(view, 'submit-suggestion').props.onPress());
     act(() => getNode(view, 'submit-suggestion').props.onPress());
     expect(getNode(view, 'suggestion-count').props.children).toBe(initialSuggestions + 1);
+  });
+
+  it('marks ratings anonymous only while Anonymous Mode is on', () => {
+    const view = renderContext();
+    act(() => getNode(view, 'set-calvin-email').props.onPress());
+
+    act(() => getNode(view, 'toggle-anonymous').props.onPress());
+    act(() => getNode(view, 'add-rating').props.onPress());
+    expect(getNode(view, 'first-anonymous').props.children).toBe('true');
+
+    act(() => getNode(view, 'toggle-anonymous').props.onPress());
+    act(() => getNode(view, 'add-rating').props.onPress());
+    expect(getNode(view, 'first-anonymous').props.children).toBe('false');
+  });
+
+  it("makes a deleted account's ratings anonymous but keeps them", () => {
+    const view = renderContext();
+    act(() => getNode(view, 'set-calvin-email').props.onPress());
+    act(() => getNode(view, 'add-rating').props.onPress());
+    const ratingCount = getNode(view, 'rating-count').props.children;
+    expect(getNode(view, 'own-public-count').props.children).toBeGreaterThan(0);
+
+    act(() => getNode(view, 'request-deletion').props.onPress());
+    act(() => getNode(view, 'finalize-deletion').props.onPress());
+
+    expect(getNode(view, 'rating-count').props.children).toBe(ratingCount);
+    expect(getNode(view, 'own-public-count').props.children).toBe(0);
   });
 
   it('toggles favorites and settings', () => {
