@@ -1,30 +1,42 @@
+import { getAmenityById } from '@/data/amenities';
 import type { SpaceAmenity } from '@/types';
 
 // Mock space-amenity join data (mirrors the spaceAmenities table).
 // Maps each space to the amenities it offers, using ids from amenities.ts.
 
 export const spaceAmenities: SpaceAmenity[] = [
-  // Hekman Library (spaces 1-4 and 21)
+  // Hekman Library, bottom to top
+  // Basement (space 2)
+  { spaceId: 2, amenityId: 1 }, // Wi-Fi
+  { spaceId: 2, amenityId: 2 }, // Outlets
+  { spaceId: 2, amenityId: 21 }, // Individual Desks
+  { spaceId: 2, amenityId: 4 }, // Quiet
+  // Student Commons (space 1)
   { spaceId: 1, amenityId: 1 }, // Wi-Fi
   { spaceId: 1, amenityId: 2 }, // Outlets
   { spaceId: 1, amenityId: 3 }, // Seating
+  { spaceId: 1, amenityId: 5 }, // Group Friendly
   { spaceId: 1, amenityId: 7 }, // Food Nearby
-  { spaceId: 2, amenityId: 1 }, // Wi-Fi
-  { spaceId: 2, amenityId: 2 }, // Outlets
-  { spaceId: 2, amenityId: 3 }, // Seating
-  { spaceId: 2, amenityId: 4 }, // Quiet
+  { spaceId: 1, amenityId: 8 }, // Printing
+  // 3rd Floor (space 3)
   { spaceId: 3, amenityId: 1 }, // Wi-Fi
   { spaceId: 3, amenityId: 2 }, // Outlets
+  { spaceId: 3, amenityId: 28 }, // Individual Study Rooms
+  { spaceId: 3, amenityId: 29 }, // Fireplace
+  { spaceId: 3, amenityId: 30 }, // Open Social Area
   { spaceId: 3, amenityId: 5 }, // Group Friendly
-  { spaceId: 3, amenityId: 19 }, // Study Rooms
+  // 4th Floor (space 4)
   { spaceId: 4, amenityId: 1 }, // Wi-Fi
   { spaceId: 4, amenityId: 2 }, // Outlets
+  { spaceId: 4, amenityId: 21 }, // Individual Desks
   { spaceId: 4, amenityId: 4 }, // Quiet
   { spaceId: 4, amenityId: 9 }, // Silent Floor
+  // 5th Floor (space 21)
   { spaceId: 21, amenityId: 1 }, // Wi-Fi
   { spaceId: 21, amenityId: 2 }, // Outlets
   { spaceId: 21, amenityId: 3 }, // Seating
   { spaceId: 21, amenityId: 6 }, // Natural Light
+  { spaceId: 21, amenityId: 20 }, // Window Seating
   // Commons Dining Hall (spaces 5-6)
   { spaceId: 5, amenityId: 1 }, // Wi-Fi
   { spaceId: 5, amenityId: 3 }, // Seating
@@ -90,4 +102,11 @@ export function getAmenitiesBySpaceId(spaceId: number): SpaceAmenity[] {
 
 export function getSpaceIdsByAmenityId(amenityId: number): SpaceAmenity[] {
   return spaceAmenities.filter((entry) => entry.amenityId === amenityId);
+}
+
+/** Names of the amenities a space offers, in data order (e.g. ['Wi-Fi', 'Fireplace']). */
+export function getAmenityNamesBySpaceId(spaceId: number): string[] {
+  return getAmenitiesBySpaceId(spaceId)
+    .map((entry) => getAmenityById(entry.amenityId)?.name)
+    .filter((name): name is string => Boolean(name));
 }

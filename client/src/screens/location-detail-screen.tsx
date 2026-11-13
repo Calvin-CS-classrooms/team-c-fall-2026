@@ -1,4 +1,5 @@
 import { Ionicons } from '@expo/vector-icons';
+import { Image } from 'expo-image';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -11,6 +12,7 @@ import { useAppData } from '@/context/app-context';
 import { categories } from '@/data/categories';
 import { getFloorById } from '@/data/floors';
 import { getLocationById } from '@/data/locations';
+import { getAmenityNamesBySpaceId } from '@/data/space-amenities';
 import { getSpacesByLocationId } from '@/data/spaces';
 
 /**
@@ -36,6 +38,18 @@ export function LocationDetailScreen() {
           </Pressable>
         </View>
 
+        {/* The building's photo, shown once here instead of on every space card. */}
+        {location?.image ? (
+          <View style={styles.section}>
+            <Image
+              source={location.image}
+              style={styles.heroImage}
+              contentFit="cover"
+              accessibilityLabel={`Photo of ${location.name}`}
+            />
+          </View>
+        ) : null}
+
         <AppHeader title={location?.name ?? 'Location'} subtitle="Spaces in this location" />
 
         <View style={styles.section}>
@@ -56,6 +70,7 @@ export function LocationDetailScreen() {
                     name={space.name}
                     categoryName={categoryName}
                     floorName={floor?.name ?? 'Floor'}
+                    amenities={getAmenityNamesBySpaceId(space.id)}
                     isFavorite={isFavorite(space.id)}
                     onToggleFavorite={() => toggleFavorite(space)}
                   />
@@ -92,6 +107,12 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 2,
     alignSelf: 'flex-start',
+  },
+  heroImage: {
+    width: '100%',
+    height: 200,
+    borderRadius: 18,
+    backgroundColor: Colors.surfaceAlt,
   },
   backText: {
     fontFamily: Typography.semiBold,

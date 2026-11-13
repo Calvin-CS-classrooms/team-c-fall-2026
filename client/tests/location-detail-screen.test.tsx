@@ -5,6 +5,7 @@ import { Image } from 'expo-image';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { act, create, type ReactTestRenderer } from 'react-test-renderer';
 
+import { LandmarkCard } from '@/components/landmark-card';
 import { AppProvider } from '@/context/app-context';
 import { getLocationById } from '@/data/locations';
 import { LocationDetailScreen } from '@/screens/location-detail-screen';
@@ -45,11 +46,23 @@ function screenText(renderer: ReactTestRenderer): string {
 describe('LocationDetailScreen', () => {
   it('shows the building photo exactly once, as the header', () => {
     const view = renderScreen();
-    const images = view.root.findAllByType(Image);
+    // The app header also renders the Calvin logo, so look for the building photo specifically.
+    const photos = view.root
+      .findAllByType(Image)
+      .filter((image) => String(image.props.accessibilityLabel).startsWith('Photo of'));
 
-    expect(images).toHaveLength(1);
-    expect(images[0].props.source).toBe(getLocationById(1)?.image);
-    expect(images[0].props.accessibilityLabel).toBe('Photo of Hekman Library');
+    expect(photos).toHaveLength(1);
+    expect(photos[0].props.source).toBe(getLocationById(1)?.image);
+    expect(photos[0].props.accessibilityLabel).toBe('Photo of Hekman Library');
+  });
+
+  it('renders the space cards without images', () => {
+    const cards = renderScreen().root.findAllByType(LandmarkCard);
+
+    expect(cards).toHaveLength(5);
+    for (const card of cards) {
+      expect(card.findAllByType(Image)).toHaveLength(0);
+    }
   });
 
   it('lists all five Hekman levels', () => {

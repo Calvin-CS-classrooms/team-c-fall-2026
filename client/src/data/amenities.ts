@@ -28,6 +28,9 @@ export const amenities: Amenity[] = [
   { id: 25, name: 'Practice Nooks' },
   { id: 26, name: 'Acoustic Spaces' },
   { id: 27, name: 'Individual Seating' },
+  { id: 28, name: 'Individual Study Rooms' },
+  { id: 29, name: 'Fireplace' },
+  { id: 30, name: 'Open Social Area' },
 ];
 
 export function getAmenityById(id: number): Amenity | undefined {
