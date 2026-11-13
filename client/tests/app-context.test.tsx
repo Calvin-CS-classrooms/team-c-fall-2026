@@ -1,7 +1,8 @@
-﻿import { Pressable, Text } from 'react-native';
+import { Pressable, Text } from 'react-native';
 import { act, create, type ReactTestRenderer } from 'react-test-renderer';
 
 import { AppProvider, useAppData } from '@/context/app-context';
+import { initialRatings, setInitialRatings } from '@/data/ratings';
 import { spaces } from '@/data/spaces';
 import type { NewRatingInput } from '@/types';
 
@@ -88,6 +89,20 @@ const newRating: NewRatingInput = {
 };
 
 describe('AppProvider', () => {
+  it('gives new ratings ids above the highest loaded rating id, e.g. ratings from the server', () => {
+    const bundled = initialRatings;
+    setInitialRatings([{ ...bundled[0], id: 500 }]);
+    try {
+      const view = renderContext();
+      act(() => getNode(view, 'set-calvin-email').props.onPress());
+      act(() => getNode(view, 'add-rating').props.onPress());
+
+      expect(getNode(view, 'first-rating-id').props.children).toBe(501);
+    } finally {
+      setInitialRatings(bundled);
+    }
+  });
+
   it('blocks rating submissions without a Calvin email', () => {
     const view = renderContext();
     const initialCount = Number(getNode(view, 'rating-count').props.children);

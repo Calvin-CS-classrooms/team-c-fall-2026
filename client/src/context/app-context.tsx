@@ -4,6 +4,7 @@ import {
   useContext,
   useEffect,
   useMemo,
+  useRef,
   useState,
   type PropsWithChildren,
 } from 'react';
@@ -67,10 +68,9 @@ interface AppContextValue {
 
 const AppContext = createContext<AppContextValue | undefined>(undefined);
 
-// Module-level counters used to generate unique ids for locally created
-// ratings and suggestions (there is no backend yet). They start above the
-// highest seeded id so locally created rows never collide with mock data.
-let ratingIdCounter = Math.max(0, ...initialRatings.map((rating) => rating.id));
+// Module-level counter used to generate unique ids for locally created
+// suggestions (there is no write endpoint yet). It starts above the highest
+// seeded id so locally created rows never collide with mock data.
 let suggestionIdCounter = Math.max(0, ...createInitialSuggestions().map((suggestion) => suggestion.id));
 
 /** "jane.doe@calvin.edu" -> "Jane Doe" */
@@ -91,6 +91,10 @@ export function nameFromEmail(email: string): string {
 export function AppProvider({ children }: PropsWithChildren) {
   const [account, setAccount] = useState<Account | null>(null);
   const [ratings, setRatings] = useState<Rating[]>(initialRatings);
+  // Next id for a locally created rating. Read from initialRatings at mount, not
+  // at import, because loadCampusData may replace them with the server's
+  // ratings (and higher ids) after this module is loaded.
+  const ratingIdCounter = useRef(Math.max(0, ...initialRatings.map((rating) => rating.id)));
   const [suggestions, setSuggestions] = useState<SpotSuggestion[]>(() => createInitialSuggestions());
   const [suggestionVotes, setSuggestionVotes] = useState<SuggestionVote[]>([]);
   const [favorites, setFavorites] = useState<Favorites[]>(initialFavorites);
@@ -149,9 +153,9 @@ export function AppProvider({ children }: PropsWithChildren) {
         return;
       }
 
-      ratingIdCounter += 1;
+      ratingIdCounter.current += 1;
       const newRating: Rating = {
-        id: ratingIdCounter,
+        id: ratingIdCounter.current,
         userId: account.id,
         spaceId: input.spaceId,
         createdAt: new Date().toISOString(),
