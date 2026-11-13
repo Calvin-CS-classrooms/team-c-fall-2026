@@ -85,6 +85,16 @@ describe('RatingForm space picker', () => {
     expect(onSubmit).toHaveBeenCalledWith(expect.objectContaining({ spaceId: 5 }));
   });
 
+  it('keeps the chosen floor when the same building is picked again', () => {
+    const { renderer, onSubmit } = renderForm({ initialSpaceId: 3 });
+
+    press(renderer, 'Building: Hekman Library');
+    press(renderer, 'Choose building Hekman Library');
+    press(renderer, 'Submit rating');
+
+    expect(onSubmit).toHaveBeenCalledWith(expect.objectContaining({ spaceId: 3 }));
+  });
+
   it('preselects the building and floor of initialSpaceId', () => {
     const { renderer } = renderForm({ initialSpaceId: 4 });
 

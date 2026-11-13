@@ -74,6 +74,7 @@ export function LocationDetailScreen() {
                     amenities={getAmenityNamesBySpaceId(space.id)}
                     isFavorite={isFavorite(space.id)}
                     onToggleFavorite={() => toggleFavorite(space)}
+                    onRate={() => router.push({ pathname: '/ratings', params: { spaceId: String(space.id) } })}
                   />
                 );
               })}

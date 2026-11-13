@@ -17,6 +17,7 @@ interface LandmarkCardProps {
   amenities: string[];
   isFavorite: boolean;
   onToggleFavorite: () => void;
+  onRate: () => void;
 }
 
 /**
@@ -33,6 +34,7 @@ interface LandmarkCardProps {
  * @param amenities - Names of what the space offers (e.g. "Fireplace").
  * @param isFavorite - Whether the space is currently favorited.
  * @param onToggleFavorite - Called when the bookmark button is tapped.
+ * @param onRate - Called when "Rate this space" is tapped.
  */
 export function LandmarkCard({
   space,
@@ -42,6 +44,7 @@ export function LandmarkCard({
   amenities,
   isFavorite,
   onToggleFavorite,
+  onRate,
 }: LandmarkCardProps) {
   // Whether the expanded details section is shown.
   const [expanded, setExpanded] = useState(false);
@@ -84,6 +87,15 @@ export function LandmarkCard({
           </View>
         ) : null}
 
+        <Pressable
+          style={styles.rateButton}
+          onPress={onRate}
+          accessibilityRole="button"
+          accessibilityLabel={`Rate ${name}`}>
+          <Ionicons name="star-outline" size={16} color={Colors.white} />
+          <Text style={styles.rateButtonText}>Rate this space</Text>
+        </Pressable>
+
         {/* Toggle button for the expanded details section. */}
         <Pressable
           style={styles.expandRow}
@@ -119,6 +131,20 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: Colors.border,
     overflow: 'hidden',
+  },
+  rateButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
+    backgroundColor: Colors.maroon,
+    borderRadius: 12,
+    paddingVertical: 10,
+  },
+  rateButtonText: {
+    fontFamily: Typography.semiBold,
+    fontSize: 14,
+    color: Colors.white,
   },
   amenities: {
     gap: 6,
