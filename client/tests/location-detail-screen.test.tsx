@@ -10,9 +10,11 @@ import { AppProvider } from '@/context/app-context';
 import { getLocationById } from '@/data/locations';
 import { LocationDetailScreen } from '@/screens/location-detail-screen';
 
+const mockPush = jest.fn();
+
 jest.mock('expo-router', () => ({
   useLocalSearchParams: () => ({ id: '1' }),
-  useRouter: () => ({ back: jest.fn(), push: jest.fn() }),
+  useRouter: () => ({ back: jest.fn(), canGoBack: () => true, replace: jest.fn(), push: mockPush }),
 }));
 
 // Fixed phone-sized metrics so safe-area hooks work outside a real device.
@@ -82,5 +84,18 @@ describe('LocationDetailScreen', () => {
     expect(text).toContain('Open Social Area');
     expect(text).toContain('H. Henry Meeter Center');
     expect(text).not.toContain('Wi-Fi');
+  });
+
+  it('opens Your Ratings with the chosen space when Rate this space is pressed', () => {
+    mockPush.mockClear();
+    const view = renderScreen();
+    const rateButton = view.root.find(
+      (node) =>
+        node.props.accessibilityLabel === 'Rate Hekman Library 3rd Floor' && typeof node.props.onPress === 'function',
+    );
+
+    act(() => rateButton.props.onPress());
+
+    expect(mockPush).toHaveBeenCalledWith({ pathname: '/ratings', params: { spaceId: '3' } });
   });
 });

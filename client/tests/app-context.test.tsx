@@ -23,6 +23,7 @@ function ContextProbe() {
       <Text testID="suggestion-count">{data.suggestions.length}</Text>
       <Text testID="atrium-status">{data.suggestions.find((s) => s.id === 1)?.status}</Text>
       <Text testID="space-count">{data.spaces.length}</Text>
+      <Text testID="space-4-rating">{data.spaces.find((space) => space.id === 4)?.overallRating}</Text>
       <Pressable
         testID="set-calvin-email"
         onPress={() => data.logIn('student@calvin.edu', 'password123')}
@@ -31,6 +32,10 @@ function ContextProbe() {
       <Pressable testID="log-in-short-password" onPress={() => data.logIn('student@calvin.edu', '123')} />
       <Pressable testID="log-out" onPress={data.logOut} />
       <Text testID="account-name">{data.account?.name ?? 'none'}</Text>
+      <Text testID="first-anonymous">{String(firstRating?.isAnonymous ?? false)}</Text>
+      <Text testID="own-public-count">
+        {data.ratings.filter((rating) => rating.userId === 1 && !rating.isAnonymous).length}
+      </Text>
       <Pressable
         testID="delete-other-rating"
         onPress={() => data.deleteRating(data.ratings.find((r) => r.userId !== data.account?.id)!.id)}
@@ -130,6 +135,23 @@ describe('AppProvider', () => {
     expect(getNode(view, 'rating-count').props.children).toBe(initialCount);
   });
 
+  it("updates the space's rating when a rating is added, and restores it when deleted", () => {
+    const view = renderContext();
+    const before = getNode(view, 'space-4-rating').props.children;
+
+    act(() => getNode(view, 'set-calvin-email').props.onPress());
+    // The test rating is 5 stars for space 4, which starts below 5.
+    act(() => getNode(view, 'add-rating').props.onPress());
+    const afterAdd = getNode(view, 'space-4-rating').props.children;
+
+    act(() => getNode(view, 'delete-rating').props.onPress());
+    const afterDelete = getNode(view, 'space-4-rating').props.children;
+
+    expect(before).toBeLessThan(5);
+    expect(afterAdd).toBeGreaterThan(before);
+    expect(afterDelete).toBe(before);
+  });
+
   it('only logs in Calvin emails with a long-enough password, and logs out', () => {
     const view = renderContext();
 
@@ -184,6 +206,33 @@ describe('AppProvider', () => {
     act(() => getNode(view, 'submit-suggestion').props.onPress());
     act(() => getNode(view, 'submit-suggestion').props.onPress());
     expect(getNode(view, 'suggestion-count').props.children).toBe(initialSuggestions + 1);
+  });
+
+  it('marks ratings anonymous only while Anonymous Mode is on', () => {
+    const view = renderContext();
+    act(() => getNode(view, 'set-calvin-email').props.onPress());
+
+    act(() => getNode(view, 'toggle-anonymous').props.onPress());
+    act(() => getNode(view, 'add-rating').props.onPress());
+    expect(getNode(view, 'first-anonymous').props.children).toBe('true');
+
+    act(() => getNode(view, 'toggle-anonymous').props.onPress());
+    act(() => getNode(view, 'add-rating').props.onPress());
+    expect(getNode(view, 'first-anonymous').props.children).toBe('false');
+  });
+
+  it("makes a deleted account's ratings anonymous but keeps them", () => {
+    const view = renderContext();
+    act(() => getNode(view, 'set-calvin-email').props.onPress());
+    act(() => getNode(view, 'add-rating').props.onPress());
+    const ratingCount = getNode(view, 'rating-count').props.children;
+    expect(getNode(view, 'own-public-count').props.children).toBeGreaterThan(0);
+
+    act(() => getNode(view, 'request-deletion').props.onPress());
+    act(() => getNode(view, 'finalize-deletion').props.onPress());
+
+    expect(getNode(view, 'rating-count').props.children).toBe(ratingCount);
+    expect(getNode(view, 'own-public-count').props.children).toBe(0);
   });
 
   it('toggles favorites and settings', () => {

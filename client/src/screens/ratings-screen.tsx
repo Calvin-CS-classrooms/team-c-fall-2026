@@ -1,3 +1,4 @@
+import { useLocalSearchParams } from 'expo-router';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
@@ -8,18 +9,21 @@ import { RatingHistoryRow } from '@/components/rating-history-row';
 import { Colors } from '@/constants/colors';
 import { Typography } from '@/constants/typography';
 import { useAppData } from '@/context/app-context';
-import { getLocationById } from '@/data/locations';
 import { getSpaceById } from '@/data/spaces';
 import { isOwnRating } from '@/utils/ratings';
-
+import { spaceIdFromParam } from '@/utils/route-params';
 
 /**
  * Ratings screen: shows the user's rating "status" (number of ratings and
  * helpful votes), lets the user submit a new rating, and lists their
  * rating history with mark-helpful and delete actions.
+ *
+ * Opening it as /ratings?spaceId=3 (e.g. from "Rate this space" on a building
+ * page) preselects that space in the form.
  */
 export function RatingsScreen() {
   const { ratings, addRating, markHelpful, deleteRating, account, settings } = useAppData();
+  const requestedSpaceId = spaceIdFromParam(useLocalSearchParams<{ spaceId?: string }>().spaceId);
   const myRatings = ratings.filter((rating) => isOwnRating(rating, account?.id));
   // Total helpful votes across all of the user's ratings.
   const helpfulVotes = myRatings.reduce((sum, rating) => sum + rating.numUpvotes, 0);
@@ -43,7 +47,9 @@ export function RatingsScreen() {
                 {settings.anonymousMode ? (
                   <Text style={styles.noticeText}>Anonymous Mode is on: this rating will show as Anonymous user.</Text>
                 ) : null}
-                <RatingForm onSubmit={addRating} />
+                {/* Keyed by the requested space so a new "Rate this space" tap
+                    resets the form to that space, even if this tab was already open. */}
+                <RatingForm key={requestedSpaceId ?? 'none'} initialSpaceId={requestedSpaceId} onSubmit={addRating} />
               </>
             ) : (
               <Text style={styles.noticeText}>
@@ -58,12 +64,11 @@ export function RatingsScreen() {
           <View style={styles.historyList}>
             {myRatings.map((rating) => {
               const space = getSpaceById(rating.spaceId);
-              const location = space ? getLocationById(space.locationId) : undefined;
               return (
                 <RatingHistoryRow
                   key={rating.id}
                   rating={rating}
-                  name={location?.name ?? `Space ${rating.spaceId}`}
+                  name={space?.name ?? `Space ${rating.spaceId}`}
                   onMarkHelpful={() => markHelpful(rating.id)}
                   onDelete={() => deleteRating(rating.id)}
                 />

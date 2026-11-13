@@ -35,6 +35,7 @@ export let initialRatings: Rating[] = [
     perceivedNoise: 'loud',
     description: 'Packed at lunch, but the new pasta station is worth the wait.',
     numUpvotes: 9,
+    isAnonymous: true,
   },
   {
     id: 4,

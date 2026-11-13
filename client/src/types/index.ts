@@ -64,6 +64,12 @@ export interface Rating {
   perceivedNoise: NoiseLevel;
   description: string;
   numUpvotes: number;
+  /**
+   * Whether the rating was submitted with Anonymous Mode on. The owner is
+   * still stored in userId, but the author is shown as "Anonymous user".
+   * Missing (e.g. ratings from the server) means not anonymous.
+   */
+  isAnonymous?: boolean;
 }
 
 export interface Amenity {
