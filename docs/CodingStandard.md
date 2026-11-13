@@ -31,6 +31,14 @@ These standards apply to the Calvin Ratings React Native/Expo client, the Node.j
 - Keep route handlers focused and easy to understand.
 - Store shared mock data in dedicated data files instead of duplicating it inside routes.
 - Use resource-oriented REST paths under `/api`.
+- Keep the three server layers separate, and only call downward:
+  - `routes/` handles HTTP only: read params, call a service, map the result to a status code. No queries or calculations.
+  - `services/` holds business logic: derived values (such as `overallRating`) and combining related rows. It calls only the repository facade in `data/index.js`, never Supabase directly.
+  - `data/` holds the database access layer. Each function runs one query and returns raw rows or throws the Supabase error. `supabase-repository.js` and `mock-repository.js` must export the same functions and return the same shapes.
+- Use camelCase for database tables and columns (`spaceId`, `spaceAmenities`) so rows match the API and client types without renaming. Keep [`supabase/schema.sql`](../supabase/schema.sql) and [`DatabaseDesign.jpg`](DatabaseDesign.jpg) up to date when the schema changes.
+- Read configuration from `process.env`, loaded from `server/.env`. Never commit `.env` or a Supabase key; document each new variable in `server/.env.example`. The service role key stays on the server and is never sent to the client.
+- Unit test services with `jest.mock("../data")` so each test controls the rows it gets. Test the Supabase repository with a mocked `@supabase/supabase-js`. Tests must never need a live database.
+- Add every new package with `npm install <name>` so it is saved in `package.json`; CI runs `npm ci` and fails on anything missing.
 
 Examples:
 
