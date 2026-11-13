@@ -37,36 +37,9 @@ function computeCurrentNoiseLevel(ratings) {
 
 // --- Spaces ----------------------------------------------------------------
 
-// Returns all spaces, each enriched with derived rating metrics.
-async function getSpaces() {
-  const [spaces, ratings] = await Promise.all([
-    repository.getAllSpaces(),
-    repository.getAllRatings(),
-  ]);
-
-  const ratingsBySpace = new Map();
-  for (const rating of ratings) {
-    const list = ratingsBySpace.get(rating.spaceId) ?? [];
-    list.push(rating);
-    ratingsBySpace.set(rating.spaceId, list);
-  }
-
-  return spaces.map((space) => {
-    const spaceRatings = ratingsBySpace.get(space.id) ?? [];
-    return {
-      ...space,
-      overallRating: computeOverallRating(spaceRatings),
-      crowdRating: computeCrowdRating(spaceRatings),
-      currentNoiseLevel: computeCurrentNoiseLevel(spaceRatings),
-    };
-  });
-}
-
-async function getSpaceById(id) {
-  const space = await repository.getSpaceById(id);
-  if (!space) return null;
-
-  const ratings = await repository.getRatingsBySpaceId(space.id);
+// Adds the derived metrics to one space, given only that space's ratings.
+// Values stored on the row are overwritten so responses always reflect ratings.
+function withMetrics(space, ratings) {
   return {
     ...space,
     overallRating: computeOverallRating(ratings),
@@ -75,26 +48,43 @@ async function getSpaceById(id) {
   };
 }
 
-async function getSpacesByLocationId(locationId) {
-  const spaces = await repository.getSpacesByLocationId(locationId);
-  const ratings = await repository.getAllRatings();
-
+// Enriches many spaces at once. Ratings are grouped by spaceId in a single pass
+// so each space only sees its own ratings (O(spaces + ratings), not a nested loop).
+function enrichSpaces(spaces, ratings) {
   const ratingsBySpace = new Map();
   for (const rating of ratings) {
     const list = ratingsBySpace.get(rating.spaceId) ?? [];
     list.push(rating);
     ratingsBySpace.set(rating.spaceId, list);
   }
+  return spaces.map((space) => withMetrics(space, ratingsBySpace.get(space.id) ?? []));
+}
 
-  return spaces.map((space) => {
-    const spaceRatings = ratingsBySpace.get(space.id) ?? [];
-    return {
-      ...space,
-      overallRating: computeOverallRating(spaceRatings),
-      crowdRating: computeCrowdRating(spaceRatings),
-      currentNoiseLevel: computeCurrentNoiseLevel(spaceRatings),
-    };
-  });
+// Returns all spaces, each enriched with derived rating metrics.
+async function getSpaces() {
+  const [spaces, ratings] = await Promise.all([
+    repository.getAllSpaces(),
+    repository.getAllRatings(),
+  ]);
+  return enrichSpaces(spaces, ratings);
+}
+
+// Returns one enriched space, or null when the id does not exist.
+async function getSpaceById(id) {
+  const space = await repository.getSpaceById(id);
+  if (!space) return null;
+
+  const ratings = await repository.getRatingsBySpaceId(space.id);
+  return withMetrics(space, ratings);
+}
+
+// Returns the enriched spaces at one location (empty when there are none).
+async function getSpacesByLocationId(locationId) {
+  const [spaces, ratings] = await Promise.all([
+    repository.getSpacesByLocationId(locationId),
+    repository.getAllRatings(),
+  ]);
+  return enrichSpaces(spaces, ratings);
 }
 
 // --- Locations -------------------------------------------------------------
@@ -163,6 +153,9 @@ async function getNotificationsByUserId(userId) {
 }
 
 module.exports = {
+  computeOverallRating,
+  computeCrowdRating,
+  computeCurrentNoiseLevel,
   getSpaces,
   getSpaceById,
   getSpacesByLocationId,
