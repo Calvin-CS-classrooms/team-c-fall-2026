@@ -28,6 +28,7 @@ import type {
 } from '@/types';
 import { isCalvinEmail } from '@/utils/verification';
 import { hasSuggestedToday } from '@/utils/suggestions';
+import { withLiveMetrics } from '@/utils/live-metrics';
 
 export const ACCOUNT_DELETION_DELAY_MS = 7 * 24 * 60 * 60 * 1000;
 
@@ -91,6 +92,8 @@ export function nameFromEmail(email: string): string {
 export function AppProvider({ children }: PropsWithChildren) {
   const [account, setAccount] = useState<Account | null>(null);
   const [ratings, setRatings] = useState<Rating[]>(initialRatings);
+  // The ratings as loaded, kept so live metrics can tell what changed since.
+  const [loadedRatings] = useState<Rating[]>(initialRatings);
   // Next id for a locally created rating. Read from initialRatings at mount, not
   // at import, because loadCampusData may replace them with the server's
   // ratings (and higher ids) after this module is loaded.
@@ -232,7 +235,9 @@ export function AppProvider({ children }: PropsWithChildren) {
 
   const locations = useMemo(() => baseLocations, []);
 
-  const spaces = useMemo(() => baseSpaces, []);
+  // Spaces with their rating, crowd level, and noise kept in step with ratings
+  // added or deleted since the app loaded (see utils/live-metrics.ts).
+  const spaces = useMemo(() => withLiveMetrics(baseSpaces, loadedRatings, ratings), [loadedRatings, ratings]);
 
   // Adds the space to favorites if absent, or removes it if already present.
   const toggleFavorite = useCallback((space: Space) => {
