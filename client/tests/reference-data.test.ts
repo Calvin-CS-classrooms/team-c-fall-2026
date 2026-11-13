@@ -63,7 +63,7 @@ describe('amenities mock data', () => {
   });
 
   it('finds an amenity by id and returns undefined for an unknown id', () => {
-    expect(getAmenityById(1)?.name).toBe('Wi-Fi');
+    expect(getAmenityById(29)?.name).toBe('Fireplace');
     expect(getAmenityById(999)).toBeUndefined();
   });
 });

@@ -1,5 +1,4 @@
 import { Ionicons } from '@expo/vector-icons';
-import { Image } from 'expo-image';
 import { useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
@@ -15,30 +14,40 @@ interface LandmarkCardProps {
   name: string;
   categoryName: string;
   floorName: string;
+  amenities: string[];
   isFavorite: boolean;
   onToggleFavorite: () => void;
 }
 
 /**
- * A card in the explore screen's landmark directory. Shows a space's
- * image, name, category, description, crowd rating, and noise level. An
- * expandable section reveals more details (overall rating, floor, and
+ * A card for one space on a building's detail page. Shows the space's name,
+ * category, floor, description, crowd rating, noise level, and what it offers.
+ * There is no image: the building's photo is shown once at the top of the page.
+ * An expandable section reveals more details (overall rating, floor, and
  * current noise). A bookmark button toggles the favorite state.
  *
  * @param space - The space to display.
- * @param name - The resolved name of the space's location.
+ * @param name - The space's name.
  * @param categoryName - The resolved category name.
  * @param floorName - The resolved floor name.
+ * @param amenities - Names of what the space offers (e.g. "Fireplace").
  * @param isFavorite - Whether the space is currently favorited.
  * @param onToggleFavorite - Called when the bookmark button is tapped.
  */
-export function LandmarkCard({ space, name, categoryName, floorName, isFavorite, onToggleFavorite }: LandmarkCardProps) {
+export function LandmarkCard({
+  space,
+  name,
+  categoryName,
+  floorName,
+  amenities,
+  isFavorite,
+  onToggleFavorite,
+}: LandmarkCardProps) {
   // Whether the expanded details section is shown.
   const [expanded, setExpanded] = useState(false);
 
   return (
     <View style={styles.card}>
-      <Image source={{ uri: `https://placehold.co/400x200?text=${encodeURIComponent(name)}` }} style={styles.image} contentFit="cover" />
       <View style={styles.body}>
         <View style={styles.headerRow}>
           <View style={styles.headerText}>
@@ -63,6 +72,17 @@ export function LandmarkCard({ space, name, categoryName, floorName, isFavorite,
         <View style={styles.tagRow}>
           <Chip label={`Noise: ${NoiseLabels[space.currentNoiseLevel]}`} />
         </View>
+
+        {amenities.length > 0 ? (
+          <View style={styles.amenities}>
+            <Text style={styles.detailHeading}>What&apos;s here</Text>
+            <View style={styles.tagRow}>
+              {amenities.map((amenity) => (
+                <Chip key={amenity} label={amenity} />
+              ))}
+            </View>
+          </View>
+        ) : null}
 
         {/* Toggle button for the expanded details section. */}
         <Pressable
@@ -100,10 +120,8 @@ const styles = StyleSheet.create({
     borderColor: Colors.border,
     overflow: 'hidden',
   },
-  image: {
-    width: '100%',
-    height: 150,
-    backgroundColor: Colors.surfaceAlt,
+  amenities: {
+    gap: 6,
   },
   body: {
     padding: 14,
