@@ -14,6 +14,7 @@ import { getFloorById } from '@/data/floors';
 import { getLocationById } from '@/data/locations';
 import { getAmenityNamesBySpaceId } from '@/data/space-amenities';
 import { getSpacesByLocationId } from '@/data/spaces';
+import { goBack } from '@/utils/navigation';
 
 /**
  * Location detail screen: shows all the spaces within a single location.
@@ -32,7 +33,7 @@ export function LocationDetailScreen() {
     <SafeAreaView style={styles.container} edges={['top', 'left', 'right']}>
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
         <View style={styles.section}>
-          <Pressable style={styles.backRow} onPress={() => router.back()} accessibilityRole="button">
+          <Pressable style={styles.backRow} onPress={() => goBack(router)} accessibilityRole="button">
             <Ionicons name="chevron-back" size={18} color={Colors.maroon} />
             <Text style={styles.backText}>Back</Text>
           </Pressable>

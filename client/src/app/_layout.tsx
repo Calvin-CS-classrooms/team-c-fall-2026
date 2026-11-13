@@ -91,6 +91,8 @@ function RootNavigator() {
       {/* Only show the main tabs when the user is logged in. */}
       <Stack.Protected guard={isLoggedIn}>
         <Stack.Screen name="(tabs)" />
+        {/* Building detail pages also require login, like the tabs. */}
+        <Stack.Screen name="location/[id]" />
       </Stack.Protected>
       {/* Only show the login screen when the user is signed out. */}
       <Stack.Protected guard={!isLoggedIn}>
