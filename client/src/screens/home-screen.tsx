@@ -1,4 +1,5 @@
 import { Ionicons } from '@expo/vector-icons';
+import { useRouter } from 'expo-router';
 import { useMemo, useRef, useState } from 'react';
 import { ActivityIndicator, FlatList, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -17,14 +18,16 @@ import { useAppData } from '@/context/app-context';
 import { activityFeed } from '@/data/activity';
 import { getLocationById } from '@/data/locations';
 import { askSpotAgent, type SpotAgentResponse } from '@/services/spot-agent';
+import { groupSpacesByBuilding } from '@/utils/buildings';
 import { applyDiscoveryFilters, DISCOVERY_FILTERS, type DiscoveryFilter } from '@/utils/discovery';
 
 /**
  * Home screen: the main landing view. Contains the combinable space filter
  * chips, the "Ask Calvin" search bar backed by the mock spot-finder agent, a
- * scrollable carousel of popular spaces, and a live activity feed.
+ * scrollable carousel of popular buildings, and a live activity feed.
  */
 export function HomeScreen() {
+  const router = useRouter();
   const { addRating, account, spaces, ratings } = useAppData();
   const [search, setSearch] = useState('');
   const [activeFilters, setActiveFilters] = useState<DiscoveryFilter[]>([]);
@@ -39,6 +42,18 @@ export function HomeScreen() {
     () => applyDiscoveryFilters(spaces, ratings, activeFilters),
     [activeFilters, spaces, ratings],
   );
+
+  // One carousel card per building, so a building with several spaces (e.g.
+  // Hekman's five floors) shows once. A building appears when any of its
+  // spaces passes the filters; tapping it opens all of its spaces.
+  const buildings = useMemo(() => groupSpacesByBuilding(filteredSpaces, getLocationById), [filteredSpaces]);
+
+  // "5 spaces", or "2 of 5 spaces match" when filters hide some of them.
+  const spaceCountLabel = (locationId: number, matching: number) => {
+    const total = spaces.filter((space) => space.locationId === locationId).length;
+    if (matching < total) return `${matching} of ${total} spaces match`;
+    return `${total} ${total === 1 ? 'space' : 'spaces'}`;
+  };
 
   const toggleFilter = (filter: DiscoveryFilter) => {
     setActiveFilters((current) =>
@@ -139,21 +154,20 @@ export function HomeScreen() {
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Popular On-Campus Today</Text>
           <FlatList
-            data={filteredSpaces}
+            data={buildings}
             horizontal
             showsHorizontalScrollIndicator={false}
-            keyExtractor={(item) => String(item.id)}
+            keyExtractor={(item) => String(item.location.id)}
             contentContainerStyle={styles.carousel}
-            renderItem={({ item }) => {
-              const location = getLocationById(item.locationId);
-              return (
-                <LocationCard
-                  space={item}
-                  name={location?.name ?? `Space ${item.id}`}
-                  image={location?.image}
-                />
-              );
-            }}
+            renderItem={({ item }) => (
+              <LocationCard
+                stats={item}
+                name={item.location.name}
+                subtitle={spaceCountLabel(item.location.id, item.spaces.length)}
+                image={item.location.image}
+                onPress={() => router.push(`/location/${item.location.id}` as never)}
+              />
+            )}
             ListEmptyComponent={
               <Text style={styles.emptyText}>No spots match all of your filters. Tap Clear to reset.</Text>
             }

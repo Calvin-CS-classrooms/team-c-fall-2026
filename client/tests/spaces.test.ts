@@ -54,6 +54,16 @@ describe('getSpacesByLocationId', () => {
     }
   });
 
+  it('lists Hekman Library from the basement up', () => {
+    expect(getSpacesByLocationId(1).map((space) => space.name)).toEqual([
+      'Hekman Library Basement',
+      'Hekman Library Student Commons',
+      'Hekman Library 3rd Floor',
+      'Hekman Library 4th Floor',
+      'Hekman Library 5th Floor',
+    ]);
+  });
+
   it('returns an empty array for an unknown location', () => {
     expect(getSpacesByLocationId(999)).toEqual([]);
   });
@@ -61,7 +71,8 @@ describe('getSpacesByLocationId', () => {
 
 describe('getSpaceById', () => {
   it('finds a space by id', () => {
-    expect(getSpaceById(4)?.name).toBe('Hekman Silent Floor');
+    // Space 4 stays the quiet floor that seeded ratings and favorites refer to.
+    expect(getSpaceById(4)).toMatchObject({ name: 'Hekman Library 4th Floor', noiseLevel: 'whisper' });
   });
 
   it('returns undefined for an unknown id', () => {

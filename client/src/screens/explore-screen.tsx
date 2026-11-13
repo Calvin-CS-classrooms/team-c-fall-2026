@@ -17,6 +17,7 @@ import { categories } from '@/data/categories';
 import { getLocationById } from '@/data/locations';
 import { getSpacesByLocationId } from '@/data/spaces';
 import type { DensityLevel } from '@/types';
+import { summarizeBuilding } from '@/utils/buildings';
 import { formatMinutesAgo } from '@/utils/format';
 import { isOwnRating } from '@/utils/ratings';
 
@@ -118,12 +119,14 @@ export function ExploreScreen() {
           {filteredLocations.length > 0 ? (
             <View style={styles.landmarkList}>
               {filteredLocations.map((location) => {
-                const firstSpace = getSpacesByLocationId(location.id)[0];
+                // Show the whole building's rating, not just its first space's.
+                const buildingSpaces = getSpacesByLocationId(location.id);
                 return (
                   <LocationCard
                     key={location.id}
-                    space={firstSpace}
+                    stats={summarizeBuilding(buildingSpaces)}
                     name={location.name}
+                    subtitle={`${buildingSpaces.length} ${buildingSpaces.length === 1 ? 'space' : 'spaces'}`}
                     image={location.image}
                     width="100%"
                     onPress={() => router.push(`/location/${location.id}` as never)}

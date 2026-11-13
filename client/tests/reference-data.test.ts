@@ -48,7 +48,7 @@ describe('floors mock data', () => {
   });
 
   it('finds a floor by id and returns undefined for an unknown id', () => {
-    expect(getFloorById(4)?.name).toMatch(/Silent/);
+    expect(getFloorById(4)).toMatchObject({ name: '4th Floor', noiseLevel: 'whisper' });
     expect(getFloorById(999)).toBeUndefined();
   });
 });
