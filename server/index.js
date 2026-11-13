@@ -1,3 +1,5 @@
+require("dotenv").config(); // uses dotenv to get local environment variables from .env
+
 // Starts the Express server on port 3000, allowing the React Native app to request data from our RESTful API
 const app = require("./app");
 
