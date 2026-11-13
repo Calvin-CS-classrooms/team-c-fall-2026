@@ -92,7 +92,7 @@ export function HomeScreen() {
             value={search}
             onChangeText={setSearch}
             onSubmit={askCalvin}
-            placeholder='Ask: "quiet spot with outlets near the library"'
+            placeholder='Ask: "quiet study spot near the library"'
           />
           {agentThinking ? (
             <View style={styles.recommendationCard}>

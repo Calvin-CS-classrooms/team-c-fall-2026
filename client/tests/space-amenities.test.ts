@@ -46,10 +46,10 @@ describe('getAmenitiesBySpaceId', () => {
 
 describe('getSpaceIdsByAmenityId', () => {
   it('returns only entries for the given amenity', () => {
-    const wifi = getSpaceIdsByAmenityId(1);
-    expect(wifi.length).toBeGreaterThan(0);
-    for (const entry of wifi) {
-      expect(entry.amenityId).toBe(1);
+    const groupTables = getSpaceIdsByAmenityId(35);
+    expect(groupTables.length).toBeGreaterThan(0);
+    for (const entry of groupTables) {
+      expect(entry.amenityId).toBe(35);
     }
   });
 
