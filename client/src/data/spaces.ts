@@ -2,10 +2,14 @@ import type { Space } from '@/types';
 
 export const spaces: Space[] = [
   // Hekman Library (location 1)
-  { id: 1, locationId: 1, categoryId: 1, floorId: 1, name: 'Hekman Commons', description: 'Group tables, service desk, and cafe seating.', noiseLevel: 'social', spotSuggestionId: null, overallRating: 4.6, crowdRating: 50, currentNoiseLevel: 'social' },
-  { id: 2, locationId: 1, categoryId: 1, floorId: 2, name: 'Hekman Reading Room', description: 'Long tables and lounge chairs for focused work.', noiseLevel: 'lowBuzz', spotSuggestionId: null, overallRating: 4.7, crowdRating: 40, currentNoiseLevel: 'lowBuzz' },
-  { id: 3, locationId: 1, categoryId: 1, floorId: 3, name: 'Hekman Group Study', description: 'Bookable group rooms and whiteboards.', noiseLevel: 'social', spotSuggestionId: null, overallRating: 4.5, crowdRating: 60, currentNoiseLevel: 'social' },
-  { id: 4, locationId: 1, categoryId: 1, floorId: 4, name: 'Hekman Silent Floor', description: 'No talking, phones on silent only.', noiseLevel: 'whisper', spotSuggestionId: null, overallRating: 4.8, crowdRating: 30, currentNoiseLevel: 'whisper' },
+  // Listed from the bottom up, which is the order the detail page shows them.
+  // Ids 1-4 are kept from the earlier data so seeded ratings, favorites, and
+  // amenities still point at the right place (4 is the quiet floor).
+  { id: 2, locationId: 1, categoryId: 1, floorId: 2, name: 'Hekman Library Basement', description: 'Study tables and carrels on the lower level, away from foot traffic.', noiseLevel: 'lowBuzz', spotSuggestionId: null, overallRating: 4.4, crowdRating: 35, currentNoiseLevel: 'lowBuzz' },
+  { id: 1, locationId: 1, categoryId: 1, floorId: 1, name: 'Hekman Library Student Commons', description: 'Group tables, service desk, and cafe seating.', noiseLevel: 'social', spotSuggestionId: null, overallRating: 4.6, crowdRating: 50, currentNoiseLevel: 'social' },
+  { id: 3, locationId: 1, categoryId: 1, floorId: 3, name: 'Hekman Library 3rd Floor', description: 'Group study rooms and whiteboards.', noiseLevel: 'social', spotSuggestionId: null, overallRating: 4.5, crowdRating: 60, currentNoiseLevel: 'social' },
+  { id: 4, locationId: 1, categoryId: 1, floorId: 4, name: 'Hekman Library 4th Floor', description: 'Silent floor: no talking, phones on silent only.', noiseLevel: 'whisper', spotSuggestionId: null, overallRating: 4.8, crowdRating: 30, currentNoiseLevel: 'whisper' },
+  { id: 21, locationId: 1, categoryId: 1, floorId: 21, name: 'Hekman Library 5th Floor', description: 'Top-floor tables and window seats for quiet reading.', noiseLevel: 'lowBuzz', spotSuggestionId: null, overallRating: 4.7, crowdRating: 25, currentNoiseLevel: 'lowBuzz' },
   // Commons Dining Hall (location 2)
   { id: 5, locationId: 2, categoryId: 2, floorId: 5, name: 'Commons Main Floor', description: 'Grill, deli, and international stations.', noiseLevel: 'social', spotSuggestionId: null, overallRating: 4.1, crowdRating: 80, currentNoiseLevel: 'loud' },
   { id: 6, locationId: 2, categoryId: 2, floorId: 6, name: 'Commons Grille Side', description: 'Quick bites and late-night grill favorites.', noiseLevel: 'loud', spotSuggestionId: null, overallRating: 4.0, crowdRating: 70, currentNoiseLevel: 'loud' },

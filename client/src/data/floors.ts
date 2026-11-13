@@ -1,10 +1,12 @@
 import type { Floor } from '@/types';
 
 export const floors: Floor[] = [
-  { id: 1, locationId: 1, name: 'Floor 1 — Commons', noiseLevel: 'social' },
-  { id: 2, locationId: 1, name: 'Floor 2 — Reading Room', noiseLevel: 'lowBuzz' },
-  { id: 3, locationId: 1, name: 'Floor 3 — Group Study', noiseLevel: 'social' },
-  { id: 4, locationId: 1, name: 'Floor 4 — Silent Floor', noiseLevel: 'whisper' },
+  // Hekman Library, listed from the bottom up.
+  { id: 2, locationId: 1, name: 'Basement', noiseLevel: 'lowBuzz' },
+  { id: 1, locationId: 1, name: 'Student Commons', noiseLevel: 'social' },
+  { id: 3, locationId: 1, name: '3rd Floor', noiseLevel: 'social' },
+  { id: 4, locationId: 1, name: '4th Floor', noiseLevel: 'whisper' },
+  { id: 21, locationId: 1, name: '5th Floor', noiseLevel: 'lowBuzz' },
   { id: 5, locationId: 2, name: 'Main Floor', noiseLevel: 'social' },
   { id: 6, locationId: 2, name: 'Grille Side', noiseLevel: 'loud' },
   { id: 7, locationId: 3, name: 'First Floor Commons', noiseLevel: 'lowBuzz' },

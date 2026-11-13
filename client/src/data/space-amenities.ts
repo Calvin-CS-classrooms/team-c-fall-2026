@@ -4,7 +4,7 @@ import type { SpaceAmenity } from '@/types';
 // Maps each space to the amenities it offers, using ids from amenities.ts.
 
 export const spaceAmenities: SpaceAmenity[] = [
-  // Hekman Library (spaces 1-4)
+  // Hekman Library (spaces 1-4 and 21)
   { spaceId: 1, amenityId: 1 }, // Wi-Fi
   { spaceId: 1, amenityId: 2 }, // Outlets
   { spaceId: 1, amenityId: 3 }, // Seating
@@ -12,7 +12,7 @@ export const spaceAmenities: SpaceAmenity[] = [
   { spaceId: 2, amenityId: 1 }, // Wi-Fi
   { spaceId: 2, amenityId: 2 }, // Outlets
   { spaceId: 2, amenityId: 3 }, // Seating
-  { spaceId: 2, amenityId: 6 }, // Natural Light
+  { spaceId: 2, amenityId: 4 }, // Quiet
   { spaceId: 3, amenityId: 1 }, // Wi-Fi
   { spaceId: 3, amenityId: 2 }, // Outlets
   { spaceId: 3, amenityId: 5 }, // Group Friendly
@@ -21,6 +21,10 @@ export const spaceAmenities: SpaceAmenity[] = [
   { spaceId: 4, amenityId: 2 }, // Outlets
   { spaceId: 4, amenityId: 4 }, // Quiet
   { spaceId: 4, amenityId: 9 }, // Silent Floor
+  { spaceId: 21, amenityId: 1 }, // Wi-Fi
+  { spaceId: 21, amenityId: 2 }, // Outlets
+  { spaceId: 21, amenityId: 3 }, // Seating
+  { spaceId: 21, amenityId: 6 }, // Natural Light
   // Commons Dining Hall (spaces 5-6)
   { spaceId: 5, amenityId: 1 }, // Wi-Fi
   { spaceId: 5, amenityId: 3 }, // Seating
