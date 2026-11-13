@@ -60,7 +60,7 @@ describe('getSpaceIdsByAmenityId', () => {
 
 describe('getAmenityNamesBySpaceId', () => {
   it("returns the names of a space's amenities in data order", () => {
-    expect(getAmenityNamesBySpaceId(20)).toEqual(['Wi-Fi', 'Seating', 'Espresso Bar', 'Mobile Order']);
+    expect(getAmenityNamesBySpaceId(20)).toEqual(['Seating', 'Espresso Bar', 'Mobile Order']);
   });
 
   it('returns an empty list for an unknown space', () => {
@@ -68,20 +68,74 @@ describe('getAmenityNamesBySpaceId', () => {
   });
 });
 
-describe('Hekman Library amenities', () => {
-  it('describes the 3rd floor: individual study rooms, a fireplace, and an open social area', () => {
-    expect(getAmenityNamesBySpaceId(3)).toEqual(
-      expect.arrayContaining(['Individual Study Rooms', 'Fireplace', 'Open Social Area']),
-    );
+describe('campus-wide amenities', () => {
+  // Every building has Wi-Fi and outlets, so listing them on each space adds noise.
+  it('does not list Wi-Fi or outlets as amenities', () => {
+    const names = amenities.map((amenity) => amenity.name);
+
+    expect(names).not.toContain('Wi-Fi');
+    expect(names).not.toContain('Outlets');
   });
 
-  it('gives every Hekman level at least three amenities', () => {
-    for (const space of spaces.filter((s) => s.locationId === 1)) {
-      expect(getAmenityNamesBySpaceId(space.id).length).toBeGreaterThanOrEqual(3);
+  it('does not attach Wi-Fi or outlets to any space', () => {
+    for (const space of spaces) {
+      expect(getAmenityNamesBySpaceId(space.id)).not.toEqual(expect.arrayContaining(['Wi-Fi']));
+      expect(getAmenityNamesBySpaceId(space.id)).not.toEqual(expect.arrayContaining(['Outlets']));
     }
   });
+});
 
-  it('keeps the 4th floor marked as the silent floor', () => {
-    expect(getAmenityNamesBySpaceId(4)).toEqual(expect.arrayContaining(['Silent Floor', 'Quiet']));
+describe('Hekman Library amenities', () => {
+  it.each([
+    [
+      'Basement',
+      2,
+      ['Individual Desks with Monitors', 'Gaming PCs', 'Gaming Room', 'CIT Department', 'Printer', 'Group Tables'],
+    ],
+    [
+      'Student Commons',
+      1,
+      [
+        'Group Friendly',
+        'Vending Machines',
+        "Peet's Coffee",
+        'CIT Help Desk',
+        'Printer',
+        'Group Tables',
+        'Whiteboards',
+        'Student Success',
+        'Intercultural Student Office (CISD)',
+        'Service-Learning Office',
+        'Sexuality Series Office',
+        'Tutoring Room',
+        'Student Engagement Office',
+        'Commons Square',
+        'Honors Office',
+      ],
+    ],
+    [
+      '3rd Floor',
+      3,
+      [
+        'Reservable Individual Study Rooms',
+        'Fireplace',
+        'Open Social Area',
+        'Rhetoric Center',
+        'Library Help Desk',
+        'Printer',
+        'Group Friendly',
+        'Career Center',
+        'Campus Ministries',
+        'Group Tables',
+      ],
+    ],
+    [
+      '4th Floor',
+      4,
+      ['PhD Seminary Office', 'H. Henry Meeter Center', 'Seminary Carrels', 'Group Tables', 'Study Carrels', 'Whiteboards'],
+    ],
+    ['5th Floor', 21, ['Group Tables', 'Study Carrels', 'Whiteboards']],
+  ])('lists what the %s has', (_level, spaceId, expected) => {
+    expect(getAmenityNamesBySpaceId(spaceId)).toEqual(expected);
   });
 });

@@ -77,8 +77,10 @@ describe('LocationDetailScreen', () => {
     const text = screenText(renderScreen());
 
     expect(text).toContain("What's here");
-    expect(text).toContain('Individual Study Rooms');
+    expect(text).toContain('Reservable Individual Study Rooms');
     expect(text).toContain('Fireplace');
     expect(text).toContain('Open Social Area');
+    expect(text).toContain('H. Henry Meeter Center');
+    expect(text).not.toContain('Wi-Fi');
   });
 });
