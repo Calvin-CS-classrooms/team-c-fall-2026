@@ -23,6 +23,7 @@ function ContextProbe() {
       <Text testID="suggestion-count">{data.suggestions.length}</Text>
       <Text testID="atrium-status">{data.suggestions.find((s) => s.id === 1)?.status}</Text>
       <Text testID="space-count">{data.spaces.length}</Text>
+      <Text testID="space-4-rating">{data.spaces.find((space) => space.id === 4)?.overallRating}</Text>
       <Pressable
         testID="set-calvin-email"
         onPress={() => data.logIn('student@calvin.edu', 'password123')}
@@ -128,6 +129,23 @@ describe('AppProvider', () => {
 
     act(() => getNode(view, 'delete-rating').props.onPress());
     expect(getNode(view, 'rating-count').props.children).toBe(initialCount);
+  });
+
+  it("updates the space's rating when a rating is added, and restores it when deleted", () => {
+    const view = renderContext();
+    const before = getNode(view, 'space-4-rating').props.children;
+
+    act(() => getNode(view, 'set-calvin-email').props.onPress());
+    // The test rating is 5 stars for space 4, which starts below 5.
+    act(() => getNode(view, 'add-rating').props.onPress());
+    const afterAdd = getNode(view, 'space-4-rating').props.children;
+
+    act(() => getNode(view, 'delete-rating').props.onPress());
+    const afterDelete = getNode(view, 'space-4-rating').props.children;
+
+    expect(before).toBeLessThan(5);
+    expect(afterAdd).toBeGreaterThan(before);
+    expect(afterDelete).toBe(before);
   });
 
   it('only logs in Calvin emails with a long-enough password, and logs out', () => {
