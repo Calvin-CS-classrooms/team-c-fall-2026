@@ -16,10 +16,11 @@ import { useAppData } from '@/context/app-context';
 import { categories } from '@/data/categories';
 import { getLocationById } from '@/data/locations';
 import { getSpacesByLocationId } from '@/data/spaces';
+import { getUserById } from '@/data/users';
 import type { DensityLevel } from '@/types';
 import { summarizeBuilding } from '@/utils/buildings';
 import { formatMinutesAgo } from '@/utils/format';
-import { isOwnRating } from '@/utils/ratings';
+import { isOwnRating, ratingAuthorLabel } from '@/utils/ratings';
 
 // Maps a crowd rating (0-100) to a density level.
 function densityForCrowd(crowd: number): DensityLevel {
@@ -173,6 +174,9 @@ export function ExploreScreen() {
                         </Pressable>
                       ) : null}
                     </View>
+                    <Text style={styles.ratingAuthor}>
+                      by {ratingAuthorLabel(rating, { currentUserId: account?.id, findUser: getUserById })}
+                    </Text>
                     <StarRating value={rating.numStars} readOnly size={15} />
                     {rating.description ? <Text style={styles.ratingComment}>{rating.description}</Text> : null}
                     <Text style={styles.ratingMeta}>{rating.crowdRating}% busy</Text>

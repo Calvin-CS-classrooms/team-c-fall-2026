@@ -56,6 +56,13 @@ export function RatingHistoryRow({ rating, name, onMarkHelpful, onDelete }: Rati
         ) : null}
       </View>
 
+      {rating.isAnonymous ? (
+        <View style={styles.anonymousTag}>
+          <Ionicons name="eye-off-outline" size={12} color={Colors.textSecondary} />
+          <Text style={styles.anonymousText}>Posted anonymously</Text>
+        </View>
+      ) : null}
+
       <StarRating value={rating.numStars} readOnly size={16} />
 
       {/* Description is optional, so only render it when present. */}

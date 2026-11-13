@@ -137,6 +137,10 @@ export function AppProvider({ children }: PropsWithChildren) {
   // Permanently removes account information. Ratings stay, but lose their owner and show as anonymous.
   const finalizeAccountDeletion = useCallback(() => {
     if (!account) return;
+    // Keep the ratings, but hide who wrote them.
+    setRatings((prev) =>
+      prev.map((rating) => (rating.userId === account.id ? { ...rating, isAnonymous: true } : rating)),
+    );
     setFavorites([]);
     setSettings(DEFAULT_SETTINGS);
     setAccount(null);
@@ -167,10 +171,11 @@ export function AppProvider({ children }: PropsWithChildren) {
         perceivedNoise: input.perceivedNoise,
         description: input.description ?? '',
         numUpvotes: 0,
+        isAnonymous: settings.anonymousMode,
       };
       setRatings((prev) => [newRating, ...prev]);
     },
-    [account],
+    [account, settings.anonymousMode],
   );
 
   // Increments the helpful count on the matching rating.
