@@ -12,6 +12,7 @@ import { Colors } from '@/constants/colors';
 import { Typography } from '@/constants/typography';
 import { useAppData } from '@/context/app-context';
 import type { SpotSuggestion } from '@/types';
+import { goBack } from '@/utils/navigation';
 import { hasSuggestedToday, PROMOTION_THRESHOLD } from '@/utils/suggestions';
 
 /**
@@ -52,7 +53,7 @@ export function SuggestionsScreen() {
         <AppHeader title="Suggest a Space" subtitle="Help the community find more study spots" />
 
         <View style={styles.section}>
-          <Pressable style={styles.backRow} onPress={() => router.back()} accessibilityRole="button">
+          <Pressable style={styles.backRow} onPress={() => goBack(router, '/explore')} accessibilityRole="button">
             <Ionicons name="chevron-back" size={18} color={Colors.maroon} />
             <Text style={styles.backText}>Back</Text>
           </Pressable>
