@@ -16,6 +16,10 @@ jest.mock("@supabase/supabase-js", () => ({
 
 // The repository requires ../config/supabase, which calls createClient() and
 // returns fakeClient. Require it after the mock is set up.
+// config/supabase.js refuses to load without credentials, so give it placeholders.
+// They are never used: createClient is mocked above.
+process.env.SUPABASE_URL = "https://example.supabase.co";
+process.env.SUPABASE_SERVICE_ROLE_KEY = "test-key";
 const repository = require("../data/supabase-repository");
 
 // Builds a query chain that resolves with the given data/error and records
