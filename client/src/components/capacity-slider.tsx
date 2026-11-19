@@ -74,6 +74,11 @@ export function CapacitySlider({ value, onChange }: CapacitySliderProps) {
         accessibilityRole="adjustable"
         accessibilityLabel="Crowd rating"
         accessibilityValue={{ min: 0, max: 100, now: value, text: `${value}%, ${label}` }}
+        // The web reads aria-value* props rather than accessibilityValue.
+        aria-valuemin={0}
+        aria-valuemax={100}
+        aria-valuenow={value}
+        aria-valuetext={`${value}%, ${label}`}
         accessibilityActions={[{ name: 'increment' }, { name: 'decrement' }]}
         onAccessibilityAction={onAccessibilityAction}
         onStartShouldSetResponder={() => true}

@@ -86,6 +86,9 @@ export function ToggleSwitch({
       accessibilityRole="switch"
       accessibilityLabel={accessibilityLabel}
       accessibilityState={{ checked: value, disabled }}
+      // The web reads aria-* props rather than accessibilityState.
+      aria-checked={value}
+      aria-disabled={disabled}
       style={disabled ? styles.disabled : undefined}>
       {track}
     </Pressable>

@@ -37,6 +37,14 @@ describe('ToggleSwitch', () => {
     expect(switchNode(on).props.accessibilityLabel).toBe('Geolocation');
   });
 
+  it('also sets aria-checked, which is what the web reads', () => {
+    const on = render(<ToggleSwitch value onValueChange={jest.fn()} />);
+    const off = render(<ToggleSwitch value={false} onValueChange={jest.fn()} />);
+
+    expect(switchNode(on).props['aria-checked']).toBe(true);
+    expect(switchNode(off).props['aria-checked']).toBe(false);
+  });
+
   it('asks for the opposite value when pressed', () => {
     const onValueChange = jest.fn();
     const on = render(<ToggleSwitch value onValueChange={onValueChange} />);
@@ -96,5 +104,6 @@ describe('SettingToggleRow', () => {
 
     expect(onValueChange).toHaveBeenCalledWith(false);
     expect(switchNode(renderer).props.accessibilityLabel).toBe('Geolocation');
+    expect(switchNode(renderer).props['aria-checked']).toBe(true);
   });
 });

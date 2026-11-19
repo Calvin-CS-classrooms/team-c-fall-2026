@@ -35,7 +35,9 @@ export function SettingToggleRow({ icon, title, subtitle, value, onValueChange }
       accessibilityRole="switch"
       accessibilityLabel={title}
       accessibilityHint={subtitle}
-      accessibilityState={{ checked: value }}>
+      accessibilityState={{ checked: value }}
+      // The web reads aria-checked rather than accessibilityState.
+      aria-checked={value}>
       <View style={styles.iconWrap}>
         <Ionicons name={icon} size={18} color={Colors.maroon} />
       </View>

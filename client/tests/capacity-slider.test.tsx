@@ -36,6 +36,19 @@ describe('CapacitySlider', () => {
     expect(slider.props.accessibilityValue).toEqual({ min: 0, max: 100, now: 40, text: '40%, Moderate' });
   });
 
+  it('also sets the aria-value props, which is what the web reads', () => {
+    const slider = adjustable(render(40).renderer);
+
+    expect(slider.props).toEqual(
+      expect.objectContaining({
+        'aria-valuemin': 0,
+        'aria-valuemax': 100,
+        'aria-valuenow': 40,
+        'aria-valuetext': '40%, Moderate',
+      }),
+    );
+  });
+
   it('steps up and down by 5% with screen-reader swipes', () => {
     const { renderer, onChange } = render(40);
     const slider = adjustable(renderer);
