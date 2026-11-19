@@ -7,6 +7,7 @@ const ratingsRouter = require("./routes/ratings");
 const favoritesRouter = require("./routes/favorites");
 const referenceRouter = require("./routes/reference");
 const notificationsRouter = require("./routes/notifications");
+const authRouter = require("./routes/auth");
 
 const app = express();
 
@@ -22,5 +23,6 @@ app.use("/api/ratings", ratingsRouter);
 app.use("/api/favorites", favoritesRouter);
 app.use("/api/reference", referenceRouter);
 app.use("/api/notifications", notificationsRouter);
+app.use("/api/auth", authRouter);
 
 module.exports = app;

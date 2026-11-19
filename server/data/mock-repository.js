@@ -91,6 +91,19 @@ async function getNotificationsByUserId(userId) {
   return notifications.filter((notification) => String(notification.userId) === String(userId));
 }
 
+// --- Auth ------------------------------------------------------------------
+
+// Emails signed up during this run. Mock mode sends no email and forgets
+// everything when the server restarts.
+const mockSignUps = new Set();
+
+async function createAuthUser({ email }) {
+  await delay();
+  if (mockSignUps.has(email)) return { userId: null, alreadyRegistered: true };
+  mockSignUps.add(email);
+  return { userId: `mock-${mockSignUps.size}`, alreadyRegistered: false };
+}
+
 module.exports = {
   getAllLocations,
   getLocationById,
@@ -107,4 +120,5 @@ module.exports = {
   getAllCategories,
   getAllNotifications,
   getNotificationsByUserId,
+  createAuthUser,
 };
