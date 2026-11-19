@@ -1,7 +1,8 @@
 import { Ionicons } from '@expo/vector-icons';
 import type { ComponentProps } from 'react';
-import { StyleSheet, Switch, Text, View } from 'react-native';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
 
+import { ToggleSwitch } from '@/components/toggle-switch';
 import { Colors } from '@/constants/colors';
 import { Typography } from '@/constants/typography';
 
@@ -17,7 +18,8 @@ interface SettingToggleRowProps {
 
 /**
  * A single preference row on the profile screen: an icon, a title and
- * subtitle, and a toggle switch bound to a boolean setting.
+ * subtitle, and a toggle switch bound to a boolean setting. The whole row is
+ * the switch, so tapping anywhere on it toggles the setting.
  *
  * @param icon - Icon shown on the left.
  * @param title - The setting's name.
@@ -27,7 +29,13 @@ interface SettingToggleRowProps {
  */
 export function SettingToggleRow({ icon, title, subtitle, value, onValueChange }: SettingToggleRowProps) {
   return (
-    <View style={styles.row}>
+    <Pressable
+      style={({ pressed }) => [styles.row, pressed && styles.pressed]}
+      onPress={() => onValueChange(!value)}
+      accessibilityRole="switch"
+      accessibilityLabel={title}
+      accessibilityHint={subtitle}
+      accessibilityState={{ checked: value }}>
       <View style={styles.iconWrap}>
         <Ionicons name={icon} size={18} color={Colors.maroon} />
       </View>
@@ -35,14 +43,9 @@ export function SettingToggleRow({ icon, title, subtitle, value, onValueChange }
         <Text style={styles.title}>{title}</Text>
         <Text style={styles.subtitle}>{subtitle}</Text>
       </View>
-      {/* Switch colors: maroon track when on, border-colored when off. */}
-      <Switch
-        value={value}
-        onValueChange={onValueChange}
-        trackColor={{ true: Colors.maroon, false: Colors.border }}
-        thumbColor={Colors.white}
-      />
-    </View>
+      {/* Drawn only; the row above handles the press and is announced as the switch. */}
+      <ToggleSwitch value={value} onValueChange={onValueChange} interactive={false} />
+    </Pressable>
   );
 }
 
@@ -54,6 +57,9 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     borderBottomWidth: 1,
     borderBottomColor: Colors.border,
+  },
+  pressed: {
+    opacity: 0.7,
   },
   iconWrap: {
     width: 36,

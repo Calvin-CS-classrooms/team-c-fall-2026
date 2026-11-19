@@ -1,89 +1,122 @@
-import { useMemo, useState } from 'react';
-import { PanResponder, StyleSheet, Text, View } from 'react-native';
+import { useRef, useState } from 'react';
+import { StyleSheet, Text, View, type AccessibilityActionEvent, type GestureResponderEvent } from 'react-native';
 
-import { Colors, DensityColors, densityForCapacity } from '@/constants/colors';
+import { Colors, DensityColors, DensityLabels, densityForCapacity } from '@/constants/colors';
 import { Typography } from '@/constants/typography';
+import { stepValue, valueFromDrag, valueFromPosition } from '@/utils/slider';
 
 interface CapacitySliderProps {
   value: number;
   onChange: (value: number) => void;
 }
 
-const THUMB_SIZE = 24;
+const THUMB_SIZE = 26;
+// The touchable area is taller than the 8px track so it is easy to grab.
+const TOUCH_HEIGHT = 44;
 
 /**
- * A draggable slider for choosing a capacity percentage (0-100). The user
- * can drag the thumb or tap anywhere on the track to set the value. The
- * fill color reflects the density level of the current value.
+ * A slider for choosing how crowded a place is (0-100%).
  *
- * @param value - Current capacity percentage (0-100).
+ * Tap anywhere on the bar to jump there, or drag the thumb. Values snap to
+ * 5% steps. The label shows the value with its crowd level ("40% · Moderate"),
+ * and the fill colour matches that level. Screen-reader users can swipe up
+ * or down to change it by 5%.
+ *
+ * @param value - Current crowd percentage (0-100).
  * @param onChange - Called with the new value when the user changes it.
  */
 export function CapacitySlider({ value, onChange }: CapacitySliderProps) {
-  // Measured width of the track, used to convert pixel positions to
-  // percentages. Set once the track is laid out.
+  // Measured width of the bar, used to turn pixel positions into percentages.
   const [trackWidth, setTrackWidth] = useState(0);
+  // Where the current drag began: the page x of the touch and the value at
+  // that moment. Drag distance is measured from there, so it must be added to
+  // the starting value, not the latest one (that made the thumb run ahead).
+  const drag = useRef({ startPageX: 0, startValue: value });
 
-  // PanResponder handles drag gestures on the track. It converts the
-  // gesture's horizontal delta (dx) into a new percentage, clamped to
-  // [0, 100], and only fires onChange when the value actually changes.
-  const panResponder = useMemo(
-    () =>
-      PanResponder.create({
-        onStartShouldSetPanResponder: () => true,
-        onMoveShouldSetPanResponder: () => true,
-        onPanResponderMove: (_event, gesture) => {
-          if (trackWidth <= 0) return;
-          const startX = (value / 100) * trackWidth;
-          const nextX = Math.min(Math.max(startX + gesture.dx, 0), trackWidth);
-          const nextValue = Math.round((nextX / trackWidth) * 100);
-          if (nextValue !== value) {
-            onChange(nextValue);
-          }
-        },
-        // Tapping the track jumps the value to the tapped position.
-        // TOFIX: When tapping while the slider position is already at that spot,
-        // it sets the slider back to 0.
-        onPanResponderGrant: (event) => {
-          if (trackWidth <= 0) return;
-          const nextX = Math.min(Math.max(event.nativeEvent.locationX, 0), trackWidth);
-          onChange(Math.round((nextX / trackWidth) * 100));
-        },
-      }),
-    [value, trackWidth, onChange],
-  );
+  const update = (next: number | undefined) => {
+    if (next !== undefined && next !== value) onChange(next);
+  };
 
-  const color = DensityColors[densityForCapacity(value)];
-  // Position the thumb so its center sits on the value; offset by half the
-  // thumb size. Before the track is measured, keep it off-screen.
+  // Touch down: jump to the touched spot. The fill and thumb ignore touches
+  // (pointerEvents="none"), so locationX is always measured from the left
+  // edge of the bar, not from whatever element was under the finger.
+  const onGrant = (event: GestureResponderEvent) => {
+    const next = valueFromPosition(event.nativeEvent.locationX, trackWidth);
+    drag.current = { startPageX: event.nativeEvent.pageX, startValue: next ?? value };
+    update(next);
+  };
+
+  const onMove = (event: GestureResponderEvent) => {
+    const dx = event.nativeEvent.pageX - drag.current.startPageX;
+    update(valueFromDrag(drag.current.startValue, dx, trackWidth));
+  };
+
+  const density = densityForCapacity(value);
+  const color = DensityColors[density];
+  const label = DensityLabels[density];
+  // Centre the thumb on the value. Before the bar is measured, keep it at the start.
   const thumbLeft = trackWidth > 0 ? (value / 100) * trackWidth - THUMB_SIZE / 2 : -THUMB_SIZE / 2;
+
+  const onAccessibilityAction = (event: AccessibilityActionEvent) => {
+    if (event.nativeEvent.actionName === 'increment') update(stepValue(value, 1));
+    if (event.nativeEvent.actionName === 'decrement') update(stepValue(value, -1));
+  };
 
   return (
     <View>
+      <View style={styles.valueRow}>
+        <Text style={[styles.valueLabel, { color }]}>{`${value}% · ${label}`}</Text>
+      </View>
       <View
-        style={styles.track}
-        onLayout={(event) => {
-          setTrackWidth(event.nativeEvent.layout.width);
-        }}
-        {...panResponder.panHandlers}>
-        <View style={[styles.fill, { width: `${value}%`, backgroundColor: color }]} />
-        <View style={[styles.thumb, { left: thumbLeft, borderColor: color }]} />
+        style={styles.touchArea}
+        onLayout={(event) => setTrackWidth(event.nativeEvent.layout.width)}
+        accessible
+        accessibilityRole="adjustable"
+        accessibilityLabel="Crowd rating"
+        accessibilityValue={{ min: 0, max: 100, now: value, text: `${value}%, ${label}` }}
+        accessibilityActions={[{ name: 'increment' }, { name: 'decrement' }]}
+        onAccessibilityAction={onAccessibilityAction}
+        onStartShouldSetResponder={() => true}
+        onMoveShouldSetResponder={() => true}
+        onResponderGrant={onGrant}
+        onResponderMove={onMove}
+        // Don't let a surrounding ScrollView take over once dragging has started.
+        onResponderTerminationRequest={() => false}>
+        <View style={styles.track} pointerEvents="none">
+          <View testID="slider-fill" pointerEvents="none" style={[styles.fill, { width: `${value}%`, backgroundColor: color }]} />
+        </View>
+        <View
+          testID="slider-thumb"
+          pointerEvents="none"
+          style={[styles.thumb, { left: thumbLeft, borderColor: color }]}
+        />
       </View>
       <View style={styles.labelsRow}>
-        <Text style={styles.endLabel}>0% Empty</Text>
-        <Text style={[styles.valueLabel, { color }]}>{value}%</Text>
-        <Text style={styles.endLabel}>100% Maxed Out</Text>
+        <Text style={styles.endLabel}>Empty</Text>
+        <Text style={styles.endLabel}>Packed</Text>
       </View>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
+  valueRow: {
+    alignItems: 'center',
+    marginBottom: 2,
+  },
+  valueLabel: {
+    fontFamily: Typography.bold,
+    fontSize: 14,
+  },
+  touchArea: {
+    height: TOUCH_HEIGHT,
+    justifyContent: 'center',
+  },
   track: {
     height: 8,
     borderRadius: 999,
     backgroundColor: Colors.surfaceAlt,
-    justifyContent: 'center',
+    overflow: 'hidden',
   },
   fill: {
     height: '100%',
@@ -91,29 +124,20 @@ const styles = StyleSheet.create({
   },
   thumb: {
     position: 'absolute',
+    top: (TOUCH_HEIGHT - THUMB_SIZE) / 2,
     width: THUMB_SIZE,
     height: THUMB_SIZE,
     borderRadius: THUMB_SIZE / 2,
     backgroundColor: Colors.white,
     borderWidth: 3,
-    shadowColor: Colors.black,
-    shadowOpacity: 0.2,
-    shadowRadius: 3,
-    shadowOffset: { width: 0, height: 1 },
-    elevation: 2,
   },
   labelsRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginTop: 10,
   },
   endLabel: {
     fontFamily: Typography.medium,
     fontSize: 11,
     color: Colors.textMuted,
-  },
-  valueLabel: {
-    fontFamily: Typography.bold,
-    fontSize: 13,
   },
 });
