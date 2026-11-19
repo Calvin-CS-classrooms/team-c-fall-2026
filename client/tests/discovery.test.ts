@@ -47,7 +47,9 @@ describe('discovery filters', () => {
     expect(recentRatingCount(old.spaceId, [old])).toBe(0);
     expect(
       recentRatingCount(old.spaceId, [
-        { ...old, createdAt: new Date(Date.now() - TRENDING_WINDOW_MINUTES * 60 * 1000).toISOString() },
+        // One minute inside the window. Exactly on the edge would be flaky: the clock
+        // can tick between creating this timestamp and reading it in recentRatingCount.
+        { ...old, createdAt: new Date(Date.now() - (TRENDING_WINDOW_MINUTES - 1) * 60 * 1000).toISOString() },
       ]),
     ).toBe(1);
   });
