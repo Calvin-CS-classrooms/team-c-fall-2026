@@ -4,6 +4,7 @@
 // business logic layer can call them identically to the Supabase repository.
 // Used when USE_MOCK_DATA=true.
 
+const users = require("../data-mock/users");
 const locations = require("../data-mock/locations");
 const spaces = require("../data-mock/spaces");
 const floors = require("../data-mock/floors");
@@ -15,6 +16,11 @@ const notifications = require("../data-mock/notifications");
 
 // Simulate a small network/db latency so async behavior matches Supabase.
 const delay = (ms = 5) => new Promise((resolve) => setTimeout(resolve, ms));
+
+async function getUserByEmail(email) {
+  await delay();
+  return users.find((user) => String(user.email).toLowerCase() === String(email).toLowerCase()) ?? null;
+}
 
 async function getAllLocations() {
   await delay();
@@ -91,7 +97,47 @@ async function getNotificationsByUserId(userId) {
   return notifications.filter((notification) => String(notification.userId) === String(userId));
 }
 
+// --- Write operations (mock) ----------------------------------------------
+
+async function createRating(rating) {
+  await delay();
+  const next = { ...rating, id: Math.max(0, ...ratings.map((r) => r.id)) + 1 };
+  ratings.push(next);
+  return next;
+}
+
+async function deleteRating(id) {
+  await delay();
+  const index = ratings.findIndex((r) => String(r.id) === String(id));
+  if (index !== -1) ratings.splice(index, 1);
+}
+
+async function createFavorite(favorite) {
+  await delay();
+  favorites.push(favorite);
+  return favorite;
+}
+
+async function deleteFavorite(userId, spaceId) {
+  await delay();
+  const index = favorites.findIndex(
+    (f) => String(f.userId) === String(userId) && String(f.spaceId) === String(spaceId),
+  );
+  if (index !== -1) favorites.splice(index, 1);
+}
+
+async function createSpotSuggestion(suggestion) {
+  await delay();
+  const next = {
+    ...suggestion,
+    id: Math.max(0, ...suggestions.map((s) => s.id)) + 1,
+  };
+  suggestions.push(next);
+  return next;
+}
+
 module.exports = {
+  getUserByEmail,
   getAllLocations,
   getLocationById,
   getAllSpaces,
@@ -107,4 +153,9 @@ module.exports = {
   getAllCategories,
   getAllNotifications,
   getNotificationsByUserId,
+  createRating,
+  deleteRating,
+  createFavorite,
+  deleteFavorite,
+  createSpotSuggestion,
 };

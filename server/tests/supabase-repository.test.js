@@ -50,6 +50,16 @@ function stubQuery({ data = [], error = null } = {}) {
 
 describe("Supabase repository", () => {
 
+  test("getUserByEmail filters by email and uses maybeSingle", async () => {
+    const recorded = stubQuery({ data: { id: 1, email: "emma.k@calvin.edu" } });
+    const result = await repository.getUserByEmail("emma.k@calvin.edu");
+    expect(recorded.table).toBe("users");
+    expect(recorded.eqColumn).toBe("email");
+    expect(recorded.eqValue).toBe("emma.k@calvin.edu");
+    expect(recorded.maybeSingle).toBe(true);
+    expect(result).toEqual({ id: 1, email: "emma.k@calvin.edu" });
+  });
+
   test("getAllLocations queries the locations table", async () => {
     const recorded = stubQuery({ data: [{ id: 1, name: "Test" }] });
     const result = await repository.getAllLocations();

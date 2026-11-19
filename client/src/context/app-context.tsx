@@ -14,8 +14,15 @@ import { locations as baseLocations } from '@/data/locations';
 import { initialRatings } from '@/data/ratings';
 import { spaces as baseSpaces } from '@/data/spaces';
 import { createInitialSuggestions } from '@/data/suggestions';
+import {
+  createFavorite,
+  createSpotSuggestion,
+  deleteFavorite,
+  deleteRating as deleteServerRating,
+  fetchUserByEmail,
+  submitRating,
+} from '@/services/campus-api';
 import type {
-  Account,
   AppSettings,
   Favorites,
   Location,
@@ -25,6 +32,7 @@ import type {
   Space,
   SpotSuggestion,
   SuggestionVote,
+  User,
 } from '@/types';
 import { isCalvinEmail } from '@/utils/verification';
 import { hasSuggestedToday } from '@/utils/suggestions';
@@ -41,10 +49,10 @@ const DEFAULT_SETTINGS: AppSettings = {
 };
 
 interface AppContextValue {
-  account: Account | null;
+  account: User | null;
   /** The verified Calvin email of the signed-in account, or null when there is no verified account. */
   calvinEmail: string | null;
-  logIn: (email: string, password: string) => string | null;
+  logIn: (email: string, password: string) => Promise<string | null>;
   logOut: () => void;
   requestAccountDeletion: () => void;
   cancelAccountDeletion: () => void;
@@ -74,14 +82,19 @@ const AppContext = createContext<AppContextValue | undefined>(undefined);
 // seeded id so locally created rows never collide with mock data.
 let suggestionIdCounter = Math.max(0, ...createInitialSuggestions().map((suggestion) => suggestion.id));
 
-/** "jane.doe@calvin.edu" -> "Jane Doe" */
-export function nameFromEmail(email: string): string {
-  return email
+/** "jane.doe@calvin.edu" -> ["Jane", "Doe"] (first and last name parts). */
+export function namePartsFromEmail(email: string): [string, string | null] {
+  const parts = email
     .split('@')[0]
     .split(/[._-]+/)
     .filter(Boolean)
-    .map((part) => part[0].toUpperCase() + part.slice(1))
-    .join(' ');
+    .map((part) => part[0].toUpperCase() + part.slice(1));
+  return [parts[0] ?? '', parts[1] ?? null];
+}
+
+/** "jane.doe@calvin.edu" -> "Jane Doe" */
+export function nameFromEmail(email: string): string {
+  return namePartsFromEmail(email).filter(Boolean).join(' ');
 }
 
 /**
@@ -89,8 +102,8 @@ export function nameFromEmail(email: string): string {
  * settings) to the component tree via context. Acts as a client-only stand-in
  * for a backend: state lives in memory and is seeded from mock data.
  */
-export function AppProvider({ children }: PropsWithChildren) {
-  const [account, setAccount] = useState<Account | null>(null);
+export function AppProvider({ children, serverAvailable = false }: PropsWithChildren & { serverAvailable?: boolean }) {
+  const [account, setAccount] = useState<User | null>(null);
   const [ratings, setRatings] = useState<Rating[]>(initialRatings);
   // The ratings as loaded, kept so live metrics can tell what changed since.
   const [loadedRatings] = useState<Rating[]>(initialRatings);
@@ -105,29 +118,56 @@ export function AppProvider({ children }: PropsWithChildren) {
 
   const calvinEmail = account?.email ?? null;
 
-  // Mock sign-in: any verified Calvin email with a long-enough password is accepted.
-  // Passwords are never stored; real authentication needs a backend.
-  const logIn = useCallback((email: string, password: string) => {
-    if (!isCalvinEmail(email)) return 'Please enter a valid @calvin.edu email.';
-    if (password.length < MIN_PASSWORD_LENGTH) {
-      return `Password must be at least ${MIN_PASSWORD_LENGTH} characters.`;
-    }
+  // Sign-in: any verified Calvin email with a long-enough password is accepted.
+  // When the server is available, the account must exist there before access is
+  // granted, and the real user's data (id, name, etc.) is used. Passwords are
+  // never stored; real authentication needs a backend.
+  const logIn = useCallback(
+    async (email: string, password: string) => {
+      if (!isCalvinEmail(email)) return 'Please enter a valid @calvin.edu email.';
+      if (password.length < MIN_PASSWORD_LENGTH) {
+        return `Password must be at least ${MIN_PASSWORD_LENGTH} characters.`;
+      }
 
-    const normalizedEmail = email.trim().toLowerCase();
-    setAccount({
-      id: 1,
-      name: nameFromEmail(normalizedEmail),
-      email: normalizedEmail,
-      createdAt: Date.now(),
-      deletionScheduledFor: null,
-    });
-    return null;
-  }, []);
+      const normalizedEmail = email.trim().toLowerCase();
+
+      if (serverAvailable) {
+        try {
+          const user = await fetchUserByEmail(normalizedEmail);
+          setAccount({ ...user, deletionScheduledFor: user.deletionScheduledFor ?? null });
+          return null;
+        } catch (error) {
+          console.warn('Failed to look up account on server:', error);
+          return 'No account found for that email. Please check your email or sign up.';
+        }
+      }
+
+      // Offline fallback: build a mock user from the email.
+      const [firstName, lastName] = namePartsFromEmail(normalizedEmail);
+      setAccount({
+        id: 1,
+        firstName,
+        lastName,
+        email: normalizedEmail,
+        createdAt: new Date().toISOString(),
+        isVerified: true,
+        isAnonymous: false,
+        hasLocationAccess: false,
+        numRatings: 0,
+        allowsNotifications: true,
+        deletionScheduledFor: null,
+      });
+      return null;
+    },
+    [serverAvailable],
+  );
 
   const logOut = useCallback(() => setAccount(null), []);
 
   const requestAccountDeletion = useCallback(() => {
-    setAccount((prev) => (prev ? { ...prev, deletionScheduledFor: Date.now() + ACCOUNT_DELETION_DELAY_MS } : prev));
+    setAccount((prev) =>
+      prev ? { ...prev, deletionScheduledFor: new Date(Date.now() + ACCOUNT_DELETION_DELAY_MS).toISOString() } : prev,
+    );
   }, []);
 
   const cancelAccountDeletion = useCallback(() => {
@@ -148,12 +188,15 @@ export function AppProvider({ children }: PropsWithChildren) {
 
   useEffect(() => {
     if (!account?.deletionScheduledFor) return;
-    const timer = setTimeout(finalizeAccountDeletion, Math.max(account.deletionScheduledFor - Date.now(), 0));
+    const delay = new Date(account.deletionScheduledFor).getTime() - Date.now();
+    const timer = setTimeout(finalizeAccountDeletion, Math.max(delay, 0));
     return () => clearTimeout(timer);
   }, [account?.deletionScheduledFor, finalizeAccountDeletion]);
 
   // Adds a rating only if the user is logged in; new ratings are prepended so
   // the most recent appears first. Anonymous Mode at submit time is recorded.
+  // When the server is available, the rating is also persisted there (fire and
+  // forget — the local state updates immediately regardless).
   const addRating = useCallback(
     (input: NewRatingInput) => {
       if (!account) {
@@ -174,8 +217,19 @@ export function AppProvider({ children }: PropsWithChildren) {
         isAnonymous: settings.anonymousMode,
       };
       setRatings((prev) => [newRating, ...prev]);
+
+      if (serverAvailable) {
+        submitRating({
+          ...input,
+          userId: account.id,
+          createdAt: newRating.createdAt,
+          numUpvotes: 0,
+        }).catch((error) => {
+          console.warn('Failed to sync rating to server:', error);
+        });
+      }
     },
-    [account, settings.anonymousMode],
+    [account, settings.anonymousMode, serverAvailable],
   );
 
   // Increments the helpful count on the matching rating.
@@ -186,13 +240,23 @@ export function AppProvider({ children }: PropsWithChildren) {
   }, []);
 
   // Removes the rating with the given id, but only if the current user owns it.
+  // When the server is available, the deletion is also persisted there (fire and
+  // forget — the local state updates immediately regardless).
   const deleteRating = useCallback(
     (id: number) => {
       if (!account) return;
       setRatings((prev) => prev.filter((rating) => !(rating.id === id && rating.userId === account.id)));
+
+      if (serverAvailable) {
+        deleteServerRating(id).catch((error) => {
+          console.warn('Failed to sync rating deletion to server:', error);
+        });
+      }
     },
-    [account],
+    [account, serverAvailable],
   );
+
+  const locations = useMemo(() => baseLocations, []);
 
   const submitSuggestion = useCallback(
     (input: NewSuggestionInput) => {
@@ -201,11 +265,15 @@ export function AppProvider({ children }: PropsWithChildren) {
       const name = input.name.trim();
       if (!name) return 'Please enter a name for the space.';
 
+      // The suggestion form doesn't collect a location, so attach it to the
+      // first loaded location (a valid id is required by the DB foreign key).
+      const locationId = locations[0]?.id ?? 1;
+
       suggestionIdCounter += 1;
       const suggestion: SpotSuggestion = {
         id: suggestionIdCounter,
         userId: account?.id ?? 0,
-        locationId: 1,
+        locationId,
         name,
         description: input.description.trim(),
         type: 'addition',
@@ -214,9 +282,25 @@ export function AppProvider({ children }: PropsWithChildren) {
         status: 'beingTested',
       };
       setSuggestions((prev) => [suggestion, ...prev]);
+
+      if (serverAvailable) {
+        createSpotSuggestion({
+          userId: account.id,
+          locationId,
+          name,
+          description: input.description.trim(),
+          type: 'addition',
+          createdAt: suggestion.createdAt,
+          numUpvotes: suggestion.numUpvotes,
+          status: suggestion.status,
+        }).catch((error) => {
+          console.warn('Failed to sync suggestion to server:', error);
+        });
+      }
+
       return null;
     },
-    [suggestions, account],
+    [suggestions, account, serverAvailable, locations],
   );
 
   const voteOnSuggestion = useCallback(
@@ -238,27 +322,61 @@ export function AppProvider({ children }: PropsWithChildren) {
     [account],
   );
 
-  const locations = useMemo(() => baseLocations, []);
-
   // Spaces with their rating, crowd level, and noise kept in step with ratings
   // added or deleted since the app loaded (see utils/live-metrics.ts).
   const spaces = useMemo(() => withLiveMetrics(baseSpaces, loadedRatings, ratings), [loadedRatings, ratings]);
 
   // Adds the space to favorites if absent, or removes it if already present.
-  const toggleFavorite = useCallback((space: Space) => {
-    setFavorites((prev) => {
-      const exists = prev.some((favorite) => favorite.spaceId === space.id);
-      if (exists) {
-        return prev.filter((favorite) => favorite.spaceId !== space.id);
+  // When the server is available, the change is also persisted there (fire and
+  // forget — the local state updates immediately regardless).
+  const toggleFavorite = useCallback(
+    (space: Space) => {
+      setFavorites((prev) => {
+        const exists = prev.some((favorite) => favorite.spaceId === space.id);
+        if (exists) {
+          return prev.filter((favorite) => favorite.spaceId !== space.id);
+        }
+        return [
+          ...prev,
+          { userId: account?.id ?? 1, spaceId: space.id, createdAt: new Date().toISOString() },
+        ];
+      });
+
+      if (serverAvailable && account) {
+        const exists = favorites.some((favorite) => favorite.spaceId === space.id);
+        if (exists) {
+          deleteFavorite(account.id, space.id).catch((error) => {
+            console.warn('Failed to sync favorite deletion to server:', error);
+          });
+        } else {
+          createFavorite({
+            userId: account.id,
+            spaceId: space.id,
+            createdAt: new Date().toISOString(),
+          }).catch((error) => {
+            console.warn('Failed to sync favorite to server:', error);
+          });
+        }
       }
-      return [...prev, { userId: 1, spaceId: space.id, createdAt: new Date().toISOString() }];
-    });
-  }, []);
+    },
+    [account, favorites, serverAvailable],
+  );
 
   // Removes the favorite with the given space id.
-  const removeFavorite = useCallback((spaceId: number) => {
-    setFavorites((prev) => prev.filter((favorite) => favorite.spaceId !== spaceId));
-  }, []);
+  // When the server is available, the deletion is also persisted there (fire and
+  // forget — the local state updates immediately regardless).
+  const removeFavorite = useCallback(
+    (spaceId: number) => {
+      setFavorites((prev) => prev.filter((favorite) => favorite.spaceId !== spaceId));
+
+      if (serverAvailable && account) {
+        deleteFavorite(account.id, spaceId).catch((error) => {
+          console.warn('Failed to sync favorite deletion to server:', error);
+        });
+      }
+    },
+    [account, serverAvailable],
+  );
 
   // Whether the given space id is currently favorited.
   const isFavorite = useCallback(

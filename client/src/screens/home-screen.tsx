@@ -76,7 +76,7 @@ export function HomeScreen() {
     setAgentThinking(false);
   };
 
-  const firstName = account?.name.split(' ')[0];
+  const firstName = account?.firstName;
 
   return (
     <SafeAreaView style={styles.container} edges={['top', 'left', 'right']}>
