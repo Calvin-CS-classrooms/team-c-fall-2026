@@ -2,7 +2,7 @@
 
 Base URL (local development): `http://localhost:3000/api`
 
-All endpoints are read-only `GET` requests that return JSON. CORS allows only the Expo web client at `http://localhost:8081`.
+All endpoints return JSON. Everything is a read-only `GET` except `POST /auth/signup`. CORS allows only the Expo web client at `http://localhost:8081`.
 
 ## Architecture
 
@@ -126,8 +126,36 @@ Returns one location in the same shape, or `404`.
 | `GET /reference/amenities` | `[{ "id", "name" }]`, e.g. Wi-Fi, Outlets |
 | `GET /reference/categories` | `[{ "id", "name" }]`: study, social, athletics, events |
 
+## Accounts
+
+### `POST /auth/signup`
+
+Creates an account in Supabase Auth and emails the student a link to confirm it. The account can't be used until the link is clicked.
+
+Request body:
+
+```json
+{ "firstName": "Jane", "lastName": "Doe", "email": "jane.doe@calvin.edu", "password": "at least 8 characters" }
+```
+
+`lastName` is optional. The email is trimmed and lower-cased; it must end in `@calvin.edu`. Passwords are 8-72 characters.
+
+| Status | When | Body |
+|---|---|---|
+| `201` | Account created, confirmation email sent | `{ "email": "jane.doe@calvin.edu", "message": "Check jane.doe@calvin.edu for a link to confirm your account." }` |
+| `400` | Invalid input, or Supabase says the password is too weak | `{ "error": "Please use your @calvin.edu email.", "field": "email" }` |
+| `409` | The email already has an account | `{ "error": "An account with this email already exists. Try logging in instead.", "field": "email" }` |
+| `429` | Too many confirmation emails sent recently | `{ "error": "..." }` |
+| `503` | Supabase can't send to this address (no custom SMTP) or sign-ups are disabled | `{ "error": "..." }` |
+
+Supabase setup:
+- **Confirm email** must be on (Authentication -> Sign In / Providers -> Email); it is by default.
+- Confirmation links go to `AUTH_REDIRECT_URL` (server `.env`) if set, otherwise the project's **Site URL**. Add the URL under Authentication -> URL Configuration.
+- Supabase's built-in email service only sends to the project's team members and about 2 emails an hour. To email real students, set up custom SMTP (Project Settings -> Authentication -> SMTP).
+- With `USE_MOCK_DATA=true`, no email is sent; sign-ups are remembered until the server restarts.
+
 ## Known gaps
 
-- **No write endpoints yet.** Creating ratings, favorites and suggestions still happens only in the client's local state.
+- **Few write endpoints.** Only sign-up writes to Supabase. Creating ratings, favorites and suggestions still happens only in the client's local state, and logging in is still mock-only (it doesn't check Supabase).
 - **`hours` is mock-only.** Locations from `data-mock` include `hours`, but the `locations` table has no hours columns (they are planned to come from Google hours). With Supabase, `hours` is missing from responses.
 - **Non-numeric ids.** With mock data, `/locations/abc` returns `404`. With Supabase, Postgres rejects `"abc"` as an integer, so the same request returns `500`.
