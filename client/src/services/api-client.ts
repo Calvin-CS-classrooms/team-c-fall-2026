@@ -30,3 +30,50 @@ export async function fetchJson<T>(path: string): Promise<T> {
 
   return (await response.json()) as T;
 }
+
+/** An error response from the API, carrying the server's message and, when given, the form field it is about. */
+export class ApiError extends Error {
+  constructor(
+    public readonly status: number,
+    message: string,
+    public readonly field?: string,
+  ) {
+    super(message);
+    this.name = 'ApiError';
+  }
+}
+
+// Sending a confirmation email can take a few seconds, so allow longer than GETs.
+const POST_TIMEOUT_MS = 15000;
+
+/**
+ * POSTs `body` as JSON to `path` and parses the JSON response.
+ *
+ * @throws ApiError with the server's `error` message and `field` for a
+ *   non-2xx response ("API returned 500" if it gave no message), or with
+ *   status 0 when the server can't be reached or doesn't answer in time.
+ */
+export async function postJson<T>(path: string, body: unknown): Promise<T> {
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), POST_TIMEOUT_MS);
+
+  let response: Response;
+  try {
+    response = await fetch(`${API_URL}${path}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+      signal: controller.signal,
+    });
+  } catch {
+    throw new ApiError(0, "Can't reach the server. Make sure it's running, then try again.");
+  } finally {
+    clearTimeout(timeout);
+  }
+
+  const data = await response.json().catch(() => ({}));
+  if (!response.ok) {
+    throw new ApiError(response.status, data?.error ?? `API returned ${response.status}`, data?.field);
+  }
+  return data as T;
+}

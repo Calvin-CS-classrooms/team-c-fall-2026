@@ -1,5 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
 import { Image } from 'expo-image';
+import { useRouter } from 'expo-router';
 import { useState } from 'react';
 import { KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -13,9 +14,11 @@ import { useAppData } from '@/context/app-context';
 /**
  * Login screen: the sign-in view shown to signed-out users. Contains input
  * fields for the Calvin email and password, a show/hide password toggle, and
- * a sign-in button. Only @calvin.edu accounts are accepted.
+ * a sign-in button. Only @calvin.edu accounts are accepted. A link under the
+ * button opens the Create account screen.
  */
 export function LoginScreen() {
+  const router = useRouter();
   const { logIn } = useAppData();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -96,6 +99,15 @@ export function LoginScreen() {
             {error ? <Text style={styles.errorText}>{error}</Text> : null}
 
             <ActionButton label="Log In" icon="log-in-outline" onPress={handleLogIn} />
+            <Pressable
+              onPress={() => router.push('/signup')}
+              accessibilityRole="link"
+              accessibilityLabel="New here? Create an account"
+              style={styles.signUpRow}>
+              <Text style={styles.signUpText}>
+                New here? <Text style={styles.signUpLink}>Create an account</Text>
+              </Text>
+            </Pressable>
             <Text style={styles.footnote}>Only @calvin.edu accounts can access Calvin Ratings.</Text>
           </View>
         </ScrollView>
@@ -175,6 +187,19 @@ const styles = StyleSheet.create({
     fontFamily: Typography.semiBold,
     fontSize: 12,
     color: Colors.danger,
+  },
+  signUpRow: {
+    alignSelf: 'center',
+    paddingVertical: 4,
+  },
+  signUpText: {
+    fontFamily: Typography.medium,
+    fontSize: 14,
+    color: Colors.textSecondary,
+  },
+  signUpLink: {
+    fontFamily: Typography.bold,
+    color: Colors.maroon,
   },
   footnote: {
     fontFamily: Typography.medium,

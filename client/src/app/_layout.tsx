@@ -94,9 +94,10 @@ function RootNavigator() {
         {/* Building detail pages also require login, like the tabs. */}
         <Stack.Screen name="location/[id]" />
       </Stack.Protected>
-      {/* Only show the login screen when the user is signed out. */}
+      {/* Only show the login and create-account screens when the user is signed out. */}
       <Stack.Protected guard={!isLoggedIn}>
         <Stack.Screen name="login" />
+        <Stack.Screen name="signup" />
       </Stack.Protected>
     </Stack>
   );
