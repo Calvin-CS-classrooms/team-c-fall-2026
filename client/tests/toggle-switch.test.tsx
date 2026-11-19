@@ -106,4 +106,16 @@ describe('SettingToggleRow', () => {
     expect(switchNode(renderer).props.accessibilityLabel).toBe('Geolocation');
     expect(switchNode(renderer).props['aria-checked']).toBe(true);
   });
+
+  it('does not dim the row while it is pressed; only the switch changes', () => {
+    const renderer = render(
+      <SettingToggleRow icon="navigate-outline" title="Geolocation" subtitle="" value onValueChange={jest.fn()} />,
+    );
+    const row = switchNode(renderer);
+    const resolve = (pressed: boolean) =>
+      StyleSheet.flatten(typeof row.props.style === 'function' ? row.props.style({ pressed }) : row.props.style);
+
+    expect(resolve(true)).toEqual(resolve(false));
+    expect(resolve(true).opacity).toBeUndefined();
+  });
 });

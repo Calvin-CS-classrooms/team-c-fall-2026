@@ -30,7 +30,8 @@ interface SettingToggleRowProps {
 export function SettingToggleRow({ icon, title, subtitle, value, onValueChange }: SettingToggleRowProps) {
   return (
     <Pressable
-      style={({ pressed }) => [styles.row, pressed && styles.pressed]}
+      // No pressed style: only the switch itself changes when the row is tapped.
+      style={styles.row}
       onPress={() => onValueChange(!value)}
       accessibilityRole="switch"
       accessibilityLabel={title}
@@ -59,9 +60,6 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     borderBottomWidth: 1,
     borderBottomColor: Colors.border,
-  },
-  pressed: {
-    opacity: 0.7,
   },
   iconWrap: {
     width: 36,
