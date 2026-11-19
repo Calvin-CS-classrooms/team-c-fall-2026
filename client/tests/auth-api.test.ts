@@ -39,10 +39,11 @@ describe('createAccount', () => {
   });
 
   it("returns the server's email and message", async () => {
-    mockResponse(201, { email: 'jane@calvin.edu', message: 'Check jane@calvin.edu for a link.' });
+    mockResponse(201, { email: 'jane@calvin.edu', emailSent: true, message: 'Check jane@calvin.edu for a link.' });
 
     await expect(createAccount(input)).resolves.toEqual({
       email: 'jane@calvin.edu',
+      emailSent: true,
       message: 'Check jane@calvin.edu for a link.',
     });
   });

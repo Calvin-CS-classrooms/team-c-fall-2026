@@ -77,8 +77,8 @@ describe('SignUpScreen', () => {
     expect(mockCreateAccount).not.toHaveBeenCalled();
   });
 
-  it('creates the account and asks the student to check their email', async () => {
-    mockCreateAccount.mockResolvedValue({ email: 'jane.doe@calvin.edu', message: 'Check jane.doe@calvin.edu' });
+  it('creates the account and asks the student to check their email when one was sent', async () => {
+    mockCreateAccount.mockResolvedValue({ email: 'jane.doe@calvin.edu', emailSent: true, message: 'Check jane.doe@calvin.edu' });
     const renderer = render();
     fillValidForm(renderer);
 
@@ -93,6 +93,20 @@ describe('SignUpScreen', () => {
     const text = screenText(renderer);
     expect(text).toMatch(/check your email/i);
     expect(text).toContain('jane.doe@calvin.edu');
+  });
+
+  it('says no email was sent when sign-up is mock-only', async () => {
+    mockCreateAccount.mockResolvedValue({ email: 'jane.doe@calvin.edu', emailSent: false, message: '' });
+    const renderer = render();
+    fillValidForm(renderer);
+
+    await press(renderer, 'Create Account');
+
+    const text = screenText(renderer);
+    expect(text).toMatch(/account created/i);
+    expect(text).toMatch(/no confirmation email was sent/i);
+    expect(text).toContain('jane.doe@calvin.edu');
+    expect(text).not.toMatch(/check your email/i);
   });
 
   it("shows the server's message next to the right field", async () => {
@@ -117,7 +131,7 @@ describe('SignUpScreen', () => {
   });
 
   it('goes back to Log In from the link and after signing up', async () => {
-    mockCreateAccount.mockResolvedValue({ email: 'jane.doe@calvin.edu', message: '' });
+    mockCreateAccount.mockResolvedValue({ email: 'jane.doe@calvin.edu', emailSent: false, message: '' });
     const renderer = render();
 
     await press(renderer, 'Already have an account? Log in');

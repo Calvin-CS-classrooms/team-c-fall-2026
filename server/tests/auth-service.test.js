@@ -17,7 +17,7 @@ const valid = {
 
 beforeEach(() => {
   jest.resetAllMocks();
-  repository.createAuthUser.mockResolvedValue({ userId: "uuid-1", alreadyRegistered: false });
+  repository.createAuthUser.mockResolvedValue({ userId: "uuid-1", alreadyRegistered: false, emailSent: false });
 });
 
 describe("createAccount", () => {
@@ -31,7 +31,13 @@ describe("createAccount", () => {
       firstName: "Jane",
       lastName: "Doe",
     });
-    expect(result).toEqual({ email: "jane.doe@calvin.edu" });
+    expect(result).toEqual({ email: "jane.doe@calvin.edu", emailSent: false });
+  });
+
+  test("reports when the data layer did send a confirmation email", async () => {
+    repository.createAuthUser.mockResolvedValue({ userId: "uuid-1", alreadyRegistered: false, emailSent: true });
+
+    await expect(createAccount(valid)).resolves.toEqual({ email: "jane.doe@calvin.edu", emailSent: true });
   });
 
   test("treats a blank last name as no last name", async () => {

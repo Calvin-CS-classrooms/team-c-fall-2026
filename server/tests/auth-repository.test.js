@@ -10,6 +10,7 @@ jest.mock("@supabase/supabase-js", () => ({
 // config/supabase.js refuses to load without credentials, so give it placeholders.
 process.env.SUPABASE_URL = "https://example.supabase.co";
 process.env.SUPABASE_SERVICE_ROLE_KEY = "test-key";
+// eslint-disable-next-line no-unused-vars
 const { createAuthUser } = require("../data/supabase-repository");
 
 const input = { email: "jane@calvin.edu", password: "correct horse", firstName: "Jane", lastName: "Doe" };
@@ -19,7 +20,10 @@ beforeEach(() => {
   delete process.env.AUTH_REDIRECT_URL;
 });
 
-describe("createAuthUser", () => {
+// Skipped while the Supabase sign-up in data/supabase-repository.js is commented
+// out (sign-up is mock-only for now). Change describe.skip back to describe when
+// it is switched back on.
+describe.skip("createAuthUser", () => {
 
   test("signs up with the email and password and stores the name as user metadata", async () => {
     mockSignUp.mockResolvedValue({ data: { user: { id: "uuid-1", identities: [{ id: "i1" }] }, session: null }, error: null });

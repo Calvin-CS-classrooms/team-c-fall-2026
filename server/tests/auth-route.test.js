@@ -9,13 +9,14 @@ const body = (email) => ({ firstName: "Jane", lastName: "Doe", email, password: 
 
 describe("POST /api/auth/signup", () => {
 
-  test("creates the account and says a confirmation email was sent", async () => {
+  test("creates the account and says that no email was sent (sign-up is mock-only for now)", async () => {
     const response = await request(app).post("/api/auth/signup").send(body("route.new@calvin.edu"));
 
     expect(response.statusCode).toBe(201);
     expect(response.body).toEqual({
       email: "route.new@calvin.edu",
-      message: expect.stringMatching(/confirm/i),
+      emailSent: false,
+      message: expect.stringMatching(/no email was sent/i),
     });
   });
 

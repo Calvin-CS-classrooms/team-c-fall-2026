@@ -53,7 +53,7 @@ describe("data source selection", () => {
   test("USE_MOCK_DATA=true uses the mock repository", () => {
     process.env.USE_MOCK_DATA = "true";
 
-    expect(require("../data")).toBe(require("../data/mock-repository"));
+    expect(require("../data").getAllLocations).toBe(require("../data/mock-repository").getAllLocations);
   });
 
   test("any other value uses the Supabase repository", () => {
@@ -61,7 +61,15 @@ describe("data source selection", () => {
     process.env.SUPABASE_URL = "https://example.supabase.co";
     process.env.SUPABASE_SERVICE_ROLE_KEY = "key";
 
-    expect(require("../data")).toBe(require("../data/supabase-repository"));
+    expect(require("../data").getAllLocations).toBe(require("../data/supabase-repository").getAllLocations);
+  });
+
+  test("sign-up always uses the mock repository for now, even with Supabase data", () => {
+    process.env.USE_MOCK_DATA = "false";
+    process.env.SUPABASE_URL = "https://example.supabase.co";
+    process.env.SUPABASE_SERVICE_ROLE_KEY = "key";
+
+    expect(require("../data").createAuthUser).toBe(require("../data/mock-repository").createAuthUser);
   });
 
 });
