@@ -14,9 +14,12 @@ const SAFE_AREA = {
 };
 
 describe('LoginScreen', () => {
-  it('has a Create account link under Log In that opens the sign-up screen', () => {
+  it('has a Create account link under Log In that opens the sign-up screen', async () => {
     let renderer!: ReactTestRenderer;
-    act(() => {
+    // The screen's icons load their font asynchronously. Rendering inside an
+    // async act lets that finish while the test is still running; otherwise the
+    // icons update after Jest has torn down and the run fails.
+    await act(async () => {
       renderer = create(
         <SafeAreaProvider initialMetrics={SAFE_AREA}>
           <AppProvider>
@@ -33,5 +36,7 @@ describe('LoginScreen', () => {
 
     expect(link.props.accessibilityLabel).toBe('New here? Create an account');
     expect(mockRouter.push).toHaveBeenCalledWith('/signup');
+
+    act(() => renderer.unmount());
   });
 });
