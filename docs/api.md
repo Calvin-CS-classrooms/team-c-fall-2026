@@ -130,7 +130,9 @@ Returns one location in the same shape, or `404`.
 
 ### `POST /auth/signup`
 
-Creates an account in Supabase Auth and emails the student a link to confirm it. The account can't be used until the link is clicked.
+Creates an account.
+
+> **Mock-only for now.** Sign-up always uses the mock data layer, even when other data comes from Supabase: no Supabase account is created and no email is sent (`emailSent: false`). The Supabase version is commented out in `server/data/supabase-repository.js` until the team decides how accounts should work; the steps to switch it back on are in that comment. With real sign-up, Supabase emails the student a link to confirm the account.
 
 Request body:
 
@@ -142,17 +144,17 @@ Request body:
 
 | Status | When | Body |
 |---|---|---|
-| `201` | Account created, confirmation email sent | `{ "email": "jane.doe@calvin.edu", "message": "Check jane.doe@calvin.edu for a link to confirm your account." }` |
+| `201` | Account created | `{ "email": "jane.doe@calvin.edu", "emailSent": false, "message": "Account created for jane.doe@calvin.edu. No email was sent: sign-up is in mock mode for now." }` (with real sign-up: `"emailSent": true` and "Check … for a link to confirm your account.") |
 | `400` | Invalid input, or Supabase says the password is too weak | `{ "error": "Please use your @calvin.edu email.", "field": "email" }` |
 | `409` | The email already has an account | `{ "error": "An account with this email already exists. Try logging in instead.", "field": "email" }` |
 | `429` | Too many confirmation emails sent recently | `{ "error": "..." }` |
 | `503` | Supabase can't send to this address (no custom SMTP) or sign-ups are disabled | `{ "error": "..." }` |
 
-Supabase setup:
+Supabase setup (for when real sign-up is switched back on):
 - **Confirm email** must be on (Authentication -> Sign In / Providers -> Email); it is by default.
 - Confirmation links go to `AUTH_REDIRECT_URL` (server `.env`) if set, otherwise the project's **Site URL**. Add the URL under Authentication -> URL Configuration.
 - Supabase's built-in email service only sends to the project's team members and about 2 emails an hour. To email real students, set up custom SMTP (Project Settings -> Authentication -> SMTP).
-- With `USE_MOCK_DATA=true`, no email is sent; sign-ups are remembered until the server restarts.
+- Mock sign-ups are remembered only until the server restarts.
 
 ## Known gaps
 

@@ -100,38 +100,44 @@ async function getNotificationsByUserId(userId) {
   return data;
 }
 
-// --- Auth ------------------------------------------------------------------
-
-/**
- * Creates a user in Supabase Auth. With "Confirm email" on (the default on
- * hosted projects), Supabase emails the user a confirmation link and returns
- * no session until they click it.
- *
- * Supabase hides whether an email is taken: depending on project settings it
- * returns either an obfuscated user with no identities or the
- * user_already_exists error. Both are reported as alreadyRegistered.
- *
- * Confirmation links go to AUTH_REDIRECT_URL when set, otherwise to the
- * project's Site URL (Supabase Dashboard -> Authentication -> URL Configuration).
- *
- * @returns {Promise<{ userId: string|null, alreadyRegistered: boolean }>}
- * @throws The Supabase error (with its `code`) for any other failure.
- */
-async function createAuthUser({ email, password, firstName, lastName }) {
-  const options = { data: { firstName, lastName } };
-  if (process.env.AUTH_REDIRECT_URL) options.emailRedirectTo = process.env.AUTH_REDIRECT_URL;
-
-  const { data, error } = await supabase.auth.signUp({ email, password, options });
-
-  if (error) {
-    if (error.code === "user_already_exists") return { userId: null, alreadyRegistered: true };
-    throw Object.assign(new Error(error.message), { code: error.code, status: error.status });
-  }
-  if (data.user && Array.isArray(data.user.identities) && data.user.identities.length === 0) {
-    return { userId: null, alreadyRegistered: true };
-  }
-  return { userId: data.user?.id ?? null, alreadyRegistered: false };
-}
+// SIGN-UP IS MOCK-ONLY FOR NOW (see data/index.js). The Supabase version is
+// kept below, commented out, until the team decides how accounts and email
+// confirmation should work. To switch it back on: uncomment it, add
+// createAuthUser back to module.exports, remove the override in data/index.js,
+// and change describe.skip back to describe in tests/auth-repository.test.js.
+//
+// // --- Auth ------------------------------------------------------------------
+//
+// /**
+//  * Creates a user in Supabase Auth. With "Confirm email" on (the default on
+//  * hosted projects), Supabase emails the user a confirmation link and returns
+//  * no session until they click it.
+//  *
+//  * Supabase hides whether an email is taken: depending on project settings it
+//  * returns either an obfuscated user with no identities or the
+//  * user_already_exists error. Both are reported as alreadyRegistered.
+//  *
+//  * Confirmation links go to AUTH_REDIRECT_URL when set, otherwise to the
+//  * project's Site URL (Supabase Dashboard -> Authentication -> URL Configuration).
+//  *
+//  * @returns {Promise<{ userId: string|null, alreadyRegistered: boolean }>}
+//  * @throws The Supabase error (with its `code`) for any other failure.
+//  */
+// async function createAuthUser({ email, password, firstName, lastName }) {
+//   const options = { data: { firstName, lastName } };
+//   if (process.env.AUTH_REDIRECT_URL) options.emailRedirectTo = process.env.AUTH_REDIRECT_URL;
+//
+//   const { data, error } = await supabase.auth.signUp({ email, password, options });
+//
+//   if (error) {
+//     if (error.code === "user_already_exists") return { userId: null, alreadyRegistered: true };
+//     throw Object.assign(new Error(error.message), { code: error.code, status: error.status });
+//   }
+//   if (data.user && Array.isArray(data.user.identities) && data.user.identities.length === 0) {
+//     return { userId: null, alreadyRegistered: true };
+//   }
+//   return { userId: data.user?.id ?? null, alreadyRegistered: false };
+// }
 
 module.exports = {
   getAllLocations,
@@ -149,5 +155,5 @@ module.exports = {
   getAllCategories,
   getAllNotifications,
   getNotificationsByUserId,
-  createAuthUser,
+  // createAuthUser,  // mock-only for now; see the note above
 };

@@ -27,9 +27,10 @@ const EMPTY_FORM: SignUpForm = { firstName: '', lastName: '', email: '', passwor
 /**
  * Create account screen, reached from "New here? Create an account" on Log In.
  *
- * Checks the form, then asks the server to create the account in Supabase
- * Auth, which emails a confirmation link to the student's Calvin address.
- * After that the screen switches to a "Check your email" message.
+ * Checks the form, then asks the server to create the account. With real
+ * sign-up, Supabase emails a confirmation link and the screen says "Check your
+ * email". While sign-up is mock-only, no email is sent and it says "Account
+ * created" instead.
  */
 export function SignUpScreen() {
   const router = useRouter();
@@ -39,8 +40,9 @@ export function SignUpScreen() {
   const [formError, setFormError] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
-  // Set once the account is created: the address the confirmation went to.
-  const [sentTo, setSentTo] = useState<string | null>(null);
+  // Set once the account is created: its email, and whether a confirmation
+  // email was actually sent (not while sign-up is mock-only).
+  const [created, setCreated] = useState<{ email: string; emailSent: boolean } | null>(null);
 
   const setField = (field: keyof SignUpForm) => (value: string) => {
     setForm((current) => ({ ...current, [field]: value }));
@@ -64,7 +66,7 @@ export function SignUpScreen() {
         email: form.email.trim().toLowerCase(),
         password: form.password,
       });
-      setSentTo(result.email);
+      setCreated({ email: result.email, emailSent: result.emailSent });
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Something went wrong. Please try again.';
       const field = error instanceof ApiError ? (error.field as keyof SignUpForm | undefined) : undefined;
@@ -75,21 +77,37 @@ export function SignUpScreen() {
     }
   };
 
-  if (sentTo) {
+  if (created) {
     return (
       <SafeAreaView style={styles.container}>
         <ScrollView contentContainerStyle={styles.scrollContent}>
           <View style={styles.sentCard}>
             <View style={styles.sentIcon}>
-              <Ionicons name="mail-unread-outline" size={32} color={Colors.maroon} />
+              <Ionicons
+                name={created.emailSent ? 'mail-unread-outline' : 'checkmark-circle-outline'}
+                size={32}
+                color={Colors.maroon}
+              />
             </View>
-            <Text style={styles.title}>Check your email</Text>
-            <Text style={styles.body}>We sent a confirmation link to</Text>
-            <Text style={styles.email}>{sentTo}</Text>
-            <Text style={styles.body}>
-              Open it to activate your account, then come back and log in. It can take a few minutes, so check your spam
-              folder too.
-            </Text>
+            {created.emailSent ? (
+              <>
+                <Text style={styles.title}>Check your email</Text>
+                <Text style={styles.body}>We sent a confirmation link to</Text>
+                <Text style={styles.email}>{created.email}</Text>
+                <Text style={styles.body}>
+                  Open it to activate your account, then come back and log in. It can take a few minutes, so check your
+                  spam folder too.
+                </Text>
+              </>
+            ) : (
+              <>
+                <Text style={styles.title}>Account created</Text>
+                <Text style={styles.email}>{created.email}</Text>
+                <Text style={styles.body}>
+                  No confirmation email was sent: sign-up is in test mode for now. You can log in with this email.
+                </Text>
+              </>
+            )}
             <ActionButton label="Back to Log In" icon="log-in-outline" onPress={goToLogIn} />
           </View>
         </ScrollView>

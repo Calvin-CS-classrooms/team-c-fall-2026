@@ -11,8 +11,10 @@ export interface CreateAccountInput {
 }
 
 export interface CreateAccountResult {
-  /** The email the confirmation link was sent to. */
+  /** The account's email (normalized by the server). */
   email: string;
+  /** Whether a confirmation email was sent. False while sign-up is mock-only. */
+  emailSent: boolean;
   message: string;
 }
 

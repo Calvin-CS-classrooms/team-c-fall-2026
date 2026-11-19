@@ -3,14 +3,17 @@ const express = require("express");
 const router = express.Router();
 const { createAccount } = require("../services/auth-service");
 
-// Create an account and email a confirmation link.
+// Create an account. Emails a confirmation link once real sign-up is switched on.
 // Body: { firstName, lastName?, email, password }
 router.post("/signup", async (req, res) => {
   try {
-    const { email } = await createAccount(req.body);
+    const { email, emailSent } = await createAccount(req.body);
     res.status(201).json({
       email,
-      message: `Check ${email} for a link to confirm your account.`,
+      emailSent,
+      message: emailSent
+        ? `Check ${email} for a link to confirm your account.`
+        : `Account created for ${email}. No email was sent: sign-up is in mock mode for now.`,
     });
   } catch (err) {
     if (err.status && err.name === "AppError") {

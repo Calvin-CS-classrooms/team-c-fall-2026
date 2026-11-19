@@ -1,7 +1,8 @@
 // Business logic for creating accounts.
 //
-// Validates the sign-up form, then asks the data layer to create the user in
-// Supabase Auth, which emails the student a confirmation link. Supabase's
+// Validates the sign-up form, then asks the data layer to create the user.
+// The Supabase data layer emails a confirmation link; for now sign-up is
+// mock-only (see data/index.js), so no email is sent. Supabase's
 // error codes are turned into messages a student can act on.
 
 const repository = require("../data");
@@ -26,7 +27,8 @@ const SUPABASE_ERRORS = {
  * Creates an account and sends a confirmation email.
  *
  * @param {{ firstName?: string, lastName?: string, email?: string, password?: string }} input
- * @returns {Promise<{ email: string }>} The normalized email the confirmation was sent to.
+ * @returns {Promise<{ email: string, emailSent: boolean }>} The normalized email, and
+ *   whether a confirmation email was actually sent (false while sign-up is mock-only).
  * @throws {AppError} 400 for invalid input, 409 if the email already has an
  *   account, and 429/503 for Supabase email limits or settings.
  */
@@ -61,7 +63,7 @@ async function createAccount(input) {
     throw new AppError(409, "An account with this email already exists. Try logging in instead.", "email");
   }
 
-  return { email };
+  return { email, emailSent: Boolean(result.emailSent) };
 }
 
 module.exports = { createAccount };

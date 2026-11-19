@@ -93,15 +93,15 @@ async function getNotificationsByUserId(userId) {
 
 // --- Auth ------------------------------------------------------------------
 
-// Emails signed up during this run. Mock mode sends no email and forgets
+// Emails signed up during this run. Mock sign-up sends no email and forgets
 // everything when the server restarts.
 const mockSignUps = new Set();
 
 async function createAuthUser({ email }) {
   await delay();
-  if (mockSignUps.has(email)) return { userId: null, alreadyRegistered: true };
+  if (mockSignUps.has(email)) return { userId: null, alreadyRegistered: true, emailSent: false };
   mockSignUps.add(email);
-  return { userId: `mock-${mockSignUps.size}`, alreadyRegistered: false };
+  return { userId: `mock-${mockSignUps.size}`, alreadyRegistered: false, emailSent: false };
 }
 
 module.exports = {
