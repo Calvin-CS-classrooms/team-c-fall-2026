@@ -1,8 +1,10 @@
 import { Ionicons } from '@expo/vector-icons';
+import { useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { Colors, NoiseLabels } from '@/constants/colors';
 import { StarRating } from '@/components/star-rating';
+import { ToggleSwitch } from '@/components/toggle-switch';
 import { Typography } from '@/constants/typography';
 import { confirmAction } from '@/utils/confirm';
 import { formatMinutesAgo } from '@/utils/format';
@@ -18,6 +20,8 @@ interface RatingHistoryRowProps {
   onMarkHelpful: () => void;
   /** Only provided for ratings the current user owns. */
   onDelete?: () => void;
+  /** Only provided for ratings the current user owns: show or hide their name. */
+  onSetAnonymous?: (isAnonymous: boolean) => void;
 }
 
 export function confirmDeleteRating(rating: Rating, name: string, onDelete: () => void) {
@@ -32,18 +36,33 @@ export function confirmDeleteRating(rating: Rating, name: string, onDelete: () =
 /**
  * A single rating in the user's rating history on the ratings screen.
  * Shows the space, star rating, optional description, crowd/noise/age
- * metadata, plus buttons to mark the rating helpful or delete it.
+ * metadata, plus buttons to mark the rating helpful or delete it. On your own
+ * ratings, Edit opens a Post anonymously switch so you can hide or show your name.
  *
  * @param rating - The rating to display.
  * @param name - The resolved name of the rated space's location.
  * @param onMarkHelpful - Called when the "Helpful" button is tapped.
  * @param onDelete - Called when the delete button is tapped.
+ * @param onSetAnonymous - Called with the new choice when Post anonymously is toggled.
  */
-export function RatingHistoryRow({ rating, name, onMarkHelpful, onDelete }: RatingHistoryRowProps) {
+export function RatingHistoryRow({ rating, name, onMarkHelpful, onDelete, onSetAnonymous }: RatingHistoryRowProps) {
+  // Whether the edit panel (Post anonymously switch) is open.
+  const [editing, setEditing] = useState(false);
+
   return (
     <View style={styles.card}>
       <View style={styles.headerRow}>
         <Text style={styles.location}>{name}</Text>
+        {onSetAnonymous ? (
+          <Pressable
+            onPress={() => setEditing((value) => !value)}
+            hitSlop={8}
+            accessibilityRole="button"
+            accessibilityLabel={`Edit rating for ${name}`}
+            style={styles.editButton}>
+            <Ionicons name="create-outline" size={18} color={Colors.maroon} />
+          </Pressable>
+        ) : null}
         {/* Delete button, only shown on the user's own ratings; hitSlop enlarges its tap target. */}
         {onDelete ? (
           <Pressable
@@ -60,6 +79,34 @@ export function RatingHistoryRow({ rating, name, onMarkHelpful, onDelete }: Rati
         <View style={styles.anonymousTag}>
           <Ionicons name="eye-off-outline" size={12} color={Colors.textSecondary} />
           <Text style={styles.anonymousText}>Posted anonymously</Text>
+        </View>
+      ) : onSetAnonymous ? (
+        <View style={styles.anonymousTag}>
+          <Ionicons name="person-outline" size={12} color={Colors.textSecondary} />
+          <Text style={styles.anonymousText}>Your name is shown</Text>
+        </View>
+      ) : null}
+
+      {editing && onSetAnonymous ? (
+        <View style={styles.editPanel}>
+          <View style={styles.editRow}>
+            <View style={styles.editText}>
+              <Text style={styles.editTitle}>Post anonymously</Text>
+              <Text style={styles.editSubtitle}>Hide your name on this rating</Text>
+            </View>
+            <ToggleSwitch
+              value={Boolean(rating.isAnonymous)}
+              onValueChange={onSetAnonymous}
+              accessibilityLabel="Post anonymously"
+            />
+          </View>
+          <Pressable
+            onPress={() => setEditing(false)}
+            accessibilityRole="button"
+            accessibilityLabel="Done editing"
+            style={styles.doneButton}>
+            <Text style={styles.doneText}>Done</Text>
+          </Pressable>
         </View>
       ) : null}
 
@@ -95,6 +142,44 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
+  },
+  editButton: {
+    marginLeft: 'auto',
+    marginRight: 14,
+  },
+  editPanel: {
+    gap: 8,
+    padding: 12,
+    borderRadius: 12,
+    backgroundColor: Colors.surfaceAlt,
+  },
+  editRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  editText: {
+    flex: 1,
+  },
+  editTitle: {
+    fontFamily: Typography.semiBold,
+    fontSize: 13,
+    color: Colors.textPrimary,
+  },
+  editSubtitle: {
+    fontFamily: Typography.medium,
+    fontSize: 12,
+    color: Colors.textSecondary,
+  },
+  doneButton: {
+    alignSelf: 'flex-end',
+    paddingVertical: 4,
+    paddingHorizontal: 8,
+  },
+  doneText: {
+    fontFamily: Typography.bold,
+    fontSize: 13,
+    color: Colors.maroon,
   },
   anonymousTag: {
     flexDirection: 'row',

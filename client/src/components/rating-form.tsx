@@ -5,6 +5,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { CapacitySlider } from '@/components/capacity-slider';
 import { Chip } from '@/components/chip';
 import { StarRating } from '@/components/star-rating';
+import { ToggleSwitch } from '@/components/toggle-switch';
 import { Colors, NoiseLabels } from '@/constants/colors';
 import { Typography } from '@/constants/typography';
 import { useAppData } from '@/context/app-context';
@@ -15,6 +16,8 @@ const NOISE_LEVELS: NoiseLevel[] = ['whisper', 'lowBuzz', 'social', 'loud'];
 
 interface RatingFormProps {
   initialSpaceId?: number;
+  /** Whether Post anonymously starts on. Defaults to the Anonymous Mode setting. */
+  defaultAnonymous?: boolean;
   onSubmit: (input: NewRatingInput) => void;
   submitLabel?: string;
 }
@@ -30,8 +33,16 @@ interface RatingFormProps {
  * @param onSubmit - Called with the completed rating when submitted.
  * @param submitLabel - Text for the submit button.
  */
-export function RatingForm({ initialSpaceId, onSubmit, submitLabel = 'Submit Rating' }: RatingFormProps) {
-  const { spaces } = useAppData();
+export function RatingForm({
+  initialSpaceId,
+  defaultAnonymous,
+  onSubmit,
+  submitLabel = 'Submit Rating',
+}: RatingFormProps) {
+  const { spaces, settings } = useAppData();
+  // Whether this rating hides the author. Starts from Anonymous Mode but can be
+  // changed for each rating.
+  const [anonymous, setAnonymous] = useState(defaultAnonymous ?? settings.anonymousMode);
   const [spaceId, setSpaceId] = useState(initialSpaceId ?? spaces[0].id);
   // Which picker list is open, if any. Only one is open at a time.
   const [openPicker, setOpenPicker] = useState<'building' | 'space' | null>(null);
@@ -73,6 +84,7 @@ export function RatingForm({ initialSpaceId, onSubmit, submitLabel = 'Submit Rat
       crowdRating: capacity,
       perceivedNoise: noise,
       description: comment.trim() || undefined,
+      isAnonymous: anonymous,
     });
     setComment('');
   };
@@ -128,6 +140,16 @@ export function RatingForm({ initialSpaceId, onSubmit, submitLabel = 'Submit Rat
         {NOISE_LEVELS.map((level) => (
           <Chip key={level} label={NoiseLabels[level]} selected={noise === level} onPress={() => setNoise(level)} />
         ))}
+      </View>
+
+      <View style={styles.anonymousRow}>
+        <View style={styles.anonymousText}>
+          <Text style={styles.anonymousTitle}>Post anonymously</Text>
+          <Text style={styles.anonymousSubtitle}>
+            {anonymous ? 'Shown as "Anonymous user"' : 'Your name is shown with this rating'}
+          </Text>
+        </View>
+        <ToggleSwitch value={anonymous} onValueChange={setAnonymous} accessibilityLabel="Post anonymously" />
       </View>
 
       <Text style={styles.label}>Add a tip (optional)</Text>
@@ -274,6 +296,30 @@ const styles = StyleSheet.create({
   pickerOptionTextActive: {
     color: Colors.maroon,
     fontFamily: Typography.semiBold,
+  },
+  anonymousRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    marginTop: 14,
+    paddingVertical: 10,
+    paddingHorizontal: 14,
+    borderRadius: 12,
+    backgroundColor: Colors.surfaceAlt,
+  },
+  anonymousText: {
+    flex: 1,
+  },
+  anonymousTitle: {
+    fontFamily: Typography.semiBold,
+    fontSize: 13,
+    color: Colors.textPrimary,
+  },
+  anonymousSubtitle: {
+    fontFamily: Typography.medium,
+    fontSize: 12,
+    color: Colors.textSecondary,
+    marginTop: 1,
   },
   chipRow: {
     flexDirection: 'row',

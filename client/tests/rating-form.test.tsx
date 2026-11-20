@@ -8,7 +8,7 @@ import { getLocationById } from '@/data/locations';
 import { spaces } from '@/data/spaces';
 import type { NewRatingInput } from '@/types';
 
-function renderForm(props: { initialSpaceId?: number } = {}) {
+function renderForm(props: { initialSpaceId?: number; defaultAnonymous?: boolean } = {}) {
   const onSubmit = jest.fn<void, [NewRatingInput]>();
   let renderer!: ReactTestRenderer;
   act(() => {
@@ -100,5 +100,45 @@ describe('RatingForm space picker', () => {
 
     expect(pressable(renderer, 'Building: Hekman Library')).toBeDefined();
     expect(pressable(renderer, 'Floor or area: Hekman Library 4th Floor')).toBeDefined();
+  });
+});
+
+describe('RatingForm anonymity', () => {
+  function anonymousSwitch(renderer: ReactTestRenderer) {
+    return renderer.root.find(
+      (node) =>
+        node.props.accessibilityRole === 'switch' &&
+        node.props.accessibilityLabel === 'Post anonymously' &&
+        typeof node.props.onPress === 'function',
+    );
+  }
+
+  it('has a Post anonymously switch, off by default', () => {
+    const { renderer } = renderForm();
+
+    expect(anonymousSwitch(renderer).props.accessibilityState).toEqual(expect.objectContaining({ checked: false }));
+  });
+
+  it('starts on when the student has Anonymous Mode on', () => {
+    const { renderer } = renderForm({ defaultAnonymous: true });
+
+    expect(anonymousSwitch(renderer).props.accessibilityState).toEqual(expect.objectContaining({ checked: true }));
+  });
+
+  it('submits the choice with the rating', () => {
+    const { renderer, onSubmit } = renderForm();
+
+    act(() => anonymousSwitch(renderer).props.onPress());
+    press(renderer, 'Submit rating');
+
+    expect(onSubmit).toHaveBeenCalledWith(expect.objectContaining({ isAnonymous: true }));
+  });
+
+  it('submits with the name shown when the switch is left off', () => {
+    const { renderer, onSubmit } = renderForm();
+
+    press(renderer, 'Submit rating');
+
+    expect(onSubmit).toHaveBeenCalledWith(expect.objectContaining({ isAnonymous: false }));
   });
 });

@@ -35,6 +35,9 @@ export interface Location {
   numFloors: number;
   numSpaces: number;
   hours: LocationHours; // later sourced from Google hours
+  /** Building centre, used to detect which building the student is in. Missing if unknown. */
+  latitude?: number;
+  longitude?: number;
 }
 
 export interface Space {
@@ -181,6 +184,8 @@ export interface NewRatingInput {
   crowdRating: number;
   perceivedNoise: NoiseLevel;
   description?: string;
+  /** Post with the author hidden. Defaults to the Anonymous Mode setting when omitted. */
+  isAnonymous?: boolean;
 }
 
 export interface AppSettings {

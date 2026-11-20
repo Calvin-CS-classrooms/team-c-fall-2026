@@ -63,6 +63,8 @@ interface AppContextValue {
   addRating: (input: NewRatingInput) => void;
   markHelpful: (id: number) => void;
   deleteRating: (id: number) => void;
+  /** Show or hide the author of one of your own ratings. */
+  setRatingAnonymous: (id: number, isAnonymous: boolean) => void;
   suggestions: SpotSuggestion[];
   suggestionVotes: SuggestionVote[];
   submitSuggestion: (input: NewSuggestionInput) => string | null;
@@ -214,13 +216,17 @@ export function AppProvider({ children, serverAvailable = false }: PropsWithChil
         perceivedNoise: input.perceivedNoise,
         description: input.description ?? '',
         numUpvotes: 0,
-        isAnonymous: settings.anonymousMode,
+        // The choice made on the form; Anonymous Mode is only its starting value.
+        isAnonymous: input.isAnonymous ?? settings.anonymousMode,
       };
       setRatings((prev) => [newRating, ...prev]);
 
       if (serverAvailable) {
+        // The Supabase ratings table has no isAnonymous column yet, so the
+        // choice stays in the app for now; sending it would make the insert fail.
+        const { isAnonymous: _isAnonymous, ...serverInput } = input;
         submitRating({
-          ...input,
+          ...serverInput,
           userId: account.id,
           createdAt: newRating.createdAt,
           numUpvotes: 0,
@@ -242,6 +248,18 @@ export function AppProvider({ children, serverAvailable = false }: PropsWithChil
   // Removes the rating with the given id, but only if the current user owns it.
   // When the server is available, the deletion is also persisted there (fire and
   // forget — the local state updates immediately regardless).
+  // Changes whether one of the signed-in student's ratings shows their name.
+  // Kept in the app only for now (see addRating), like the original choice.
+  const setRatingAnonymous = useCallback(
+    (id: number, isAnonymous: boolean) => {
+      if (!account) return;
+      setRatings((prev) =>
+        prev.map((rating) => (rating.id === id && rating.userId === account.id ? { ...rating, isAnonymous } : rating)),
+      );
+    },
+    [account],
+  );
+
   const deleteRating = useCallback(
     (id: number) => {
       if (!account) return;
@@ -404,6 +422,7 @@ export function AppProvider({ children, serverAvailable = false }: PropsWithChil
       addRating,
       markHelpful,
       deleteRating,
+      setRatingAnonymous,
       suggestions,
       suggestionVotes,
       submitSuggestion,
@@ -429,6 +448,7 @@ export function AppProvider({ children, serverAvailable = false }: PropsWithChil
       addRating,
       markHelpful,
       deleteRating,
+      setRatingAnonymous,
       suggestions,
       suggestionVotes,
       submitSuggestion,

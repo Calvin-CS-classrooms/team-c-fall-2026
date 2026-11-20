@@ -17,9 +17,11 @@ import { Typography } from '@/constants/typography';
 import { useAppData } from '@/context/app-context';
 import { activityFeed } from '@/data/activity';
 import { getLocationById } from '@/data/locations';
+import { useCurrentBuilding } from '@/hooks/use-current-building';
 import { askSpotAgent, type SpotAgentResponse } from '@/services/spot-agent';
 import { groupSpacesByBuilding } from '@/utils/buildings';
 import { applyDiscoveryFilters, DISCOVERY_FILTERS, type DiscoveryFilter } from '@/utils/discovery';
+import { floorLabel } from '@/utils/geo';
 
 /**
  * Home screen: the main landing view. Contains the combinable space filter
@@ -28,7 +30,31 @@ import { applyDiscoveryFilters, DISCOVERY_FILTERS, type DiscoveryFilter } from '
  */
 export function HomeScreen() {
   const router = useRouter();
-  const { addRating, account, spaces, ratings } = useAppData();
+  const { addRating, account, spaces, ratings, locations, settings } = useAppData();
+  // The building the student is in, from the phone's location (only while
+  // Geolocation is on in Profile). GPS can't tell floors apart, so the
+  // student picks the floor.
+  const { status: locationStatus, building: currentBuilding, retry: retryLocation } = useCurrentBuilding(
+    settings.geolocation,
+    locations,
+  );
+  const [pickedSpaceId, setPickedSpaceId] = useState<number | undefined>();
+  const floorChoices = useMemo(
+    () =>
+      currentBuilding
+        ? spaces
+            .filter((space) => space.locationId === currentBuilding.id)
+            .map((space) => ({ spaceId: space.id, label: floorLabel(space, currentBuilding) }))
+        : [],
+    [currentBuilding, spaces],
+  );
+  // Keep the pick only if it belongs to the current building; a building with
+  // one area needs no pick.
+  const selectedSpaceId = floorChoices.some((floor) => floor.spaceId === pickedSpaceId)
+    ? pickedSpaceId
+    : floorChoices.length === 1
+      ? floorChoices[0].spaceId
+      : undefined;
   const [search, setSearch] = useState('');
   const [activeFilters, setActiveFilters] = useState<DiscoveryFilter[]>([]);
   const [quickRateVisible, setQuickRateVisible] = useState(false);
@@ -148,7 +174,16 @@ export function HomeScreen() {
         </View>
 
         <View style={styles.section}>
-          <GpsBanner locationLabel="Hekman Library Floor 2" onPress={() => setQuickRateVisible(true)} />
+          <GpsBanner
+            status={locationStatus}
+            building={currentBuilding}
+            floors={floorChoices}
+            selectedSpaceId={selectedSpaceId}
+            onSelectSpace={setPickedSpaceId}
+            onRate={() => setQuickRateVisible(true)}
+            onRetry={retryLocation}
+            onTurnOn={() => router.push('/profile')}
+          />
         </View>
 
         <View style={styles.section}>
@@ -185,9 +220,11 @@ export function HomeScreen() {
       </ScrollView>
 
       <QuickRateSheet
+        // Remount when the floor changes so the form opens on the picked floor.
+        key={selectedSpaceId ?? 'none'}
         visible={quickRateVisible}
         onClose={() => setQuickRateVisible(false)}
-        spaceId={1}
+        spaceId={selectedSpaceId ?? spaces[0]?.id ?? 1}
         onSubmit={addRating}
       />
     </SafeAreaView>
