@@ -97,6 +97,34 @@ async function getNotificationsByUserId(userId) {
   return notifications.filter((notification) => String(notification.userId) === String(userId));
 }
 
+// --- Auth ------------------------------------------------------------------
+
+// Mock sign-up adds the student to the mock users list (the same list login
+// looks emails up in), so a new account can log in straight away. It sends no
+// email, and the new users are forgotten when the server restarts.
+async function createAuthUser({ email, firstName, lastName }) {
+  await delay();
+  const taken = users.some((user) => String(user.email).toLowerCase() === email.toLowerCase());
+  if (taken) return { userId: null, alreadyRegistered: true, emailSent: false };
+
+  const user = {
+    id: Math.max(0, ...users.map((existing) => existing.id)) + 1,
+    firstName,
+    lastName,
+    email,
+    createdAt: new Date().toISOString(),
+    // No confirmation email in mock mode, so the account is usable at once.
+    isVerified: true,
+    isAnonymous: false,
+    hasLocationAccess: false,
+    numRatings: 0,
+    allowsNotifications: true,
+    deletionScheduledFor: null,
+  };
+  users.push(user);
+  return { userId: user.id, alreadyRegistered: false, emailSent: false };
+}
+
 // --- Write operations (mock) ----------------------------------------------
 
 async function createRating(rating) {
@@ -153,6 +181,7 @@ module.exports = {
   getAllCategories,
   getAllNotifications,
   getNotificationsByUserId,
+  createAuthUser,
   createRating,
   deleteRating,
   createFavorite,

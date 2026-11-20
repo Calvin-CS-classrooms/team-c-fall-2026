@@ -21,6 +21,12 @@ jest.mock("../data", () => ({
   getAllCategories: jest.fn(),
   getAllNotifications: jest.fn(),
   getNotificationsByUserId: jest.fn(),
+  getUserByEmail: jest.fn(),
+  createRating: jest.fn(),
+  deleteRating: jest.fn(),
+  createFavorite: jest.fn(),
+  deleteFavorite: jest.fn(),
+  createSpotSuggestion: jest.fn(),
 }));
 
 const repository = require("../data");
@@ -301,12 +307,64 @@ describe("pass-through queries", () => {
     ["getAmenities", "getAllAmenities", []],
     ["getCategories", "getAllCategories", []],
     ["getNotificationsByUserId", "getNotificationsByUserId", [2]],
+    ["getUserByEmail", "getUserByEmail", ["emma.k@calvin.edu"]],
   ])("%s returns the rows from repository.%s", async (serviceFn, repoFn, args) => {
     const rows = [{ id: 1 }, { id: 2 }];
     repository[repoFn].mockResolvedValue(rows);
 
     await expect(service[serviceFn](...args)).resolves.toBe(rows);
     expect(repository[repoFn]).toHaveBeenCalledWith(...args);
+  });
+
+});
+
+describe("getUserByEmail", () => {
+
+  test("returns null when no user has that email, so login can say so", async () => {
+    repository.getUserByEmail.mockResolvedValue(null);
+
+    await expect(service.getUserByEmail("nobody@calvin.edu")).resolves.toBeNull();
+  });
+
+});
+
+describe("write operations", () => {
+
+  const newRating = { userId: 1, spaceId: 6, numStars: 5, crowdRating: 20, perceivedNoise: "whisper", description: "" };
+  const favorite = { userId: 1, spaceId: 6 };
+  const suggestion = { userId: 1, locationId: 2, name: "Quiet Nook", description: "Corner seats", type: "addition" };
+
+  test.each([
+    ["createRating", [newRating], { id: 9, ...newRating }],
+    ["createFavorite", [favorite], { ...favorite, createdAt: "2026-11-19T12:00:00.000Z" }],
+    ["createSpotSuggestion", [suggestion], { id: 3, ...suggestion }],
+  ])("%s saves through the data layer and returns the saved row", async (fn, args, saved) => {
+    repository[fn].mockResolvedValue(saved);
+
+    await expect(service[fn](...args)).resolves.toBe(saved);
+    expect(repository[fn]).toHaveBeenCalledWith(...args);
+  });
+
+  test.each([
+    ["deleteRating", [9]],
+    ["deleteFavorite", [1, 6]],
+  ])("%s deletes through the data layer", async (fn, args) => {
+    repository[fn].mockResolvedValue(undefined);
+
+    await expect(service[fn](...args)).resolves.toBeUndefined();
+    expect(repository[fn]).toHaveBeenCalledWith(...args);
+  });
+
+  test.each([
+    ["createRating", [newRating]],
+    ["deleteRating", [9]],
+    ["createFavorite", [favorite]],
+    ["deleteFavorite", [1, 6]],
+    ["createSpotSuggestion", [suggestion]],
+  ])("%s passes database errors up to the route", async (fn, args) => {
+    repository[fn].mockRejectedValue(new Error("insert or delete failed"));
+
+    await expect(service[fn](...args)).rejects.toThrow("insert or delete failed");
   });
 
 });

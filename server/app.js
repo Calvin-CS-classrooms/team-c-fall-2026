@@ -7,6 +7,7 @@ const ratingsRouter = require("./routes/ratings");
 const favoritesRouter = require("./routes/favorites");
 const referenceRouter = require("./routes/reference");
 const notificationsRouter = require("./routes/notifications");
+const authRouter = require("./routes/auth");
 const suggestionsRouter = require("./routes/suggestions");
 const usersRouter = require("./routes/users");
 
@@ -24,6 +25,7 @@ app.use("/api/ratings", ratingsRouter);
 app.use("/api/favorites", favoritesRouter);
 app.use("/api/reference", referenceRouter);
 app.use("/api/notifications", notificationsRouter);
+app.use("/api/auth", authRouter);
 app.use("/api/suggestions", suggestionsRouter);
 app.use("/api/users", usersRouter);
 
