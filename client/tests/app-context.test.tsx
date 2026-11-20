@@ -54,6 +54,26 @@ function ContextProbe() {
       />
       <Pressable testID="upvote-atrium" onPress={() => data.voteOnSuggestion(1, 1)} />
       <Pressable testID="add-rating" onPress={() => data.addRating(newRating)} />
+      <Pressable testID="add-anonymous-rating" onPress={() => data.addRating({ ...newRating, isAnonymous: true })} />
+      <Pressable testID="add-public-rating" onPress={() => data.addRating({ ...newRating, isAnonymous: false })} />
+      <Pressable
+        testID="make-first-anonymous"
+        onPress={() => firstRating && data.setRatingAnonymous(firstRating.id, true)}
+      />
+      <Pressable
+        testID="make-first-public"
+        onPress={() => firstRating && data.setRatingAnonymous(firstRating.id, false)}
+      />
+      <Pressable
+        testID="make-other-anonymous"
+        onPress={() => {
+          const other = data.ratings.find((r) => r.userId !== data.account?.id && !r.isAnonymous);
+          if (other) data.setRatingAnonymous(other.id, true);
+        }}
+      />
+      <Text testID="others-public-count">
+        {data.ratings.filter((rating) => rating.userId !== data.account?.id && !rating.isAnonymous).length}
+      </Text>
       <Pressable
         testID="mark-helpful"
         onPress={() => firstRating && data.markHelpful(firstRating.id)}
@@ -233,6 +253,42 @@ describe('AppProvider', () => {
     act(() => getNode(view, 'toggle-anonymous').props.onPress());
     act(() => getNode(view, 'add-rating').props.onPress());
     expect(getNode(view, 'first-anonymous').props.children).toBe('false');
+  });
+
+  it('uses the choice made on the form, whatever Anonymous Mode is set to', async () => {
+    const view = renderContext();
+    await logInAs(view);
+
+    // Anonymous Mode is off, but this rating was posted anonymously.
+    act(() => getNode(view, 'add-anonymous-rating').props.onPress());
+    expect(getNode(view, 'first-anonymous').props.children).toBe('true');
+
+    // Anonymous Mode is on, but this rating was posted with the name shown.
+    act(() => getNode(view, 'toggle-anonymous').props.onPress());
+    act(() => getNode(view, 'add-public-rating').props.onPress());
+    expect(getNode(view, 'first-anonymous').props.children).toBe('false');
+  });
+
+  it('lets a student change whether their own rating is anonymous', async () => {
+    const view = renderContext();
+    await logInAs(view);
+    act(() => getNode(view, 'add-public-rating').props.onPress());
+
+    act(() => getNode(view, 'make-first-anonymous').props.onPress());
+    expect(getNode(view, 'first-anonymous').props.children).toBe('true');
+
+    act(() => getNode(view, 'make-first-public').props.onPress());
+    expect(getNode(view, 'first-anonymous').props.children).toBe('false');
+  });
+
+  it("does not let a student change another student's rating", async () => {
+    const view = renderContext();
+    await logInAs(view);
+    const othersPublic = getNode(view, 'others-public-count').props.children;
+
+    act(() => getNode(view, 'make-other-anonymous').props.onPress());
+
+    expect(getNode(view, 'others-public-count').props.children).toBe(othersPublic);
   });
 
   it("makes a deleted account's ratings anonymous but keeps them", async () => {
