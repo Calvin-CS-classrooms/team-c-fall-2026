@@ -16,6 +16,17 @@ async function getUserByEmail(email) {
   return data;
 }
 
+async function updateUser(id, changes) {
+  const { data, error } = await supabase
+    .from("users")
+    .update(changes)
+    .eq("id", id)
+    .select()
+    .maybeSingle();
+  if (error) throw error;
+  return data;
+}
+
 async function getAllLocations() {
   const { data, error } = await supabase.from("locations").select("*");
   if (error) throw error;
@@ -185,6 +196,7 @@ async function createSpotSuggestion(suggestion) {
 
 module.exports = {
   getUserByEmail,
+  updateUser,
   getAllLocations,
   getLocationById,
   getAllSpaces,

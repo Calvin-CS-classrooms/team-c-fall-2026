@@ -60,6 +60,38 @@ describe("Supabase repository", () => {
     expect(result).toEqual({ id: 1, email: "emma.k@calvin.edu" });
   });
 
+  test("updateUser updates the users table by id and returns the row", async () => {
+    const recorded = { table: null, changes: null, eqColumn: null, eqValue: null };
+    fakeClient.from = (table) => {
+      recorded.table = table;
+      return {
+        update: (changes) => {
+          recorded.changes = changes;
+          return {
+            eq: (column, value) => {
+              recorded.eqColumn = column;
+              recorded.eqValue = value;
+              return {
+                select: () => ({
+                  maybeSingle: () => ({
+                    then: (resolve) => resolve({ data: { id: 1, ...changes }, error: null }),
+                  }),
+                }),
+              };
+            },
+          };
+        },
+      };
+    };
+
+    const result = await repository.updateUser(1, { allowsNotifications: true });
+    expect(recorded.table).toBe("users");
+    expect(recorded.changes).toEqual({ allowsNotifications: true });
+    expect(recorded.eqColumn).toBe("id");
+    expect(recorded.eqValue).toBe(1);
+    expect(result).toEqual({ id: 1, allowsNotifications: true });
+  });
+
   test("getAllLocations queries the locations table", async () => {
     const recorded = stubQuery({ data: [{ id: 1, name: "Test" }] });
     const result = await repository.getAllLocations();

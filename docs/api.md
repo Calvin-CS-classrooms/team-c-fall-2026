@@ -122,7 +122,13 @@ Returns one location in the same shape, or `404`.
 
 ## Users
 
-`GET /users/by-email/:email` returns that user (used by Log In to check the account exists), or `404` `{ "error": "User not found" }`.
+| Endpoint | Body | Returns |
+|---|---|---|
+| `GET /users/by-email/:email` | none | That user (used by Log In to check the account exists), or `404` `{ "error": "User not found" }` |
+| `PATCH /users/:id` | any subset of the user's columns, e.g. `{ "allowsNotifications": true }` | The updated user, or `404` |
+
+`PATCH /users/:id` is how preference changes reach the database: the client maps
+`anonymousMode` to `isAnonymous` and `capacityAlerts` to `allowsNotifications`.
 
 ## Notifications
 
@@ -175,6 +181,14 @@ Supabase setup (for when real sign-up is switched back on):
 - Confirmation links go to `AUTH_REDIRECT_URL` (server `.env`) if set, otherwise the project's **Site URL**. Add the URL under Authentication -> URL Configuration.
 - Supabase's built-in email service only sends to the project's team members and about 2 emails an hour. To email real students, set up custom SMTP (Project Settings -> Authentication -> SMTP).
 - Mock sign-up adds the student to the mock users list, so they can log in straight away while the server uses mock data. New users are forgotten when the server restarts.
+
+## Client sync behavior
+
+When the server is reachable, the client applies account-side changes to local
+state immediately (optimistic update), then persists them through the write
+endpoints above. If a write fails, the client reverts the local change and shows
+the user a dismissible error banner. When the server is unreachable, changes stay
+local only.
 
 ## Known gaps
 

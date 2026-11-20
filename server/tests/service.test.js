@@ -22,6 +22,7 @@ jest.mock("../data", () => ({
   getAllNotifications: jest.fn(),
   getNotificationsByUserId: jest.fn(),
   getUserByEmail: jest.fn(),
+  updateUser: jest.fn(),
   createRating: jest.fn(),
   deleteRating: jest.fn(),
   createFavorite: jest.fn(),
@@ -338,6 +339,7 @@ describe("write operations", () => {
     ["createRating", [newRating], { id: 9, ...newRating }],
     ["createFavorite", [favorite], { ...favorite, createdAt: "2026-11-19T12:00:00.000Z" }],
     ["createSpotSuggestion", [suggestion], { id: 3, ...suggestion }],
+    ["updateUser", [1, { allowsNotifications: true }], { id: 1, allowsNotifications: true }],
   ])("%s saves through the data layer and returns the saved row", async (fn, args, saved) => {
     repository[fn].mockResolvedValue(saved);
 
@@ -361,6 +363,7 @@ describe("write operations", () => {
     ["createFavorite", [favorite]],
     ["deleteFavorite", [1, 6]],
     ["createSpotSuggestion", [suggestion]],
+    ["updateUser", [1, { allowsNotifications: true }]],
   ])("%s passes database errors up to the route", async (fn, args) => {
     repository[fn].mockRejectedValue(new Error("insert or delete failed"));
 

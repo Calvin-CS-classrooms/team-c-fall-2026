@@ -22,6 +22,14 @@ async function getUserByEmail(email) {
   return users.find((user) => String(user.email).toLowerCase() === String(email).toLowerCase()) ?? null;
 }
 
+async function updateUser(id, changes) {
+  await delay();
+  const user = users.find((entry) => String(entry.id) === String(id));
+  if (!user) return null;
+  Object.assign(user, changes);
+  return user;
+}
+
 async function getAllLocations() {
   await delay();
   return locations;
@@ -166,6 +174,7 @@ async function createSpotSuggestion(suggestion) {
 
 module.exports = {
   getUserByEmail,
+  updateUser,
   getAllLocations,
   getLocationById,
   getAllSpaces,
