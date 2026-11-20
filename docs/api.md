@@ -2,7 +2,7 @@
 
 Base URL (local development): `http://localhost:3000/api`
 
-All endpoints return JSON. Everything is a read-only `GET` except `POST /auth/signup`. CORS allows only the Expo web client at `http://localhost:8081`.
+All endpoints return JSON. `GET` endpoints read data; the `POST` and `DELETE` endpoints listed under each resource write it. CORS allows only the Expo web client at `http://localhost:8081`.
 
 ## Architecture
 
@@ -100,9 +100,29 @@ Returns one location in the same shape, or `404`.
 
 `userId` is `null` when the author has deleted their account.
 
+## Ratings: writing
+
+| Endpoint | Body | Returns |
+|---|---|---|
+| `POST /ratings` | `{ "userId", "spaceId", "numStars", "crowdRating", "perceivedNoise", "description", "isAnonymous"? }` | `201` with the saved rating (including its new `id`) |
+| `DELETE /ratings/:id` | none | `204` |
+
 ## Favorites
 
 `GET /favorites/user/:userId` returns that user's saved spaces as `{ "userId", "spaceId", "createdAt" }` rows (`[]` if none).
+
+| Endpoint | Body | Returns |
+|---|---|---|
+| `POST /favorites` | `{ "userId", "spaceId" }` | `201` with the saved favorite |
+| `DELETE /favorites/:userId/:spaceId` | none | `204` |
+
+## Suggestions
+
+`POST /suggestions` saves a space suggestion: `{ "userId", "locationId", "name", "description", "type" }` (`type` is `addition` or `removal`). Returns `201` with the saved suggestion.
+
+## Users
+
+`GET /users/by-email/:email` returns that user (used by Log In to check the account exists), or `404` `{ "error": "User not found" }`.
 
 ## Notifications
 
@@ -154,10 +174,12 @@ Supabase setup (for when real sign-up is switched back on):
 - **Confirm email** must be on (Authentication -> Sign In / Providers -> Email); it is by default.
 - Confirmation links go to `AUTH_REDIRECT_URL` (server `.env`) if set, otherwise the project's **Site URL**. Add the URL under Authentication -> URL Configuration.
 - Supabase's built-in email service only sends to the project's team members and about 2 emails an hour. To email real students, set up custom SMTP (Project Settings -> Authentication -> SMTP).
-- Mock sign-ups are remembered only until the server restarts.
+- Mock sign-up adds the student to the mock users list, so they can log in straight away while the server uses mock data. New users are forgotten when the server restarts.
 
 ## Known gaps
 
-- **Few write endpoints.** Only sign-up writes to Supabase. Creating ratings, favorites and suggestions still happens only in the client's local state, and logging in is still mock-only (it doesn't check Supabase).
+- **Write endpoints don't validate input yet.** `POST /ratings`, `/favorites` and `/suggestions` save the body as given; bad input comes back as `500` instead of `400`.
+- **Log In only checks that the email exists** (`GET /users/by-email`); there is no password check yet.
+- **Sign-up is mock-only.** New accounts go into the mock users list, so they can log in only while the server uses mock data (`USE_MOCK_DATA=true`). With Supabase data, Log In looks in the real `users` table, where mock sign-ups don't exist.
 - **`hours` is mock-only.** Locations from `data-mock` include `hours`, but the `locations` table has no hours columns (they are planned to come from Google hours). With Supabase, `hours` is missing from responses.
 - **Non-numeric ids.** With mock data, `/locations/abc` returns `404`. With Supabase, Postgres rejects `"abc"` as an integer, so the same request returns `500`.
