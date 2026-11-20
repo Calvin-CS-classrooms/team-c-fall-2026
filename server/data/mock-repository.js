@@ -99,15 +99,30 @@ async function getNotificationsByUserId(userId) {
 
 // --- Auth ------------------------------------------------------------------
 
-// Emails signed up during this run. Mock sign-up sends no email and forgets
-// everything when the server restarts.
-const mockSignUps = new Set();
-
-async function createAuthUser({ email }) {
+// Mock sign-up adds the student to the mock users list (the same list login
+// looks emails up in), so a new account can log in straight away. It sends no
+// email, and the new users are forgotten when the server restarts.
+async function createAuthUser({ email, firstName, lastName }) {
   await delay();
-  if (mockSignUps.has(email)) return { userId: null, alreadyRegistered: true, emailSent: false };
-  mockSignUps.add(email);
-  return { userId: `mock-${mockSignUps.size}`, alreadyRegistered: false, emailSent: false };
+  const taken = users.some((user) => String(user.email).toLowerCase() === email.toLowerCase());
+  if (taken) return { userId: null, alreadyRegistered: true, emailSent: false };
+
+  const user = {
+    id: Math.max(0, ...users.map((existing) => existing.id)) + 1,
+    firstName,
+    lastName,
+    email,
+    createdAt: new Date().toISOString(),
+    // No confirmation email in mock mode, so the account is usable at once.
+    isVerified: true,
+    isAnonymous: false,
+    hasLocationAccess: false,
+    numRatings: 0,
+    allowsNotifications: true,
+    deletionScheduledFor: null,
+  };
+  users.push(user);
+  return { userId: user.id, alreadyRegistered: false, emailSent: false };
 }
 
 // --- Write operations (mock) ----------------------------------------------
