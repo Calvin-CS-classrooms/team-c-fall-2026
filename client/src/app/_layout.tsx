@@ -43,6 +43,8 @@ export default function RootLayout() {
 
   // Whether location loading has finished (from the server or the bundled fallback).
   const [locationsLoaded, setLocationsLoaded] = useState(false);
+  // Whether live data came from the server (vs. bundled fallback).
+  const [serverAvailable, setServerAvailable] = useState(false);
 
   useEffect(() => {
     // Wait for fonts before attempting to load locations.
@@ -52,7 +54,8 @@ export default function RootLayout() {
       try {
         // Prefer live data from the server. On failure this keeps the bundled
         // data (and logs a warning) so the client can also run on its own.
-        await loadCampusData();
+        const source = await loadCampusData();
+        setServerAvailable(source === 'server');
       } finally {
         // Always continue and hide the splash screen, success or fallback.
         setLocationsLoaded(true);
@@ -69,7 +72,7 @@ export default function RootLayout() {
   }
 
   return (
-    <AppProvider>
+    <AppProvider serverAvailable={serverAvailable}>
       <RootNavigator />
     </AppProvider>
   );

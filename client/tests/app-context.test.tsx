@@ -31,7 +31,9 @@ function ContextProbe() {
       <Pressable testID="create-invalid-account" onPress={() => data.logIn('student@gmail.com', 'password123')} />
       <Pressable testID="log-in-short-password" onPress={() => data.logIn('student@calvin.edu', '123')} />
       <Pressable testID="log-out" onPress={data.logOut} />
-      <Text testID="account-name">{data.account?.name ?? 'none'}</Text>
+      <Text testID="account-name">
+        {data.account ? [data.account.firstName, data.account.lastName].filter(Boolean).join(' ') : 'none'}
+      </Text>
       <Text testID="first-anonymous">{String(firstRating?.isAnonymous ?? false)}</Text>
       <Text testID="own-public-count">
         {data.ratings.filter((rating) => rating.userId === 1 && !rating.isAnonymous).length}
@@ -85,6 +87,14 @@ function getNode(renderer: ReactTestRenderer, testID: string) {
   return renderer.root.findByProps({ testID });
 }
 
+// Logs in as the test student, awaiting the async logIn so the account state
+// is set before assertions run.
+async function logInAs(view: ReactTestRenderer) {
+  await act(async () => {
+    await getNode(view, 'set-calvin-email').props.onPress();
+  });
+}
+
 const newRating: NewRatingInput = {
   spaceId: 4,
   numStars: 5,
@@ -94,12 +104,12 @@ const newRating: NewRatingInput = {
 };
 
 describe('AppProvider', () => {
-  it('gives new ratings ids above the highest loaded rating id, e.g. ratings from the server', () => {
+  it('gives new ratings ids above the highest loaded rating id, e.g. ratings from the server', async () => {
     const bundled = initialRatings;
     setInitialRatings([{ ...bundled[0], id: 500 }]);
     try {
       const view = renderContext();
-      act(() => getNode(view, 'set-calvin-email').props.onPress());
+      await logInAs(view);
       act(() => getNode(view, 'add-rating').props.onPress());
 
       expect(getNode(view, 'first-rating-id').props.children).toBe(501);
@@ -117,11 +127,11 @@ describe('AppProvider', () => {
     expect(getNode(view, 'rating-count').props.children).toBe(initialCount);
   });
 
-  it('adds a rating, marks it helpful, and deletes it', () => {
+  it('adds a rating, marks it helpful, and deletes it', async () => {
     const view = renderContext();
     const initialCount = Number(getNode(view, 'rating-count').props.children);
 
-    act(() => getNode(view, 'set-calvin-email').props.onPress());
+    await logInAs(view);
     act(() => getNode(view, 'add-rating').props.onPress());
 
     expect(getNode(view, 'rating-count').props.children).toBe(initialCount + 1);
@@ -135,11 +145,11 @@ describe('AppProvider', () => {
     expect(getNode(view, 'rating-count').props.children).toBe(initialCount);
   });
 
-  it("updates the space's rating when a rating is added, and restores it when deleted", () => {
+  it("updates the space's rating when a rating is added, and restores it when deleted", async () => {
     const view = renderContext();
     const before = getNode(view, 'space-4-rating').props.children;
 
-    act(() => getNode(view, 'set-calvin-email').props.onPress());
+    await logInAs(view);
     // The test rating is 5 stars for space 4, which starts below 5.
     act(() => getNode(view, 'add-rating').props.onPress());
     const afterAdd = getNode(view, 'space-4-rating').props.children;
@@ -152,16 +162,20 @@ describe('AppProvider', () => {
     expect(afterDelete).toBe(before);
   });
 
-  it('only logs in Calvin emails with a long-enough password, and logs out', () => {
+  it('only logs in Calvin emails with a long-enough password, and logs out', async () => {
     const view = renderContext();
 
-    act(() => getNode(view, 'create-invalid-account').props.onPress());
+    await act(async () => {
+      await getNode(view, 'create-invalid-account').props.onPress();
+    });
     expect(getNode(view, 'account-email').props.children).toBe('none');
 
-    act(() => getNode(view, 'log-in-short-password').props.onPress());
+    await act(async () => {
+      await getNode(view, 'log-in-short-password').props.onPress();
+    });
     expect(getNode(view, 'account-email').props.children).toBe('none');
 
-    act(() => getNode(view, 'set-calvin-email').props.onPress());
+    await logInAs(view);
     expect(getNode(view, 'account-email').props.children).toBe('student@calvin.edu');
     expect(getNode(view, 'account-name').props.children).toBe('Student');
 
@@ -169,19 +183,19 @@ describe('AppProvider', () => {
     expect(getNode(view, 'account-email').props.children).toBe('none');
   });
 
-  it("does not let a user delete another student's rating", () => {
+  it("does not let a user delete another student's rating", async () => {
     const view = renderContext();
     const initialCount = getNode(view, 'rating-count').props.children;
 
-    act(() => getNode(view, 'set-calvin-email').props.onPress());
+    await logInAs(view);
     act(() => getNode(view, 'delete-other-rating').props.onPress());
 
     expect(getNode(view, 'rating-count').props.children).toBe(initialCount);
   });
 
-  it('schedules, cancels, and finalizes account deletion while keeping ratings', () => {
+  it('schedules, cancels, and finalizes account deletion while keeping ratings', async () => {
     const view = renderContext();
-    act(() => getNode(view, 'set-calvin-email').props.onPress());
+    await logInAs(view);
     act(() => getNode(view, 'add-rating').props.onPress());
     const countWithRating = getNode(view, 'rating-count').props.children;
 
@@ -198,19 +212,19 @@ describe('AppProvider', () => {
     expect(getNode(view, 'rating-count').props.children).toBe(countWithRating);
   });
 
-  it('limits suggestions to one per day', () => {
+  it('limits suggestions to one per day', async () => {
     const view = renderContext();
     const initialSuggestions = getNode(view, 'suggestion-count').props.children;
-    act(() => getNode(view, 'set-calvin-email').props.onPress());
+    await logInAs(view);
 
     act(() => getNode(view, 'submit-suggestion').props.onPress());
     act(() => getNode(view, 'submit-suggestion').props.onPress());
     expect(getNode(view, 'suggestion-count').props.children).toBe(initialSuggestions + 1);
   });
 
-  it('marks ratings anonymous only while Anonymous Mode is on', () => {
+  it('marks ratings anonymous only while Anonymous Mode is on', async () => {
     const view = renderContext();
-    act(() => getNode(view, 'set-calvin-email').props.onPress());
+    await logInAs(view);
 
     act(() => getNode(view, 'toggle-anonymous').props.onPress());
     act(() => getNode(view, 'add-rating').props.onPress());
@@ -221,9 +235,9 @@ describe('AppProvider', () => {
     expect(getNode(view, 'first-anonymous').props.children).toBe('false');
   });
 
-  it("makes a deleted account's ratings anonymous but keeps them", () => {
+  it("makes a deleted account's ratings anonymous but keeps them", async () => {
     const view = renderContext();
-    act(() => getNode(view, 'set-calvin-email').props.onPress());
+    await logInAs(view);
     act(() => getNode(view, 'add-rating').props.onPress());
     const ratingCount = getNode(view, 'rating-count').props.children;
     expect(getNode(view, 'own-public-count').props.children).toBeGreaterThan(0);

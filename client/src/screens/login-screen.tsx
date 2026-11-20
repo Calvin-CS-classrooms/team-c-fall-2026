@@ -28,8 +28,10 @@ export function LoginScreen() {
   const [error, setError] = useState('');
 
   // Attempts to log in and surfaces any error returned by the auth logic.
-  const handleLogIn = () => {
-    setError(logIn(email, password) ?? '');
+  const handleLogIn = async () => {
+    setError('');
+    const result = await logIn(email, password);
+    setError(result ?? '');
   };
 
   return (

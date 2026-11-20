@@ -174,3 +174,22 @@ describe("Notifications API", () => {
   });
 
 });
+
+describe("Users API", () => {
+
+  test("GET user by email returns the matching user", async () => {
+    const response = await request(app).get("/api/users/by-email/emma.k@calvin.edu");
+
+    expect(response.statusCode).toBe(200);
+    expect(response.body.email).toBe("emma.k@calvin.edu");
+    expect(response.body.firstName).toBe("Emma");
+  });
+
+  test("GET user by unknown email returns 404", async () => {
+    const response = await request(app).get("/api/users/by-email/nobody@calvin.edu");
+
+    expect(response.statusCode).toBe(404);
+    expect(response.body.error).toBe("User not found");
+  });
+
+});

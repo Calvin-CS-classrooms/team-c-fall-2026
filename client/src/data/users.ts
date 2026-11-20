@@ -14,6 +14,7 @@ export const users: User[] = [
     hasLocationAccess: false,
     numRatings: 1,
     allowsNotifications: true,
+    deletionScheduledFor: null,
   },
   {
     id: 2,
@@ -26,6 +27,7 @@ export const users: User[] = [
     hasLocationAccess: true,
     numRatings: 1,
     allowsNotifications: false,
+    deletionScheduledFor: null,
   },
   {
     id: 3,
@@ -38,6 +40,7 @@ export const users: User[] = [
     hasLocationAccess: false,
     numRatings: 1,
     allowsNotifications: true,
+    deletionScheduledFor: null,
   },
   {
     id: 4,
@@ -50,6 +53,7 @@ export const users: User[] = [
     hasLocationAccess: false,
     numRatings: 1,
     allowsNotifications: true,
+    deletionScheduledFor: null,
   },
 ];
 

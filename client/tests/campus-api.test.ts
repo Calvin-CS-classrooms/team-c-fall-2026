@@ -5,13 +5,14 @@
 // (e.g. server locations with bundled spaces) attaches spaces and ratings to the
 // wrong buildings. loadCampusData is therefore all-or-nothing.
 import type { ApiLocation, ApiSpace } from '@/services/campus-api';
-import type { Location, Rating, Space } from '@/types';
+import type { Category, Location, Rating, Space } from '@/types';
 
 type CampusModules = {
   api: typeof import('@/services/campus-api');
   locations: typeof import('@/data/locations');
   spaces: typeof import('@/data/spaces');
   ratings: typeof import('@/data/ratings');
+  categories: typeof import('@/data/categories');
 };
 
 // The data modules hold module-level state, so each test gets fresh copies.
@@ -23,6 +24,7 @@ function loadModules(): CampusModules {
       locations: require('@/data/locations'),
       spaces: require('@/data/spaces'),
       ratings: require('@/data/ratings'),
+      categories: require('@/data/categories'),
     };
   });
   return modules;
@@ -66,6 +68,12 @@ const serverRating = (overrides: Partial<Rating> = {}): Rating => ({
   perceivedNoise: 'whisper',
   description: 'Server rating',
   numUpvotes: 2,
+  ...overrides,
+});
+
+const serverCategory = (overrides: Partial<Category> = {}): Category => ({
+  id: 10,
+  name: 'server-category',
   ...overrides,
 });
 
@@ -163,11 +171,12 @@ describe('spacesFromLocations', () => {
 });
 
 describe('loadCampusData', () => {
-  it('replaces locations, spaces, and ratings together when the server answers', async () => {
+  it('replaces locations, spaces, ratings, and categories together when the server answers', async () => {
     const modules = loadModules();
     mockServer({
       '/api/locations': { body: [serverLocation()] },
       '/api/ratings': { body: [serverRating()] },
+      '/api/reference/categories': { body: [serverCategory()] },
     });
 
     await expect(modules.api.loadCampusData()).resolves.toBe('server');
@@ -176,6 +185,7 @@ describe('loadCampusData', () => {
     expect(modules.spaces.spaces.map((space: Space) => space.id)).toEqual([101]);
     expect(modules.spaces.getSpaceById(101)?.name).toBe('Server Quiet Floor');
     expect(modules.ratings.initialRatings).toEqual([serverRating()]);
+    expect(modules.categories.categories).toEqual([serverCategory()]);
   });
 
   it('does not keep the nested floors and spaces on stored locations', async () => {
@@ -183,6 +193,7 @@ describe('loadCampusData', () => {
     mockServer({
       '/api/locations': { body: [serverLocation()] },
       '/api/ratings': { body: [] },
+      '/api/reference/categories': { body: [] },
     });
 
     await modules.api.loadCampusData();
@@ -197,10 +208,12 @@ describe('loadCampusData', () => {
       locations: modules.locations.locations,
       spaces: modules.spaces.spaces,
       ratings: modules.ratings.initialRatings,
+      categories: modules.categories.categories,
     };
     mockServer({
       '/api/locations': { body: [serverLocation()] },
       '/api/ratings': { ok: false, status: 500 },
+      '/api/reference/categories': { body: [serverCategory()] },
     });
 
     await expect(modules.api.loadCampusData()).resolves.toBe('bundled');
@@ -208,6 +221,7 @@ describe('loadCampusData', () => {
     expect(modules.locations.locations).toBe(bundled.locations);
     expect(modules.spaces.spaces).toBe(bundled.spaces);
     expect(modules.ratings.initialRatings).toBe(bundled.ratings);
+    expect(modules.categories.categories).toBe(bundled.categories);
   });
 
   it('keeps all bundled data when the server is unreachable', async () => {
@@ -216,6 +230,7 @@ describe('loadCampusData', () => {
     mockServer({
       '/api/locations': { fail: new TypeError('Network request failed') },
       '/api/ratings': { fail: new TypeError('Network request failed') },
+      '/api/reference/categories': { fail: new TypeError('Network request failed') },
     });
 
     await expect(modules.api.loadCampusData()).resolves.toBe('bundled');

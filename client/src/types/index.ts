@@ -18,6 +18,8 @@ export interface User {
   hasLocationAccess: boolean;
   numRatings: number;
   allowsNotifications: boolean;
+  /** When the user requested account deletion, or null when none is pending. */
+  deletionScheduledFor: string | null; // TIMESTAMPTZ
 }
 
 export interface LocationHours {
@@ -160,16 +162,6 @@ export interface UserRating {
   ownerName?: string;
   isAnonymous: boolean;
 }
-
-export interface Account {
-  id: number;
-  name: string;
-  email: string;
-  createdAt: number;
-  /** Epoch ms when the account will be permanently deleted, or null if no deletion is pending. */
-  deletionScheduledFor: number | null;
-}
-
 
 export interface SuggestedAmenity {
   name: string;
