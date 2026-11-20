@@ -10,6 +10,12 @@
 
 const supabase = require("../config/supabase");
 
+async function getUserByEmail(email) {
+  const { data, error } = await supabase.from("users").select("*").eq("email", email).maybeSingle();
+  if (error) throw error;
+  return data;
+}
+
 async function getAllLocations() {
   const { data, error } = await supabase.from("locations").select("*");
   if (error) throw error;
@@ -100,7 +106,46 @@ async function getNotificationsByUserId(userId) {
   return data;
 }
 
+// --- Write operations ------------------------------------------------------
+
+async function createRating(rating) {
+  const { data, error } = await supabase.from("ratings").insert(rating).select().maybeSingle();
+  if (error) throw error;
+  return data;
+}
+
+async function deleteRating(id) {
+  const { error } = await supabase.from("ratings").delete().eq("id", id);
+  if (error) throw error;
+}
+
+async function createFavorite(favorite) {
+  const { data, error } = await supabase.from("favorites").insert(favorite).select().maybeSingle();
+  if (error) throw error;
+  return data;
+}
+
+async function deleteFavorite(userId, spaceId) {
+  const { error } = await supabase
+    .from("favorites")
+    .delete()
+    .eq("userId", userId)
+    .eq("spaceId", spaceId);
+  if (error) throw error;
+}
+
+async function createSpotSuggestion(suggestion) {
+  const { data, error } = await supabase
+    .from("spotSuggestions")
+    .insert(suggestion)
+    .select()
+    .maybeSingle();
+  if (error) throw error;
+  return data;
+}
+
 module.exports = {
+  getUserByEmail,
   getAllLocations,
   getLocationById,
   getAllSpaces,
@@ -116,4 +161,9 @@ module.exports = {
   getAllCategories,
   getAllNotifications,
   getNotificationsByUserId,
+  createRating,
+  deleteRating,
+  createFavorite,
+  deleteFavorite,
+  createSpotSuggestion,
 };

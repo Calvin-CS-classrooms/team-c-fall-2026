@@ -35,6 +35,12 @@ function computeCurrentNoiseLevel(ratings) {
   return latest.perceivedNoise;
 }
 
+// --- Users -----------------------------------------------------------------
+
+async function getUserByEmail(email) {
+  return repository.getUserByEmail(email);
+}
+
 // --- Spaces ----------------------------------------------------------------
 
 // Adds the derived metrics to one space, given only that space's ratings.
@@ -152,10 +158,33 @@ async function getNotificationsByUserId(userId) {
   return repository.getNotificationsByUserId(userId);
 }
 
+// --- Write operations ------------------------------------------------------
+
+async function createRating(rating) {
+  return repository.createRating(rating);
+}
+
+async function deleteRating(id) {
+  return repository.deleteRating(id);
+}
+
+async function createFavorite(favorite) {
+  return repository.createFavorite(favorite);
+}
+
+async function deleteFavorite(userId, spaceId) {
+  return repository.deleteFavorite(userId, spaceId);
+}
+
+async function createSpotSuggestion(suggestion) {
+  return repository.createSpotSuggestion(suggestion);
+}
+
 module.exports = {
   computeOverallRating,
   computeCrowdRating,
   computeCurrentNoiseLevel,
+  getUserByEmail,
   getSpaces,
   getSpaceById,
   getSpacesByLocationId,
@@ -167,4 +196,9 @@ module.exports = {
   getAmenities,
   getCategories,
   getNotificationsByUserId,
+  createRating,
+  deleteRating,
+  createFavorite,
+  deleteFavorite,
+  createSpotSuggestion,
 };

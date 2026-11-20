@@ -46,7 +46,9 @@ create table users (
   "hasLocationAccess"  boolean not null default false,
   -- Denormalized count of the user's ratings, kept for the profile screen.
   "numRatings"         integer not null default 0 check ("numRatings" >= 0),
-  "allowsNotifications" boolean not null default false
+  "allowsNotifications" boolean not null default false,
+  -- When the user requested account deletion; null when no deletion is pending.
+  "deletionScheduledFor" timestamptz
 );
 
 -- ---------------------------------------------------------------------------

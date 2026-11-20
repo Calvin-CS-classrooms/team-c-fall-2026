@@ -50,7 +50,10 @@ export function ProfileScreen() {
 
         {account ? (
           <View style={styles.section}>
-            <ProfileCard name={account.name} email={account.email} />
+            <ProfileCard
+              name={[account.firstName, account.lastName].filter(Boolean).join(' ')}
+              email={account.email}
+            />
           </View>
         ) : null}
 
@@ -62,8 +65,9 @@ export function ProfileScreen() {
                 <Text style={styles.deletionTitle}>Deletion scheduled</Text>
               </View>
               <Text style={styles.deletionText}>
-                Your account will be permanently deleted on {formatDate(account.deletionScheduledFor)}. Your ratings
-                will remain and show as &quot;Anonymous user&quot;.
+                Your account will be permanently deleted on{' '}
+                {formatDate(new Date(account.deletionScheduledFor).getTime())}. Your ratings will remain and show as
+                &quot;Anonymous user&quot;.
               </Text>
               <ActionButton label="Keep My Account" variant="outline" onPress={cancelAccountDeletion} />
               <ActionButton label="Demo: finish deletion now" variant="ghost" onPress={finalizeAccountDeletion} />
