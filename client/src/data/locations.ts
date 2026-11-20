@@ -1,5 +1,9 @@
 import type { Location } from '@/types';
 
+// latitude/longitude are building centres from OpenStreetMap, used to detect
+// which building the student is in. Business Building and Morren Fitness Center
+// had no OpenStreetMap match, so they have none yet and can't be detected; add
+// them once checked on a map.
 export let locations: Location[] = [
   {
     id: 1,
@@ -9,6 +13,8 @@ export let locations: Location[] = [
     numFloors: 5,
     numSpaces: 62,
     hours: { openingTime: '07:00', closingTime: '01:00' },
+    latitude: 42.9297932,
+    longitude: -85.5875716,
   },
   {
     id: 2,
@@ -18,6 +24,8 @@ export let locations: Location[] = [
     numFloors: 2,
     numSpaces: 81,
     hours: { openingTime: '07:00', closingTime: '20:00' },
+    latitude: 42.9311663,
+    longitude: -85.5871575,
   },
   {
     id: 3,
@@ -36,6 +44,8 @@ export let locations: Location[] = [
     numFloors: 2,
     numSpaces: 20,
     hours: { openingTime: '07:00', closingTime: '23:00' },
+    latitude: 42.9315271,
+    longitude: -85.5887711,
   },
   {
     id: 5,
@@ -45,6 +55,8 @@ export let locations: Location[] = [
     numFloors: 2,
     numSpaces: 48,
     hours: { openingTime: '06:00', closingTime: '22:00' },
+    latitude: 42.9331244,
+    longitude: -85.5882828,
   },
   {
     id: 6,
@@ -54,6 +66,8 @@ export let locations: Location[] = [
     numFloors: 2,
     numSpaces: 12,
     hours: { openingTime: '08:00', closingTime: '21:00' },
+    latitude: 42.9309458,
+    longitude: -85.5895697,
   },
   {
     id: 7,
@@ -63,6 +77,8 @@ export let locations: Location[] = [
     numFloors: 2,
     numSpaces: 24,
     hours: { openingTime: '07:00', closingTime: '00:00' },
+    latitude: 42.9305561,
+    longitude: -85.585893,
   },
   {
     id: 8,
@@ -81,6 +97,8 @@ export let locations: Location[] = [
     numFloors: 1,
     numSpaces: 38,
     hours: { openingTime: '07:00', closingTime: '18:00' },
+    latitude: 42.9300963,
+    longitude: -85.5875886,
   },
 ];
 

@@ -56,6 +56,8 @@ Returns one location in the same shape, or `404`.
   "numFloors": 3,
   "numSpaces": 24,
   "hours": { "openingTime": "07:00", "closingTime": "22:00" },
+  "latitude": 42.9303623,
+  "longitude": -85.5821382,
   "floors": [
     { "id": 1, "locationId": 1, "name": "Grand Atrium", "noiseLevel": "social" }
   ],
@@ -72,6 +74,8 @@ Returns one location in the same shape, or `404`.
 ```
 
 `image` is a key the client maps to a bundled image (see `client/src/services/locations-api.ts`).
+
+`latitude` and `longitude` are the building's centre (from OpenStreetMap), used by the app to detect which building the student is in. They are missing when unknown. The student's own position is never sent to the server.
 
 ## Spaces
 

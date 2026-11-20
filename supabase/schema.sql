@@ -62,7 +62,11 @@ create table locations (
   image         varchar,
   description   varchar,
   "numFloors"   integer not null default 1 check ("numFloors" >= 1),
-  "numSpaces"   integer not null default 0 check ("numSpaces" >= 0)
+  "numSpaces"   integer not null default 0 check ("numSpaces" >= 0),
+  -- Building centre, used by the app to detect which building a student is in.
+  -- Null when unknown. The position itself never leaves the student's device.
+  latitude      double precision check (latitude between -90 and 90),
+  longitude     double precision check (longitude between -180 and 180)
 );
 
 create table floors (
