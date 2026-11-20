@@ -45,5 +45,18 @@ describe("Location mock data", () => {
     }
   });
 
-});
+  test("coordinates, when present, are numbers on the Calvin campus", () => {
+    const withCoords = locations.filter(loc => loc.latitude !== undefined || loc.longitude !== undefined);
 
+    expect(withCoords.length).toBeGreaterThan(0);
+    for (const loc of withCoords) {
+      expect(typeof loc.latitude).toBe("number");
+      expect(typeof loc.longitude).toBe("number");
+      expect(loc.latitude).toBeGreaterThan(42.925);
+      expect(loc.latitude).toBeLessThan(42.937);
+      expect(loc.longitude).toBeGreaterThan(-85.595);
+      expect(loc.longitude).toBeLessThan(-85.58);
+    }
+  });
+
+});

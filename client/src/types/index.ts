@@ -35,6 +35,9 @@ export interface Location {
   numFloors: number;
   numSpaces: number;
   hours: LocationHours; // later sourced from Google hours
+  /** Building centre, used to detect which building the student is in. Missing if unknown. */
+  latitude?: number;
+  longitude?: number;
 }
 
 export interface Space {
