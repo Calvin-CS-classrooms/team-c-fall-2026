@@ -50,4 +50,34 @@ describe("POST /api/auth/signup", () => {
     expect(response.statusCode).toBe(204);
   });
 
+
+  test("a new account can then be found by login's user lookup", async () => {
+    await request(app).post("/api/auth/signup").send(body("route.login@calvin.edu"));
+    const response = await request(app).get("/api/users/by-email/route.login%40calvin.edu");
+
+    expect(response.statusCode).toBe(200);
+    expect(response.body).toMatchObject({
+      email: "route.login@calvin.edu",
+      firstName: "Jane",
+      lastName: "Doe",
+      deletionScheduledFor: null,
+    });
+    expect(Number.isInteger(response.body.id)).toBe(true);
+  });
+
+  test("gives each new account its own id", async () => {
+    await request(app).post("/api/auth/signup").send(body("route.first@calvin.edu"));
+    await request(app).post("/api/auth/signup").send(body("route.second@calvin.edu"));
+    const first = await request(app).get("/api/users/by-email/route.first%40calvin.edu");
+    const second = await request(app).get("/api/users/by-email/route.second%40calvin.edu");
+
+    expect(first.body.id).not.toBe(second.body.id);
+  });
+
+  test("treats a sample student's email as already taken", async () => {
+    const response = await request(app).post("/api/auth/signup").send(body("Emma.K@calvin.edu"));
+
+    expect(response.statusCode).toBe(409);
+  });
+
 });
