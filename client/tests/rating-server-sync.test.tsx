@@ -43,6 +43,7 @@ it('does not send the anonymous choice to the server', async () => {
     hasLocationAccess: false,
     numRatings: 1,
     allowsNotifications: true,
+    deletionScheduledFor: null,
   });
   mockSubmit.mockResolvedValue({} as never);
 

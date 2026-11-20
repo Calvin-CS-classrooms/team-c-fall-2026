@@ -181,6 +181,8 @@ export interface NewRatingInput {
   crowdRating: number;
   perceivedNoise: NoiseLevel;
   description?: string;
+  /** Post with the author hidden. Defaults to the Anonymous Mode setting when omitted. */
+  isAnonymous?: boolean;
 }
 
 export interface AppSettings {

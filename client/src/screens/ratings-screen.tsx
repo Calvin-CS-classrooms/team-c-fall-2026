@@ -22,7 +22,7 @@ import { spaceIdFromParam } from '@/utils/route-params';
  * page) preselects that space in the form.
  */
 export function RatingsScreen() {
-  const { ratings, addRating, markHelpful, deleteRating, account, settings } = useAppData();
+  const { ratings, addRating, markHelpful, deleteRating, setRatingAnonymous, account, settings } = useAppData();
   const requestedSpaceId = spaceIdFromParam(useLocalSearchParams<{ spaceId?: string }>().spaceId);
   const myRatings = ratings.filter((rating) => isOwnRating(rating, account?.id));
   // Total helpful votes across all of the user's ratings.
@@ -44,12 +44,14 @@ export function RatingsScreen() {
                 prompt the user to add one in the profile section. */}
             {account ? (
               <>
-                {settings.anonymousMode ? (
-                  <Text style={styles.noticeText}>Anonymous Mode is on: this rating will show as Anonymous user.</Text>
-                ) : null}
                 {/* Keyed by the requested space so a new "Rate this space" tap
                     resets the form to that space, even if this tab was already open. */}
-                <RatingForm key={requestedSpaceId ?? 'none'} initialSpaceId={requestedSpaceId} onSubmit={addRating} />
+                <RatingForm
+                  key={requestedSpaceId ?? 'none'}
+                  initialSpaceId={requestedSpaceId}
+                  defaultAnonymous={settings.anonymousMode}
+                  onSubmit={addRating}
+                />
               </>
             ) : (
               <Text style={styles.noticeText}>
@@ -71,6 +73,7 @@ export function RatingsScreen() {
                   name={space?.name ?? `Space ${rating.spaceId}`}
                   onMarkHelpful={() => markHelpful(rating.id)}
                   onDelete={() => deleteRating(rating.id)}
+                  onSetAnonymous={(isAnonymous) => setRatingAnonymous(rating.id, isAnonymous)}
                 />
               );
             })}
