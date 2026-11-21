@@ -41,6 +41,10 @@ async function getUserByEmail(email) {
   return repository.getUserByEmail(email);
 }
 
+async function updateUser(id, changes) {
+  return repository.updateUser(id, changes);
+}
+
 // --- Spaces ----------------------------------------------------------------
 
 // Adds the derived metrics to one space, given only that space's ratings.
@@ -185,6 +189,7 @@ module.exports = {
   computeCrowdRating,
   computeCurrentNoiseLevel,
   getUserByEmail,
+  updateUser,
   getSpaces,
   getSpaceById,
   getSpacesByLocationId,

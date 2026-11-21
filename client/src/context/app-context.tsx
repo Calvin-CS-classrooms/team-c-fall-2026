@@ -21,6 +21,7 @@ import {
   deleteRating as deleteServerRating,
   fetchUserByEmail,
   submitRating,
+  updateUser,
 } from '@/services/campus-api';
 import type {
   AppSettings,
@@ -73,6 +74,10 @@ interface AppContextValue {
   isFavorite: (spaceId: number) => boolean;
   settings: AppSettings;
   toggleSetting: (key: keyof AppSettings) => void;
+  /** Message for a failed server sync, or null when there is none. */
+  serverError: string | null;
+  /** Dismisses the current server error message. */
+  clearServerError: () => void;
 }
 
 const AppContext = createContext<AppContextValue | undefined>(undefined);
@@ -115,8 +120,12 @@ export function AppProvider({ children, serverAvailable = false }: PropsWithChil
   const [suggestionVotes, setSuggestionVotes] = useState<SuggestionVote[]>([]);
   const [favorites, setFavorites] = useState<Favorites[]>(initialFavorites);
   const [settings, setSettings] = useState<AppSettings>(DEFAULT_SETTINGS);
+  // Message shown to the user when a server sync fails and a change is reverted.
+  const [serverError, setServerError] = useState<string | null>(null);
 
   const calvinEmail = account?.email ?? null;
+
+  const clearServerError = useCallback(() => setServerError(null), []);
 
   // Sign-in: any verified Calvin email with a long-enough password is accepted.
   // When the server is available, the account must exist there before access is
@@ -195,8 +204,8 @@ export function AppProvider({ children, serverAvailable = false }: PropsWithChil
 
   // Adds a rating only if the user is logged in; new ratings are prepended so
   // the most recent appears first. Anonymous Mode at submit time is recorded.
-  // When the server is available, the rating is also persisted there (fire and
-  // forget — the local state updates immediately regardless).
+  // The local state updates immediately (assume it worked); if the server sync
+  // fails, the rating is removed again and the user is notified.
   const addRating = useCallback(
     (input: NewRatingInput) => {
       if (!account) {
@@ -225,6 +234,9 @@ export function AppProvider({ children, serverAvailable = false }: PropsWithChil
           createdAt: newRating.createdAt,
           numUpvotes: 0,
         }).catch((error) => {
+          // Revert the optimistic add and tell the user.
+          setRatings((prev) => prev.filter((rating) => rating.id !== newRating.id));
+          setServerError('Your rating could not be saved. Please try again.');
           console.warn('Failed to sync rating to server:', error);
         });
       }
@@ -240,20 +252,26 @@ export function AppProvider({ children, serverAvailable = false }: PropsWithChil
   }, []);
 
   // Removes the rating with the given id, but only if the current user owns it.
-  // When the server is available, the deletion is also persisted there (fire and
-  // forget — the local state updates immediately regardless).
+  // The local state updates immediately (assume it worked); if the server sync
+  // fails, the rating is restored and the user is notified.
   const deleteRating = useCallback(
     (id: number) => {
       if (!account) return;
+      const removed = ratings.find((rating) => rating.id === id && rating.userId === account.id);
       setRatings((prev) => prev.filter((rating) => !(rating.id === id && rating.userId === account.id)));
 
-      if (serverAvailable) {
+      if (serverAvailable && removed) {
         deleteServerRating(id).catch((error) => {
+          // Revert the optimistic delete and tell the user.
+          setRatings((prev) =>
+            [...prev, removed].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()),
+          );
+          setServerError('Your rating could not be deleted. Please try again.');
           console.warn('Failed to sync rating deletion to server:', error);
         });
       }
     },
-    [account, serverAvailable],
+    [account, ratings, serverAvailable],
   );
 
   const locations = useMemo(() => baseLocations, []);
@@ -294,6 +312,9 @@ export function AppProvider({ children, serverAvailable = false }: PropsWithChil
           numUpvotes: suggestion.numUpvotes,
           status: suggestion.status,
         }).catch((error) => {
+          // Revert the optimistic add and tell the user.
+          setSuggestions((prev) => prev.filter((entry) => entry.id !== suggestion.id));
+          setServerError('Your suggestion could not be saved. Please try again.');
           console.warn('Failed to sync suggestion to server:', error);
         });
       }
@@ -327,13 +348,15 @@ export function AppProvider({ children, serverAvailable = false }: PropsWithChil
   const spaces = useMemo(() => withLiveMetrics(baseSpaces, loadedRatings, ratings), [loadedRatings, ratings]);
 
   // Adds the space to favorites if absent, or removes it if already present.
-  // When the server is available, the change is also persisted there (fire and
-  // forget — the local state updates immediately regardless).
+  // The local state updates immediately (assume it worked); if the server sync
+  // fails, the change is reverted and the user is notified.
   const toggleFavorite = useCallback(
     (space: Space) => {
+      const wasFavorite = favorites.some((favorite) => favorite.spaceId === space.id);
+      const previousFavorites = favorites;
+
       setFavorites((prev) => {
-        const exists = prev.some((favorite) => favorite.spaceId === space.id);
-        if (exists) {
+        if (wasFavorite) {
           return prev.filter((favorite) => favorite.spaceId !== space.id);
         }
         return [
@@ -343,39 +366,46 @@ export function AppProvider({ children, serverAvailable = false }: PropsWithChil
       });
 
       if (serverAvailable && account) {
-        const exists = favorites.some((favorite) => favorite.spaceId === space.id);
-        if (exists) {
-          deleteFavorite(account.id, space.id).catch((error) => {
-            console.warn('Failed to sync favorite deletion to server:', error);
-          });
-        } else {
-          createFavorite({
-            userId: account.id,
-            spaceId: space.id,
-            createdAt: new Date().toISOString(),
-          }).catch((error) => {
-            console.warn('Failed to sync favorite to server:', error);
-          });
-        }
+        const request = wasFavorite
+          ? deleteFavorite(account.id, space.id)
+          : createFavorite({
+              userId: account.id,
+              spaceId: space.id,
+              createdAt: new Date().toISOString(),
+            });
+        request.catch((error) => {
+          // Revert the optimistic change and tell the user.
+          setFavorites(previousFavorites);
+          setServerError(
+            wasFavorite
+              ? 'Your favorite could not be removed. Please try again.'
+              : 'Your favorite could not be saved. Please try again.',
+          );
+          console.warn('Failed to sync favorite to server:', error);
+        });
       }
     },
     [account, favorites, serverAvailable],
   );
 
   // Removes the favorite with the given space id.
-  // When the server is available, the deletion is also persisted there (fire and
-  // forget — the local state updates immediately regardless).
+  // The local state updates immediately (assume it worked); if the server sync
+  // fails, the favorite is restored and the user is notified.
   const removeFavorite = useCallback(
     (spaceId: number) => {
+      const removed = favorites.find((favorite) => favorite.spaceId === spaceId);
       setFavorites((prev) => prev.filter((favorite) => favorite.spaceId !== spaceId));
 
-      if (serverAvailable && account) {
+      if (serverAvailable && account && removed) {
         deleteFavorite(account.id, spaceId).catch((error) => {
+          // Revert the optimistic delete and tell the user.
+          setFavorites((prev) => [...prev, removed]);
+          setServerError('Your favorite could not be removed. Please try again.');
           console.warn('Failed to sync favorite deletion to server:', error);
         });
       }
     },
-    [account, serverAvailable],
+    [account, favorites, serverAvailable],
   );
 
   // Whether the given space id is currently favorited.
@@ -384,10 +414,31 @@ export function AppProvider({ children, serverAvailable = false }: PropsWithChil
     [favorites],
   );
 
-  // Flips the boolean value of the given setting key.
-  const toggleSetting = useCallback((key: keyof AppSettings) => {
-    setSettings((prev) => ({ ...prev, [key]: !prev[key] }));
-  }, []);
+  // Flips the boolean value of the given setting key. The local state updates
+  // immediately (assume it worked); if the server sync fails, the setting is
+  // reverted and the user is notified.
+  const toggleSetting = useCallback(
+    (key: keyof AppSettings) => {
+      const previousSettings = settings;
+      const nextValue = !settings[key];
+      setSettings((prev) => ({ ...prev, [key]: nextValue }));
+
+      if (serverAvailable && account) {
+        // Map the client setting to the matching users-table column.
+        const column =
+          key === 'anonymousMode' ? 'isAnonymous' : key === 'capacityAlerts' ? 'allowsNotifications' : null;
+        if (column) {
+          updateUser(account.id, { [column]: nextValue }).catch((error) => {
+            // Revert the optimistic change and tell the user.
+            setSettings(previousSettings);
+            setServerError('Your preference could not be saved. Please try again.');
+            console.warn('Failed to sync preference to server:', error);
+          });
+        }
+      }
+    },
+    [account, serverAvailable, settings],
+  );
 
   const value = useMemo(
     () => ({
@@ -414,6 +465,8 @@ export function AppProvider({ children, serverAvailable = false }: PropsWithChil
       isFavorite,
       settings,
       toggleSetting,
+      serverError,
+      clearServerError,
     }),
     [
       account,
@@ -439,6 +492,8 @@ export function AppProvider({ children, serverAvailable = false }: PropsWithChil
       isFavorite,
       settings,
       toggleSetting,
+      serverError,
+      clearServerError,
     ],
   );
 

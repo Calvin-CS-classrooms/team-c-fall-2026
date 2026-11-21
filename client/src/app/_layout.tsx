@@ -9,7 +9,9 @@ import {
 import { Stack } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { useEffect, useState } from 'react';
+import { StyleSheet, View } from 'react-native';
 
+import { ServerErrorBanner } from '@/components/server-error-banner';
 import { Colors } from '@/constants/colors';
 import { AppProvider, useAppData } from '@/context/app-context';
 
@@ -86,22 +88,32 @@ export default function RootLayout() {
  * available depending on whether an account is present.
  */
 function RootNavigator() {
-  const { account } = useAppData();
+  const { account, serverError, clearServerError } = useAppData();
   const isLoggedIn = Boolean(account);
 
   return (
-    <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: Colors.background } }}>
-      {/* Only show the main tabs when the user is logged in. */}
-      <Stack.Protected guard={isLoggedIn}>
-        <Stack.Screen name="(tabs)" />
-        {/* Building detail pages also require login, like the tabs. */}
-        <Stack.Screen name="location/[id]" />
-      </Stack.Protected>
-      {/* Only show the login and create-account screens when the user is signed out. */}
-      <Stack.Protected guard={!isLoggedIn}>
-        <Stack.Screen name="login" />
-        <Stack.Screen name="signup" />
-      </Stack.Protected>
-    </Stack>
+    <View style={styles.root}>
+      <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: Colors.background } }}>
+        {/* Only show the main tabs when the user is logged in. */}
+        <Stack.Protected guard={isLoggedIn}>
+          <Stack.Screen name="(tabs)" />
+          {/* Building detail pages also require login, like the tabs. */}
+          <Stack.Screen name="location/[id]" />
+        </Stack.Protected>
+        {/* Only show the login and create-account screens when the user is signed out. */}
+        <Stack.Protected guard={!isLoggedIn}>
+          <Stack.Screen name="login" />
+          <Stack.Screen name="signup" />
+        </Stack.Protected>
+      </Stack>
+      {/* Shown above every screen when a server sync fails and is reverted. */}
+      {serverError ? <ServerErrorBanner message={serverError} onDismiss={clearServerError} /> : null}
+    </View>
   );
 }
+
+const styles = StyleSheet.create({
+  root: {
+    flex: 1,
+  },
+});

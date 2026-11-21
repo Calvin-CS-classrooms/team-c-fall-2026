@@ -32,6 +32,15 @@ export function fetchUserByEmail(email: string): Promise<User> {
   return fetchJson<User>(`/api/users/by-email/${encodeURIComponent(email)}`);
 }
 
+/** Updates a user's account fields via PATCH /api/users/:id. */
+export function updateUser(id: number, changes: Partial<User>): Promise<User> {
+  return fetchJson<User>(`/api/users/${id}`, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(changes),
+  });
+}
+
 /** Fetches every rating from GET /api/ratings. */
 export function fetchRatings(): Promise<Rating[]> {
   return fetchJson<Rating[]>('/api/ratings');

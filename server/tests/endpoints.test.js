@@ -192,4 +192,23 @@ describe("Users API", () => {
     expect(response.body.error).toBe("User not found");
   });
 
+  test("PATCH user updates the given fields", async () => {
+    const response = await request(app)
+      .patch("/api/users/1")
+      .send({ allowsNotifications: true });
+
+    expect(response.statusCode).toBe(200);
+    expect(response.body.id).toBe(1);
+    expect(response.body.allowsNotifications).toBe(true);
+  });
+
+  test("PATCH an unknown user returns 404", async () => {
+    const response = await request(app)
+      .patch("/api/users/999")
+      .send({ allowsNotifications: true });
+
+    expect(response.statusCode).toBe(404);
+    expect(response.body.error).toBe("User not found");
+  });
+
 });
